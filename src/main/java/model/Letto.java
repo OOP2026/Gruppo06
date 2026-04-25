@@ -2,7 +2,9 @@ package model;
 
 public class Letto {
     public int numero_letto;
-    public boolean occupato = false; //LIBERO
+    public boolean occupato = false;//LIBERO
+
+    //Richiamo classi
     public Stanza stanza;
     public Reparto reparto;
     public Paziente paziente;

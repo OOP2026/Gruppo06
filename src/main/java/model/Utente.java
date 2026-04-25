@@ -13,7 +13,7 @@ public class Utente {
         this.matricola = matricola;
     }
 
-    public boolean login(String login, String password) {
-        return ( login.equals(this.login) && password.equals(this.password));
+    public boolean login(String login, String password, String matricola) {
+        return ( login.equals(this.login) && password.equals(this.password) && matricola.equals(this.matricola));
     }
 }

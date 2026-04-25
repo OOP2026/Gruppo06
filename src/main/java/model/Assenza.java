@@ -7,6 +7,8 @@ public class Assenza {
     public Date data_fine_assenza;
     public String motivo_assenza;
     public boolean approvazione;
+
+    //Richiamo classi
     public Medico medico;
     public Turno_Lavoro turno_lavoro;
 

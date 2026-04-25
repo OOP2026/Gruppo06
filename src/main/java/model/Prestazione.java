@@ -4,6 +4,8 @@ public class Prestazione {
     public String tipologia_prestazione;
     public String descrizione_prestazione;
     public String esito_prestazione;
+
+    //Richiamo classi
     public Medico medico;
 
 

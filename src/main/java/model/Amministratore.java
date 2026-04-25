@@ -3,6 +3,7 @@ package model;
 import java.util.Date;
 
 public class Amministratore extends Utente {
+    //Richiamo classi
     public Medico medico;
     public Paziente paziente;
     public Reparto reparto;

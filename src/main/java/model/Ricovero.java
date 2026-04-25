@@ -6,6 +6,8 @@ public class Ricovero {
     public Date dataOraInizio;
     public Date DataOraFinePrevista;
     public Date DataOraFineEffettiva;
+
+    //Richiamo classi
     public Paziente paziente;
 
     public Ricovero(Date dataOraInizio, Date DataOraFinePrevista, Date getDataOraFineEffettiva, Paziente paziente){

@@ -3,5 +3,5 @@ package gui;
 import javax.swing.*;
 
 public class Login {
-    private JTable table1;
+    private JTree tree1;
 }

@@ -46,7 +46,7 @@ public class Home {
 
     public static void main(String[] args) {
         JFrame frame = new JFrame("Home");
-        frame.setContentPane(new Home("Dott. Ciruzzo Esposito").panelHome);
+        frame.setContentPane(new Home("Dott. Mario Rossi").panelHome);
 
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(1000, 680); // Imposta le dimensioni desiderate

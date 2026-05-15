@@ -4,13 +4,13 @@ import javax.swing.*;
 import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.Font;
+import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-public class Home {
+public class Home extends JFrame {
 
-    // Dichiarazione dei componenti (gestiti dal GUI Builder)
     private JPanel panelHome;
     private JButton pazientiButton;
     private JButton lettiButton;
@@ -24,10 +24,17 @@ public class Home {
 
     // COSTRUTTORE
     public Home(String nomeUtente) {
+
+        this.setTitle("Ospedale - Home");
+        this.setContentPane(panelHome);
+        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.setSize(1000, 680);
+        this.setResizable(false);
+        this.setLocationRelativeTo(null);
+
         if (utenteLoggatoLabel != null) {
             utenteLoggatoLabel.setText(" " + nomeUtente);
             utenteLoggatoLabel.setForeground(Color.WHITE);
-            // Opzionale: rende il testo più grande e in grassetto da codice
             utenteLoggatoLabel.setFont(new Font("Arial", Font.BOLD, 14));
         }
 
@@ -42,17 +49,37 @@ public class Home {
         applicaStilePulsantiCentrali(dimissioniButton);
         applicaStilePulsantiCentrali(mediciButton);
 
+        esciButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                int conferma = JOptionPane.showConfirmDialog(null, "Sei sicuro di voler uscire?", "Conferma uscita", JOptionPane.YES_NO_OPTION);
+                if (conferma == JOptionPane.YES_OPTION) {
+                    dispose();
+                    Login loginFrame = new Login();
+                    loginFrame.main(null);
+                }
+            }
+        });
+        lettiButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Letti lettiFrame = new Letti();
+                JFrame frame = new JFrame("Letti");
+                frame.setContentPane(lettiFrame.LettiPanel);
+                frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                frame.setSize(1000, 680);
+                frame.setResizable(false);
+                frame.setLocationRelativeTo(null);
+                frame.setVisible(true);
+            }
+        });
     }
 
     public static void main(String[] args) {
-        JFrame frame = new JFrame("Home");
-        frame.setContentPane(new Home("Dott. Mario Rossi").panelHome);
-
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(1000, 680); // Imposta le dimensioni desiderate
-        frame.setResizable(false);
-        frame.setLocationRelativeTo(null); // Centra la finestra
-        frame.setVisible(true);
+        SwingUtilities.invokeLater(() -> {
+            Home h = new Home("Dott. Mario Rossi");
+            h.setVisible(true);
+        });
     }
 
     private void applicaStileMenuLaterale(JButton bottone) {

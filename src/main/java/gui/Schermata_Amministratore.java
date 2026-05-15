@@ -9,7 +9,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-public class Home extends JFrame {
+public class Schermata_Amministratore extends JFrame {
 
     private JPanel panelHome;
     private JButton pazientiButton;
@@ -23,7 +23,7 @@ public class Home extends JFrame {
     private JButton esciButton;
 
     // COSTRUTTORE
-    public Home(String nomeUtente) {
+    public Schermata_Amministratore(String nomeUtente) {
 
         this.setTitle("Ospedale - Home");
         this.setContentPane(panelHome);
@@ -77,7 +77,7 @@ public class Home extends JFrame {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            Home h = new Home("Dott. Mario Rossi");
+            Schermata_Amministratore h = new Schermata_Amministratore("Dott. Mario Rossi");
             h.setVisible(true);
         });
     }

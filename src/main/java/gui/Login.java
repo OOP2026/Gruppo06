@@ -26,8 +26,8 @@ public class Login {
                     JFrame currentFrame = (JFrame) SwingUtilities.getWindowAncestor(accediButton);
                     currentFrame.dispose();
 
-                    Home homeFrame = new Home(nomeCompletoMedico);
-                    homeFrame.setVisible(true);
+                    Schermata_Amministratore schermataAmministratoreFrame = new Schermata_Amministratore(nomeCompletoMedico);
+                    schermataAmministratoreFrame.setVisible(true);
                 } else {
                     JOptionPane.showMessageDialog(null, "Credenziali errate. Riprova.");
                 }

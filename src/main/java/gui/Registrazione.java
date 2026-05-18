@@ -9,13 +9,12 @@ import java.awt.event.MouseEvent;
 public class Registrazione {
     private JPanel RegisterPanel;
 
-    // Campi di testo aggiornati in base all'interfaccia grafica
     private JTextField nomeField;
     private JTextField cognomeField;
     private JTextField usernameField;
     private JPasswordField passwordField;
     private JCheckBox AmministratoreCheck;
-    private JTextField pinField; // Campo per il PIN dell'amministratore
+    private JTextField pinField;
 
     private JButton registratiButton;
     private JLabel AccediLabel;
@@ -40,7 +39,6 @@ public class Registrazione {
     }
 
     private void effettuaRegistrazione() {
-        // Recupero i dati da tutti i campi del form
         String nome = nomeField.getText();
         String cognome = cognomeField.getText();
         String username = usernameField.getText();
@@ -48,13 +46,11 @@ public class Registrazione {
         boolean isAmministratore = AmministratoreCheck.isSelected();
         String pin = pinField.getText();
 
-        // Controllo che i campi principali non siano vuoti
         if (nome.trim().isEmpty() || cognome.trim().isEmpty() || username.trim().isEmpty() || password.trim().isEmpty()) {
             JOptionPane.showMessageDialog(null, "Compila tutti i campi obbligatori (Nome, Cognome, Username, Password).", "Errore", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        // Controllo aggiuntivo logico: se è amministratore, il PIN non dovrebbe essere vuoto
         if (isAmministratore && pin.trim().isEmpty()) {
             JOptionPane.showMessageDialog(null, "Inserisci il PIN per registrarti come Amministratore.", "Errore PIN", JOptionPane.WARNING_MESSAGE);
             return;

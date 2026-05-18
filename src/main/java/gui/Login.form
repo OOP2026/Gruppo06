@@ -16,7 +16,7 @@
         <properties/>
         <border type="none"/>
         <children>
-          <grid id="ee176" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+          <grid id="ee176" layout-manager="GridLayoutManager" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
@@ -38,54 +38,102 @@
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
                 </constraints>
               </vspacer>
+              <grid id="13071" layout-manager="BorderLayout" hgap="0" vgap="0">
+                <constraints>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <maximumSize width="400" height="75"/>
+                  <minimumSize width="400" height="75"/>
+                  <preferredSize width="400" height="75"/>
+                </properties>
+                <border type="none"/>
+                <children>
+                  <component id="b4c81" class="javax.swing.JLabel">
+                    <constraints border-constraint="Center"/>
+                    <properties>
+                      <font size="16" style="1"/>
+                      <horizontalAlignment value="2"/>
+                      <horizontalTextPosition value="0"/>
+                      <text value="Username"/>
+                      <verticalAlignment value="3"/>
+                    </properties>
+                  </component>
+                  <component id="7a13d" class="javax.swing.JTextField" binding="usernameField">
+                    <constraints border-constraint="South"/>
+                    <properties>
+                      <font name="Droid Sans Mono" size="14" style="0"/>
+                      <foreground color="-13487566"/>
+                      <horizontalAlignment value="2"/>
+                      <maximumSize width="80" height="25"/>
+                      <minimumSize width="80" height="25"/>
+                      <preferredSize width="80" height="25"/>
+                      <text value=""/>
+                      <visible value="true"/>
+                    </properties>
+                  </component>
+                </children>
+              </grid>
+              <grid id="bffd0" layout-manager="BorderLayout" hgap="0" vgap="0">
+                <constraints>
+                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <foreground color="-16777216"/>
+                  <maximumSize width="400" height="75"/>
+                  <minimumSize width="400" height="75"/>
+                  <preferredSize width="400" height="75"/>
+                </properties>
+                <border type="none"/>
+                <children>
+                  <component id="5afb9" class="javax.swing.JLabel">
+                    <constraints border-constraint="Center"/>
+                    <properties>
+                      <font size="16" style="1"/>
+                      <horizontalAlignment value="2"/>
+                      <horizontalTextPosition value="0"/>
+                      <text value="Password"/>
+                      <verticalAlignment value="3"/>
+                    </properties>
+                  </component>
+                  <component id="f538b" class="javax.swing.JPasswordField" binding="passwordField">
+                    <constraints border-constraint="South"/>
+                    <properties>
+                      <foreground color="-16777216"/>
+                      <maximumSize width="80" height="25"/>
+                      <minimumSize width="80" height="25"/>
+                      <opaque value="true"/>
+                      <preferredSize width="80" height="25"/>
+                    </properties>
+                  </component>
+                </children>
+              </grid>
             </children>
           </grid>
-          <grid id="dc350" layout-manager="GridLayoutManager" row-count="5" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
-            <margin top="0" left="0" bottom="10" right="0"/>
+          <grid id="dc350" layout-manager="GridLayoutManager" row-count="3" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="10" left="0" bottom="10" right="0"/>
             <constraints>
               <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties/>
             <border type="none"/>
             <children>
-              <component id="9ad2d" class="javax.swing.JPasswordField" binding="passwordField">
-                <constraints>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="0" indent="0" use-parent-layout="false">
-                    <minimum-size width="250" height="20"/>
-                    <preferred-size width="250" height="20"/>
-                    <maximum-size width="250" height="20"/>
-                  </grid>
-                </constraints>
-                <properties/>
-              </component>
               <vspacer id="d101b">
                 <constraints>
-                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
                 </constraints>
               </vspacer>
               <component id="dc422" class="javax.swing.JButton" binding="accediButton" default-binding="true">
                 <constraints>
-                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text value="Accedi"/>
                 </properties>
               </component>
-              <component id="c4f7c" class="javax.swing.JTextField" binding="textField">
-                <constraints>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="0" fill="0" indent="0" use-parent-layout="false">
-                    <minimum-size width="250" height="20"/>
-                    <preferred-size width="250" height="20"/>
-                    <maximum-size width="250" height="20"/>
-                  </grid>
-                </constraints>
-                <properties>
-                  <text value=""/>
-                </properties>
-              </component>
               <component id="e8b19" class="javax.swing.JLabel">
                 <constraints>
-                  <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <text value="Non hai un profilo? Registrati"/>

@@ -6,9 +6,10 @@ import java.awt.event.MouseEvent;
 
 public class Login {
     private JPasswordField passwordField;
-    private JTextField textField;
     private JButton accediButton;
     private JPanel mainPanel;
+    private JTextField usernameField;
+
 
     private final String userMedico = "123";
     private final String passMedico = "123";
@@ -18,7 +19,7 @@ public class Login {
         accediButton.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                String username = textField.getText();
+                String username = usernameField.getText();
                 String password = new String(passwordField.getPassword());
 
 
@@ -48,4 +49,5 @@ public class Login {
             frame.setVisible(true);
         });
     }
+
 }

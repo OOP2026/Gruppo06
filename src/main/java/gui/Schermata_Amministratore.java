@@ -27,7 +27,7 @@ public class Schermata_Amministratore extends JFrame {
 
         this.setTitle("Ospedale - Home");
         this.setContentPane(panelHome);
-        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // Chiude tutto se chiudi la Home
         this.setSize(1000, 680);
         this.setResizable(false);
         this.setLocationRelativeTo(null);
@@ -43,11 +43,12 @@ public class Schermata_Amministratore extends JFrame {
         applicaStileMenuLaterale(turniButton);
         applicaStileMenuLaterale(esciButton);
 
-
         applicaStilePulsantiCentrali(pazientiButton);
         applicaStilePulsantiCentrali(lettiButton);
         applicaStilePulsantiCentrali(dimissioniButton);
         applicaStilePulsantiCentrali(mediciButton);
+
+        // --- AZIONI DEI PULSANTI ---
 
         esciButton.addActionListener(new ActionListener() {
             @Override
@@ -59,6 +60,38 @@ public class Schermata_Amministratore extends JFrame {
                     loginFrame.main(null);
                 }
             }
+        });
+
+        // Apre la schermata Letti
+        lettiButton.addActionListener(e -> {
+            Letti lettiFrame = new Letti();
+
+            // Imposta il pannello principale creato dal GUI Builder
+            if (lettiFrame.LettiPanel != null) {
+                lettiFrame.setContentPane(lettiFrame.LettiPanel);
+            }
+
+            lettiFrame.setTitle("Ricerca Letti Ospedalieri");
+            lettiFrame.setSize(1100, 750);
+            lettiFrame.setLocationRelativeTo(null);
+            lettiFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); // Chiude solo questa finestra
+            lettiFrame.setVisible(true);
+        });
+
+        // Apre la schermata Prestazioni
+        prestazioniButton.addActionListener(e -> {
+            Prestazioni prestazioniFrame = new Prestazioni();
+
+            // Imposta il pannello principale creato dal GUI Builder
+            if (prestazioniFrame.mainPanel != null) {
+                prestazioniFrame.setContentPane(prestazioniFrame.mainPanel);
+            }
+
+            prestazioniFrame.setTitle("Ricerca Prestazioni Mediche");
+            prestazioniFrame.setSize(1000, 680);
+            prestazioniFrame.setLocationRelativeTo(null);
+            prestazioniFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); // Chiude solo questa finestra
+            prestazioniFrame.setVisible(true);
         });
     }
 

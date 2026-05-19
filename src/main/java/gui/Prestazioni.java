@@ -23,7 +23,6 @@ public class Prestazioni extends JFrame {
     private JTextField nomeField;
     private JTextField codiceField;
 
-    // --- Colori coordinati con la Schermata Home ---
     private static final Color AZZURRO_HOME = new Color(70, 132, 197); // Azzurro del menu
     private static final Color SELECTION_BG = new Color(187, 222, 247);
     private static final Color ALT_ROW_BG = new Color(0xf5, 0xf8, 0xfc);
@@ -31,7 +30,6 @@ public class Prestazioni extends JFrame {
     private static final Font BASE_FONT = new Font("SansSerif", Font.PLAIN, 12);
     private static final Font HEADER_FONT = new Font("SansSerif", Font.BOLD, 12);
 
-    // --- Dati ---
     private static final String[] COLONNE = {
             "ID Prestaz.", "Codice", "Nome Prestazione",
             "Tipo", "Reparto Erog.", "Note/Dettagli"
@@ -81,11 +79,9 @@ public class Prestazioni extends JFrame {
     }
 
     private void setupStyles() {
-        // Applica i colori alle liste
         styleList(tipologiaList);
         styleList(repartoList);
 
-        // Stile Tabella
         prestazioniTable.setRowHeight(26);
         prestazioniTable.setShowGrid(false);
         prestazioniTable.setIntercellSpacing(new Dimension(0, 0));
@@ -93,7 +89,6 @@ public class Prestazioni extends JFrame {
         prestazioniTable.setSelectionForeground(Color.BLACK);
         prestazioniTable.setFont(BASE_FONT);
 
-        // Header Tabella coordinato con l'azzurro della Home
         JTableHeader th = prestazioniTable.getTableHeader();
         th.setBackground(AZZURRO_HOME);
         th.setForeground(Color.WHITE);
@@ -114,7 +109,6 @@ public class Prestazioni extends JFrame {
             }
         });
 
-        // Applica lo stile della Home ai bottoni centrali della schermata Prestazioni
         if(cercaButton != null) applicaStilePulsantiCentrali(cercaButton);
         if(resetButton != null) applicaStilePulsantiCentrali(resetButton);
         if(storprestazioneButton != null) applicaStilePulsantiCentrali(storprestazioneButton);
@@ -127,7 +121,6 @@ public class Prestazioni extends JFrame {
         list.setFont(BASE_FONT);
     }
 
-    // --- METODI DI STILE COPIATI DALLA HOME ---
     private void applicaStilePulsantiCentrali(JButton bottone) {
         Color coloreSfondoDefault = Color.WHITE;
         Color coloreTestoDefault = Color.BLACK;
@@ -136,7 +129,6 @@ public class Prestazioni extends JFrame {
         Color coloreTestoHover = Color.WHITE;
 
         impostaColoriEdEffetti(bottone, coloreSfondoDefault, coloreTestoDefault, coloreSfondoHover, coloreTestoHover);
-        // Aggiungiamo un bordo sottile azzurro per definire i bottoni sul pannello bianco
         bottone.setBorder(BorderFactory.createLineBorder(AZZURRO_HOME, 1));
         bottone.setBorderPainted(true);
     }
@@ -163,7 +155,6 @@ public class Prestazioni extends JFrame {
             }
         });
     }
-    // ------------------------------------------
 
     private void setupListeners() {
         cercaButton.addActionListener(e -> {

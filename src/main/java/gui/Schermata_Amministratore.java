@@ -60,19 +60,6 @@ public class Schermata_Amministratore extends JFrame {
                 }
             }
         });
-        lettiButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Letti lettiFrame = new Letti();
-                JFrame frame = new JFrame("Letti");
-                frame.setContentPane(lettiFrame.LettiPanel);
-                frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-                frame.setSize(1000, 680);
-                frame.setResizable(false);
-                frame.setLocationRelativeTo(null);
-                frame.setVisible(true);
-            }
-        });
     }
 
     public static void main(String[] args) {

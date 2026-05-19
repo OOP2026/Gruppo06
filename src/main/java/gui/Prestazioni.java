@@ -3,97 +3,110 @@ package gui;
 import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.Calendar;
 import java.util.Date;
 
 public class Prestazioni extends JFrame {
 
-    public JPanel panel1;
+    public JPanel mainPanel;
     private JButton cercaButton;
     private JButton resetButton;
-    private JSpinner spinner1;
-    private JTable table1;
-    private JList list2;
-    private JLabel Tipo;
-    private JList list1;
-    private JButton button1;
-    private JButton button2;
-    private JTextField textField1;
-    private JTextField textField2;
+    private JSpinner dataSpinner;
+    private JTable prestazioniTable;
+    private JList<String> repartoList;
+    private JList<String> tipologiaList;
+    private JLabel tipoLabel;
+    private JButton storprestazioneButton;
+    private JButton newprestazioneButton;
+    private JTextField nomeField;
+    private JTextField codiceField;
 
-    // Dati completi
-    private final Object[][] DATI = {
-            {"ID: P001","D001","Intervento Chirurgia Bariatrica","Chirurgia Gen.","Blocco Operatorio","Team spec."},
-            {"ID: P002","R005","RM Cardiaca con Contrasto","Diagnostica Av.","Neuroradiologia","Cardiologo pres."},
-            {"ID: P003","E101","Colonscopia Robotica","Procedure Endo.","Blocco Operatorio","Sedazione"},
-            {"ID: P004","R201","TC Cranio Alta Risoluzione","Radiologia Inter.","Blocco Operatorio","Urgenze priorità"},
-            {"ID: P005","D005","TC Cranio Alta Risoluzione","Radiologia Inter.","Neuroradiologia","Esame base"},
-            {"ID: P006","D006","TC Cranio (base)","Diagnostica Av.","Laboratorio Analisi","Esame base"},
-            {"ID: P007","D007","Intervento Chirurgia Bariatrica","Diagnostica Av.","Neuroradiologia","Team spec."},
-            {"ID: P008","D008","Intervento Chirurgia Assistita","Procedure Endo.","Neuroradiologia","Sedazione"},
-            {"ID: P009","D009","Intervento Chirurgia Bariatrica","Procedure Endo.","Neuroradiologia","Cardiologo pres."},
+    // --- Colori coordinati con la Schermata Home ---
+    private static final Color AZZURRO_HOME = new Color(70, 132, 197); // Azzurro del menu
+    private static final Color SELECTION_BG = new Color(187, 222, 247);
+    private static final Color ALT_ROW_BG = new Color(0xf5, 0xf8, 0xfc);
+
+    private static final Font BASE_FONT = new Font("SansSerif", Font.PLAIN, 12);
+    private static final Font HEADER_FONT = new Font("SansSerif", Font.BOLD, 12);
+
+    // --- Dati ---
+    private static final String[] COLONNE = {
+            "ID Prestaz.", "Codice", "Nome Prestazione",
+            "Tipo", "Reparto Erog.", "Note/Dettagli"
+    };
+
+    private static final Object[][] DATI = {
+            {"ID: P001", "D001", "Intervento Chirurgia Bariatrica", "Chirurgia Gen.", "Blocco Operatorio", "Team spec."},
+            {"ID: P002", "R005", "RM Cardiaca con Contrasto", "Diagnostica Av.", "Neuroradiologia", "Cardiologo pres."},
+            {"ID: P003", "E101", "Colonscopia Robotica", "Procedure Endo.", "Blocco Operatorio", "Sedazione"},
+            {"ID: P004", "R201", "TC Cranio Alta Risoluzione", "Radiologia Inter.", "Blocco Operatorio", "Urgenze priorità"},
+            {"ID: P005", "D005", "TC Cranio Alta Risoluzione", "Radiologia Inter.", "Neuroradiologia", "Esame base"},
+            {"ID: P006", "D006", "TC Cranio (base)", "Diagnostica Av.", "Laboratorio Analisi", "Esame base"},
+            {"ID: P007", "D007", "Intervento Chirurgia Bariatrica", "Diagnostica Av.", "Neuroradiologia", "Team spec."},
+            {"ID: P008", "D008", "Intervento Chirurgia Assistita", "Procedure Endo.", "Neuroradiologia", "Sedazione"},
+            {"ID: P009", "D009", "Intervento Chirurgia Bariatrica", "Procedure Endo.", "Neuroradiologia", "Cardiologo pres."},
     };
 
     public Prestazioni() {
+        initComponents();
+        setupStyles();
+        setupListeners();
+        loadTableData(null, null, null, null);
+    }
 
-        // ── Spinner data ──────────────────────────────
+    private void initComponents() {
         SpinnerDateModel dateModel = new SpinnerDateModel(new Date(), null, null, Calendar.DAY_OF_MONTH);
-        spinner1.setModel(dateModel);
-        spinner1.setEditor(new JSpinner.DateEditor(spinner1, "dd/MM/yyyy"));
+        dataSpinner.setModel(dateModel);
+        dataSpinner.setEditor(new JSpinner.DateEditor(dataSpinner, "dd/MM/yyyy"));
 
-        // ── Popola list1 (Tipologia) ──────────────────
-        String[] tipologie = {
-                "Chirurgia Generale", "Radiologia Interventistica",
-                "Diagnostica Avanzata", "Chirurgia Robotica",
-                "Procedure Endoscopiche", "Radioterapia",
-                "Cardiologia", "Oncologia"
+        tipologiaList.setListData(new String[]{
+                "Chirurgia Generale", "Radiologia Interventistica", "Diagnostica Avanzata",
+                "Chirurgia Robotica", "Procedure Endoscopiche", "Radioterapia", "Cardiologia", "Oncologia"
+        });
+
+        repartoList.setListData(new String[]{
+                "Chirurgia Robotica", "Neuroradiologia", "Blocco Operatorio",
+                "Chirurgia Toracica", "Anatomia Patologica", "Laboratorio Analisi", "Radiologia Interventistica"
+        });
+
+        DefaultTableModel model = new DefaultTableModel(COLONNE, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
         };
-        list1.setListData(tipologie);
-        list1.setSelectionBackground(new Color(0x1a, 0x5f, 0xa0));
-        list1.setSelectionForeground(Color.WHITE);
-        list1.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        prestazioniTable.setModel(model);
+    }
 
-        // ── Popola list2 (Reparto) ────────────────────
-        String[] reparti = {
-                "Chirurgia Robotica", "Neuroradiologia",
-                "Blocco Operatorio", "Chirurgia Toracica",
-                "Anatomia Patologica", "Laboratorio Analisi",
-                "Radiologia Interventistica"
-        };
-        list2.setListData(reparti);
-        list2.setSelectionBackground(new Color(0x1a, 0x5f, 0xa0));
-        list2.setSelectionForeground(Color.WHITE);
-        list2.setFont(new Font("SansSerif", Font.PLAIN, 12));
+    private void setupStyles() {
+        // Applica i colori alle liste
+        styleList(tipologiaList);
+        styleList(repartoList);
 
-        // ── Tabella ───────────────────────────────────
-        String[] colonne = {"ID Prestaz.", "Codice", "Nome Prestazione",
-                "Tipo", "Reparto Erog.", "Note/Dettagli"};
-        DefaultTableModel model = new DefaultTableModel(colonne, 0);
-        for (Object[] row : DATI) model.addRow(row);
-        table1.setModel(model);
+        // Stile Tabella
+        prestazioniTable.setRowHeight(26);
+        prestazioniTable.setShowGrid(false);
+        prestazioniTable.setIntercellSpacing(new Dimension(0, 0));
+        prestazioniTable.setSelectionBackground(SELECTION_BG);
+        prestazioniTable.setSelectionForeground(Color.BLACK);
+        prestazioniTable.setFont(BASE_FONT);
 
-        table1.setRowHeight(26);
-        table1.setShowGrid(false);
-        table1.setIntercellSpacing(new Dimension(0, 0));
-        table1.setSelectionBackground(new Color(187, 222, 247));
-        table1.setSelectionForeground(Color.BLACK);
-        table1.setFont(new Font("SansSerif", Font.PLAIN, 12));
-
-        JTableHeader th = table1.getTableHeader();
-        th.setBackground(new Color(0x1a, 0x3a, 0x5c));
+        // Header Tabella coordinato con l'azzurro della Home
+        JTableHeader th = prestazioniTable.getTableHeader();
+        th.setBackground(AZZURRO_HOME);
         th.setForeground(Color.WHITE);
-        th.setFont(new Font("SansSerif", Font.BOLD, 12));
+        th.setFont(HEADER_FONT);
         th.setPreferredSize(new Dimension(th.getWidth(), 30));
         th.setReorderingAllowed(false);
 
-        // Righe alternate
-        table1.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+        prestazioniTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             @Override
-            public Component getTableCellRendererComponent(
-                    JTable t, Object v, boolean sel, boolean foc, int row, int col) {
+            public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int row, int col) {
                 super.getTableCellRendererComponent(t, v, sel, foc, row, col);
                 if (!sel) {
-                    setBackground(row % 2 == 0 ? Color.WHITE : new Color(0xf5, 0xf8, 0xfc));
+                    setBackground(row % 2 == 0 ? Color.WHITE : ALT_ROW_BG);
                     setForeground(Color.BLACK);
                 }
                 setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 6));
@@ -101,52 +114,110 @@ public class Prestazioni extends JFrame {
             }
         });
 
-        // ── Bottone Cerca ─────────────────────────────
-        cercaButton.addActionListener(e -> {
-            String nome   = textField1.getText().toLowerCase().trim();
-            String codice = textField2.getText().toLowerCase().trim();
+        // Applica lo stile della Home ai bottoni centrali della schermata Prestazioni
+        if(cercaButton != null) applicaStilePulsantiCentrali(cercaButton);
+        if(resetButton != null) applicaStilePulsantiCentrali(resetButton);
+        if(storprestazioneButton != null) applicaStilePulsantiCentrali(storprestazioneButton);
+        if(newprestazioneButton != null) applicaStilePulsantiCentrali(newprestazioneButton);
+    }
 
-            DefaultTableModel m = (DefaultTableModel) table1.getModel();
-            m.setRowCount(0);
+    private void styleList(JList<String> list) {
+        list.setSelectionBackground(AZZURRO_HOME);
+        list.setSelectionForeground(Color.WHITE);
+        list.setFont(BASE_FONT);
+    }
 
-            for (Object[] row : DATI) {
-                String rNome   = ((String) row[2]).toLowerCase();
-                String rCodice = ((String) row[1]).toLowerCase();
+    // --- METODI DI STILE COPIATI DALLA HOME ---
+    private void applicaStilePulsantiCentrali(JButton bottone) {
+        Color coloreSfondoDefault = Color.WHITE;
+        Color coloreTestoDefault = Color.BLACK;
 
-                boolean okNome   = nome.isEmpty()   || rNome.contains(nome);
-                boolean okCodice = codice.isEmpty() || rCodice.contains(codice);
+        Color coloreSfondoHover = AZZURRO_HOME;
+        Color coloreTestoHover = Color.WHITE;
 
-                if (okNome && okCodice) m.addRow(row);
+        impostaColoriEdEffetti(bottone, coloreSfondoDefault, coloreTestoDefault, coloreSfondoHover, coloreTestoHover);
+        // Aggiungiamo un bordo sottile azzurro per definire i bottoni sul pannello bianco
+        bottone.setBorder(BorderFactory.createLineBorder(AZZURRO_HOME, 1));
+        bottone.setBorderPainted(true);
+    }
+
+    private void impostaColoriEdEffetti(JButton bottone, Color sfondoDefault, Color testoDefault, Color sfondoHover, Color testoHover) {
+        bottone.setBackground(sfondoDefault);
+        bottone.setForeground(testoDefault);
+        bottone.setFocusPainted(false);
+        bottone.setContentAreaFilled(true);
+        bottone.setOpaque(true);
+        bottone.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        bottone.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseEntered(MouseEvent e) {
+                bottone.setBackground(sfondoHover);
+                bottone.setForeground(testoHover);
+            }
+
+            @Override
+            public void mouseExited(MouseEvent e) {
+                bottone.setBackground(sfondoDefault);
+                bottone.setForeground(testoDefault);
             }
         });
+    }
+    // ------------------------------------------
 
-        // ── Bottone Reset ─────────────────────────────
-        resetButton.addActionListener(e -> {
-            textField1.setText("");
-            textField2.setText("");
-            list1.clearSelection();
-            list2.clearSelection();
-            spinner1.setValue(new Date());
+    private void setupListeners() {
+        cercaButton.addActionListener(e -> {
+            String nome = nomeField.getText().toLowerCase().trim();
+            String codice = codiceField.getText().toLowerCase().trim();
+            String tipologia = tipologiaList.getSelectedValue();
+            String reparto = repartoList.getSelectedValue();
 
-            DefaultTableModel m = (DefaultTableModel) table1.getModel();
-            m.setRowCount(0);
-            for (Object[] row : DATI) m.addRow(row);
+            loadTableData(nome, codice, tipologia, reparto);
         });
+
+        resetButton.addActionListener(e -> {
+            nomeField.setText("");
+            codiceField.setText("");
+            tipologiaList.clearSelection();
+            repartoList.clearSelection();
+            dataSpinner.setValue(new Date());
+
+            loadTableData(null, null, null, null);
+        });
+    }
+
+    private void loadTableData(String filtroNome, String filtroCodice, String filtroTipo, String filtroReparto) {
+        DefaultTableModel m = (DefaultTableModel) prestazioniTable.getModel();
+        m.setRowCount(0);
+
+        for (Object[] row : DATI) {
+            String rCodice = ((String) row[1]).toLowerCase();
+            String rNome = ((String) row[2]).toLowerCase();
+            String rTipo = (String) row[3];
+            String rReparto = (String) row[4];
+
+            boolean matchNome = (filtroNome == null || filtroNome.isEmpty() || rNome.contains(filtroNome));
+            boolean matchCodice = (filtroCodice == null || filtroCodice.isEmpty() || rCodice.contains(filtroCodice));
+
+            boolean matchTipo = (filtroTipo == null || rTipo.equals(filtroTipo));
+            boolean matchReparto = (filtroReparto == null || rReparto.equals(filtroReparto));
+
+            if (matchNome && matchCodice && matchTipo && matchReparto) {
+                m.addRow(row);
+            }
+        }
     }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             Prestazioni frame = new Prestazioni();
-
             Dimension strictSize = new Dimension(1000, 680);
-            frame.panel1.setPreferredSize(strictSize);
-            frame.panel1.setMinimumSize(strictSize);
-            frame.panel1.setMaximumSize(strictSize);
 
-            frame.setContentPane(frame.panel1);
+            frame.mainPanel.setPreferredSize(strictSize);
+            frame.setContentPane(frame.mainPanel);
             frame.setTitle("Ricerca Prestazioni Mediche");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(1000, 680);
+            frame.pack();
             frame.setResizable(false);
             frame.setLocationRelativeTo(null);
             frame.setVisible(true);

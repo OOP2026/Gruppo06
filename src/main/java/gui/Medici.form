@@ -1,13 +1,284 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <form xmlns="http://www.intellij.com/uidesigner/form/" version="1" bind-to-class="gui.Medici">
-  <grid id="27dc6" row-count="1" column-count="1" layout-manager="GridLayoutManager">
+  <grid id="27dc6" binding="mainPanel" layout-manager="GridLayoutManager" row-count="4" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="500" height="400"/>
-      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+      <xy x="20" y="20" width="1024" height="400"/>
     </constraints>
     <properties/>
     <border type="none"/>
-    <children/>
+    <children>
+      <grid id="6c373" layout-manager="GridLayoutManager" row-count="1" column-count="5" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="10" bottom="0" right="28"/>
+        <constraints>
+          <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="0" fill="3" indent="0" use-parent-layout="false">
+            <minimum-size width="1000" height="100"/>
+            <preferred-size width="1000" height="100"/>
+            <maximum-size width="1000" height="100"/>
+          </grid>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <grid id="c945" layout-manager="GridLayoutManager" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="12" left="0" bottom="0" right="0"/>
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="89b66" class="javax.swing.JTextField" binding="nomeField">
+                <constraints>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="9" fill="1" indent="0" use-parent-layout="false">
+                    <preferred-size width="150" height="-1"/>
+                  </grid>
+                </constraints>
+                <properties/>
+              </component>
+              <component id="8a09b" class="javax.swing.JLabel">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="10" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="Nome e Cogome"/>
+                </properties>
+              </component>
+              <component id="bb80b" class="javax.swing.JTextField" binding="codiceField">
+                <constraints>
+                  <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
+                    <preferred-size width="150" height="-1"/>
+                  </grid>
+                </constraints>
+                <properties/>
+              </component>
+              <component id="bee69" class="javax.swing.JLabel">
+                <constraints>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="Matricola"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+          <grid id="58ca3" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="0" left="0" bottom="35" right="0"/>
+            <constraints>
+              <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <grid id="339b8" layout-manager="FormLayout">
+                <rowspec value="center:d:grow"/>
+                <rowspec value="top:4dlu:noGrow"/>
+                <rowspec value="center:d:grow"/>
+                <colspec value="fill:d:grow"/>
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <component id="33936" class="javax.swing.JSpinner" binding="dataSpinner">
+                    <constraints>
+                      <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="9" fill="1" indent="0" use-parent-layout="false"/>
+                      <forms defaultalign-horz="false" defaultalign-vert="false"/>
+                    </constraints>
+                    <properties/>
+                  </component>
+                  <component id="26c81" class="javax.swing.JLabel">
+                    <constraints>
+                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="10" fill="0" indent="0" use-parent-layout="false"/>
+                      <forms defaultalign-vert="false"/>
+                    </constraints>
+                    <properties>
+                      <text value="Data"/>
+                    </properties>
+                  </component>
+                </children>
+              </grid>
+            </children>
+          </grid>
+          <grid id="95698" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="14" left="0" bottom="0" right="0"/>
+            <constraints>
+              <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="3" hsize-policy="0" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties/>
+            <border type="none">
+              <font/>
+            </border>
+            <children>
+              <component id="ec728" class="javax.swing.JLabel">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="10" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="Reparto Assegnato:"/>
+                </properties>
+              </component>
+              <scrollpane id="cbf3a">
+                <constraints>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <horizontalScrollBarPolicy value="31"/>
+                </properties>
+                <border type="none"/>
+                <children>
+                  <component id="e2d4b" class="javax.swing.JList" binding="repartoList">
+                    <constraints/>
+                    <properties>
+                      <maximumSize width="220" height="140"/>
+                      <minimumSize width="220" height="140"/>
+                      <model>
+                        <item value="Blocco Operatorio"/>
+                        <item value="Neuroradiologia"/>
+                        <item value="Terapia Intensiva"/>
+                        <item value="Chrirugia Generale"/>
+                        <item value="Ematologia"/>
+                        <item value="Otorinolaringoiatria"/>
+                      </model>
+                      <preferredSize width="220" height="140"/>
+                    </properties>
+                  </component>
+                </children>
+              </scrollpane>
+            </children>
+          </grid>
+          <grid id="34a9d" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="14" left="0" bottom="0" right="0"/>
+            <constraints>
+              <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="0" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="46d76" class="javax.swing.JLabel" binding="tipoLabel">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="Specializzazione:"/>
+                </properties>
+              </component>
+              <scrollpane id="b1d63">
+                <constraints>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <horizontalScrollBarPolicy value="31"/>
+                </properties>
+                <border type="none"/>
+                <children>
+                  <component id="b7546" class="javax.swing.JList" binding="specializzazioneList">
+                    <constraints/>
+                    <properties>
+                      <maximumSize width="220" height="140"/>
+                      <minimumSize width="220" height="140"/>
+                      <model>
+                        <item value="Chirurgia Generale"/>
+                        <item value="Bariatria"/>
+                        <item value="Radiologia Interventista"/>
+                        <item value="Radiologia Interventista"/>
+                        <item value="Radiologia Interventista"/>
+                      </model>
+                      <preferredSize width="220" height="140"/>
+                    </properties>
+                  </component>
+                </children>
+              </scrollpane>
+            </children>
+          </grid>
+          <grid id="edc9a" layout-manager="GridLayoutManager" row-count="2" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+            <margin top="25" left="0" bottom="0" right="0"/>
+            <constraints>
+              <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children>
+              <component id="64dad" class="javax.swing.JButton" binding="resetButton">
+                <constraints>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="1" fill="1" indent="0" use-parent-layout="false">
+                    <minimum-size width="110" height="30"/>
+                    <preferred-size width="110" height="30"/>
+                    <maximum-size width="110" height="30"/>
+                  </grid>
+                </constraints>
+                <properties>
+                  <text value="Reset"/>
+                </properties>
+              </component>
+              <component id="4838e" class="javax.swing.JButton" binding="cercaButton">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="2" fill="1" indent="0" use-parent-layout="false">
+                    <minimum-size width="110" height="30"/>
+                    <preferred-size width="110" height="30"/>
+                    <maximum-size width="110" height="30"/>
+                  </grid>
+                </constraints>
+                <properties>
+                  <text value="Cerca Medici"/>
+                </properties>
+              </component>
+            </children>
+          </grid>
+        </children>
+      </grid>
+      <grid id="bd47d" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+        <margin top="0" left="0" bottom="10" right="0"/>
+        <constraints>
+          <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties/>
+        <border type="none"/>
+        <children>
+          <component id="52a00" class="javax.swing.JTable" binding="mediciTable">
+            <constraints>
+              <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="6" anchor="0" fill="3" indent="0" use-parent-layout="false">
+                <preferred-size width="150" height="50"/>
+              </grid>
+            </constraints>
+            <properties/>
+          </component>
+        </children>
+      </grid>
+      <component id="4a1ca" class="javax.swing.JLabel">
+        <constraints>
+          <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+        </constraints>
+        <properties>
+          <font size="36" style="1"/>
+          <text value="Ricerca Medici"/>
+        </properties>
+      </component>
+      <component id="6696a" class="javax.swing.JButton" binding="refreshList">
+        <constraints>
+          <grid row="3" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false">
+            <minimum-size width="150" height="50"/>
+            <preferred-size width="150" height="50"/>
+            <maximum-size width="150" height="50"/>
+          </grid>
+        </constraints>
+        <properties>
+          <text value="Aggiorna Lista"/>
+        </properties>
+      </component>
+      <component id="51d54" class="javax.swing.JButton" binding="newMedico">
+        <constraints>
+          <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="4" fill="0" indent="0" use-parent-layout="false">
+            <minimum-size width="150" height="50"/>
+            <preferred-size width="150" height="50"/>
+            <maximum-size width="150" height="50"/>
+          </grid>
+        </constraints>
+        <properties>
+          <text value="Nuovo Medico"/>
+        </properties>
+      </component>
+    </children>
   </grid>
 </form>

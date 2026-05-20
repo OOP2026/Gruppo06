@@ -9,7 +9,7 @@ import java.util.Calendar;
 import java.util.Date;
 
 public class Medici extends JFrame {
-
+    //Dichiarazione componenti GUI
     public JPanel mainPanel;
     private JTextField nomeField;
     private JTextField codiceField;
@@ -23,19 +23,19 @@ public class Medici extends JFrame {
 
     private JList<String> specializzazioneList;
     private JList<String> repartoList;
-
+    //Selezione colori GUI
     private static final Color AZZURRO_HOME = new Color(70, 132, 197);
     private static final Color SELECTION_BG = new Color(187, 222, 247);
     private static final Color ALT_ROW_BG = new Color(0xf5, 0xf8, 0xfc);
-
+    //Selezione font GUI
     private static final Font BASE_FONT = new Font("SansSerif", Font.PLAIN, 12);
     private static final Font HEADER_FONT = new Font("SansSerif", Font.BOLD, 12);
-
+    //Assegnazione campi presso: JTable mediciTable
     private static final String[] COLONNE = {
             "Matricola", "Cognome e Nome", "Specializzazione",
             "Reparto Assegnato", "Stato", "Note/Contatto"
     };
-
+    //Popolazione JTable mediciTable
     private static final Object[][] DATI = {
             {"M-001", "Rossi Mario", "Chirurgia Generale", "Blocco Operatorio", "Attivo", "Primario"},
             {"M-002", "Bianchi Giulia", "Cardiologia", "Terapia Intensiva", "Attivo", "Turno Notturno"},
@@ -44,14 +44,14 @@ public class Medici extends JFrame {
             {"M-005", "Gialli Marco", "Chirurgia Toracica", "Chirurgia Toracica", "Attivo", "-"},
             {"M-006", "Viola Elena", "Ematologia", "Laboratorio Analisi", "Maternità", "-"}
     };
-
+    //Dichiarazione Costruttore
     public Medici() {
         initComponents();
         setupStyles();
         setupListeners();
         loadTableData(null, null, null, null);
     }
-
+    //Inserimento parametri list e definizione modelli Table
     private void initComponents() {
         SpinnerDateModel dateModel = new SpinnerDateModel(new Date(), null, null, Calendar.DAY_OF_MONTH);
         dataSpinner.setModel(dateModel);
@@ -75,7 +75,7 @@ public class Medici extends JFrame {
         };
         mediciTable.setModel(model);
     }
-
+    //Set di stili
     private void setupStyles() {
         styleList(specializzazioneList);
         styleList(repartoList);
@@ -175,7 +175,7 @@ public class Medici extends JFrame {
             loadTableData(null, null, null, null);
         });
     }
-
+    //Inserimento dei dati nella table
     private void loadTableData(String filtroNome, String filtroMatricola, String filtroSpec, String filtroReparto) {
         DefaultTableModel m = (DefaultTableModel) mediciTable.getModel();
         m.setRowCount(0);

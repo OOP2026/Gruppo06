@@ -10,7 +10,6 @@ import java.util.Date;
 
 public class Medici extends JFrame {
 
-    // ── Variabili UI allineate al tuo file .form ──
     public JPanel mainPanel;
     private JTextField nomeField;
     private JTextField codiceField;
@@ -22,11 +21,9 @@ public class Medici extends JFrame {
     private JButton refreshList;
     private JButton newMedico;
 
-    // Assicurati che le JList dentro i JScrollPane si chiamino così:
     private JList<String> specializzazioneList;
     private JList<String> repartoList;
 
-    // Costanti di Stile
     private static final Color AZZURRO_HOME = new Color(70, 132, 197);
     private static final Color SELECTION_BG = new Color(187, 222, 247);
     private static final Color ALT_ROW_BG = new Color(0xf5, 0xf8, 0xfc);
@@ -34,7 +31,6 @@ public class Medici extends JFrame {
     private static final Font BASE_FONT = new Font("SansSerif", Font.PLAIN, 12);
     private static final Font HEADER_FONT = new Font("SansSerif", Font.BOLD, 12);
 
-    // Struttura Tabella e Dati Mock per i Medici
     private static final String[] COLONNE = {
             "Matricola", "Cognome e Nome", "Specializzazione",
             "Reparto Assegnato", "Stato", "Note/Contatto"
@@ -57,12 +53,10 @@ public class Medici extends JFrame {
     }
 
     private void initComponents() {
-        // Setup Spinner
         SpinnerDateModel dateModel = new SpinnerDateModel(new Date(), null, null, Calendar.DAY_OF_MONTH);
         dataSpinner.setModel(dateModel);
         dataSpinner.setEditor(new JSpinner.DateEditor(dataSpinner, "dd/MM/yyyy"));
 
-        // Setup Liste
         specializzazioneList.setListData(new String[]{
                 "Chirurgia Generale", "Cardiologia", "Neurologia",
                 "Anestesia", "Chirurgia Toracica", "Ematologia", "Otorinolaringoiatria"
@@ -73,7 +67,6 @@ public class Medici extends JFrame {
                 "Chirurgia Toracica", "Laboratorio Analisi", "Pronto Soccorso"
         });
 
-        // Setup Modello Tabella (Non modificabile)
         DefaultTableModel model = new DefaultTableModel(COLONNE, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -87,7 +80,6 @@ public class Medici extends JFrame {
         styleList(specializzazioneList);
         styleList(repartoList);
 
-        // Stile Tabella
         mediciTable.setRowHeight(26);
         mediciTable.setShowGrid(false);
         mediciTable.setIntercellSpacing(new Dimension(0, 0));
@@ -95,7 +87,6 @@ public class Medici extends JFrame {
         mediciTable.setSelectionForeground(Color.BLACK);
         mediciTable.setFont(BASE_FONT);
 
-        // Stile Intestazione Tabella
         JTableHeader th = mediciTable.getTableHeader();
         th.setBackground(AZZURRO_HOME);
         th.setForeground(Color.WHITE);
@@ -103,7 +94,6 @@ public class Medici extends JFrame {
         th.setPreferredSize(new Dimension(th.getWidth(), 30));
         th.setReorderingAllowed(false);
 
-        // Render Righe Alternate
         mediciTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int row, int col) {
@@ -117,7 +107,6 @@ public class Medici extends JFrame {
             }
         });
 
-        // Applica stile hover ai bottoni presenti nel form
         if(cercaButton != null) applicaStilePulsantiCentrali(cercaButton);
         if(resetButton != null) applicaStilePulsantiCentrali(resetButton);
         if(refreshList != null) applicaStilePulsantiCentrali(refreshList);
@@ -214,7 +203,6 @@ public class Medici extends JFrame {
             Medici frame = new Medici();
             Dimension strictSize = new Dimension(1000, 680);
 
-            // Lock delle dimensioni sulla root
             frame.mainPanel.setPreferredSize(strictSize);
             frame.mainPanel.setMinimumSize(strictSize);
             frame.mainPanel.setMaximumSize(strictSize);
@@ -223,7 +211,6 @@ public class Medici extends JFrame {
             frame.setTitle("Gestione Medici ");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-            // Lock delle dimensioni sul Frame
             frame.setSize(1000, 680);
             frame.setResizable(false);
 

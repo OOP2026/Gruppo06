@@ -35,7 +35,7 @@ public class Medici extends JFrame {
             "Matricola", "Cognome e Nome", "Specializzazione",
             "Reparto Assegnato", "Stato", "Note/Contatto"
     };
-    //Popolazione JTable mediciTable
+    //Definizione dati per Medici
     private static final Object[][] DATI = {
             {"M-001", "Rossi Mario", "Chirurgia Generale", "Blocco Operatorio", "Attivo", "Primario"},
             {"M-002", "Bianchi Giulia", "Cardiologia", "Terapia Intensiva", "Attivo", "Turno Notturno"},
@@ -75,7 +75,7 @@ public class Medici extends JFrame {
         };
         mediciTable.setModel(model);
     }
-    //Set di stili
+    //Setup degli stili visivi per le componenti GUI
     private void setupStyles() {
         styleList(specializzazioneList);
         styleList(repartoList);
@@ -154,11 +154,10 @@ public class Medici extends JFrame {
         });
     }
 
-    private void setupListeners() {
+    private void setupListeners() { //Setup Listener e operazioni di filtraggio su Matricola
         cercaButton.addActionListener(e -> {
             String nome = nomeField.getText().toLowerCase().trim();
-            // Utilizzo la variabile codiceField per filtrare la Matricola
-            String matricola = codiceField.getText().toLowerCase().trim();
+            String matricola = codiceField.getText().toLowerCase().trim();//codiceField viene usato per il filtraggio
             String specializzazione = specializzazioneList.getSelectedValue();
             String reparto = repartoList.getSelectedValue();
 
@@ -175,7 +174,7 @@ public class Medici extends JFrame {
             loadTableData(null, null, null, null);
         });
     }
-    //Inserimento dei dati nella table
+    //Popolazione JTable mediciTable e filtraggio
     private void loadTableData(String filtroNome, String filtroMatricola, String filtroSpec, String filtroReparto) {
         DefaultTableModel m = (DefaultTableModel) mediciTable.getModel();
         m.setRowCount(0);

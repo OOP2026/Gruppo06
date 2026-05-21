@@ -13,11 +13,11 @@ public class Pazienti extends JFrame {
     private JPanel panelPrincipale;
     private JTextField nomeField;
     private JTextField codiceField;
-    private JLabel tipoLabel;
+    private JLabel RepartoLabel;
     private JList<String> tipologiaList;
     private JButton resetButton;
     private JButton cercaButton;
-    private JTable prestazioniTable;
+    private JTable PazientiTable;
     private JButton nuovoPazienteButton;
     private JButton storicoPazienteButton;
     private JTextField idField;
@@ -59,7 +59,7 @@ public class Pazienti extends JFrame {
                 return false;
             }
         };
-        prestazioniTable.setModel(model);
+        PazientiTable.setModel(model);
 
         if (tipologiaList != null) {
             tipologiaList.setListData(new String[]{
@@ -76,21 +76,21 @@ public class Pazienti extends JFrame {
     }
 
     private void setupStyles() {
-        prestazioniTable.setRowHeight(26);
-        prestazioniTable.setShowGrid(false);
-        prestazioniTable.setIntercellSpacing(new Dimension(0, 0));
-        prestazioniTable.setSelectionBackground(SELECTION_BG);
-        prestazioniTable.setSelectionForeground(Color.BLACK);
-        prestazioniTable.setFont(BASE_FONT);
+        PazientiTable.setRowHeight(26);
+        PazientiTable.setShowGrid(false);
+        PazientiTable.setIntercellSpacing(new Dimension(0, 0));
+        PazientiTable.setSelectionBackground(SELECTION_BG);
+        PazientiTable.setSelectionForeground(Color.BLACK);
+        PazientiTable.setFont(BASE_FONT);
 
-        JTableHeader th = prestazioniTable.getTableHeader();
+        JTableHeader th = PazientiTable.getTableHeader();
         th.setBackground(AZZURRO_HOME);
         th.setForeground(Color.WHITE);
         th.setFont(HEADER_FONT);
         th.setPreferredSize(new Dimension(th.getWidth(), 30));
         th.setReorderingAllowed(false);
 
-        prestazioniTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+        PazientiTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int row, int col) {
                 super.getTableCellRendererComponent(t, v, sel, foc, row, col);

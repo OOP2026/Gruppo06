@@ -1,11 +1,9 @@
 package model;
 
-import java.util.ArrayList;
-
 public class Utente {
-    private String login;
-    private String password;
-    private String matricola;
+    protected String login;
+    protected String password;
+    protected String matricola;
 
     public Utente(String login, String password, String matricola) {
         this.login = login;

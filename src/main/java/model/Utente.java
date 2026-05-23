@@ -30,6 +30,9 @@ public class Utente {
      * @return boolean
      */
     public void login(String login, String password, String matricola) {
-       //
+    }
+
+    public String getLogin(){
+        return this.login;
     }
 }

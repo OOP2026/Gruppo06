@@ -45,9 +45,26 @@ public class Controller {
 	 * @param password the password
 	 * @return the boolean
 	 */
-	public boolean Registrazione(String login, String password){
-		for (Utente u : utenteRegistrato)
-			if(u.get)
+	public boolean registrazione(String login, String password,String nome, String cognome, String pin, boolean isAdmin, String matricola) {
+		for (Utente u : utenteRegistrato){
+			if(u.getLogin().equals(login)){
+				return false;
+			}
+		}
+		if(isAdmin){
+			if (pin.equals("1234")) {
+				Amministratore nuovoAdmin = new Amministratore(login, password, matricola, nome, pin);
+				utenteRegistrato.add(nuovoAdmin);
+				return true;
+			} else {
+				return false;
+			}
+		} else {
+
+			Medico nuovoMedico = new Medico(nome, cognome, login, password, matricola);
+			utenteRegistrato.add(nuovoMedico);
+			return true;
+		}
 	}
 
 	/**
@@ -64,11 +81,12 @@ public class Controller {
 			if (utenteCorrente instanceof Amministratore){
 				Amministratore admin = (Amministratore) utenteCorrente;
 				System.out.println("La Matricola" + admin.getMatricola() + "ha effettuato l'accesso come Admin");
+				return true;
 			}else if(utenteCorrente instanceof Medico){
 				System.out.println("Un medico ha effettuato l'accesso ");
+				return true;
 			}
-			return true;
-			}
+		}
 		//Se non trova nessun utente restituisce false
 		return false;
 		}

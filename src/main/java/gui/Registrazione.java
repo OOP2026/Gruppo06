@@ -1,5 +1,7 @@
 package gui;
 
+import model.*;
+import controller.Controller;
 import javax.swing.*;
 import java.awt.Color;
 import java.awt.Cursor;
@@ -15,9 +17,13 @@ public class Registrazione {
     private JPasswordField passwordField;
     private JCheckBox amministratoreCheck;
     private JTextField pinField;
+    private JTextField matricolaField; // assicurati di averla nel designer
 
     private JButton registratiButton;
     private JLabel accediLabel;
+
+    // ── Controller condiviso ──────────────────────
+    private static Controller controller = new Controller();
 
     public Registrazione() {
         applicaStilePulsantiCentrali(registratiButton);
@@ -39,48 +45,76 @@ public class Registrazione {
     }
 
     private void effettuaRegistrazione() {
-        String nome = nomeField.getText();
-        String cognome = cognomeField.getText();
-        String username = usernameField.getText();
-        String password = new String(passwordField.getPassword());
-        boolean isAmministratore = amministratoreCheck.isSelected();
-        String pin = pinField.getText();
+        // ── Leggi i campi ─────────────────────────
+        String nome     = nomeField.getText().trim();
+        String cognome  = cognomeField.getText().trim();
+        String username = usernameField.getText().trim();
+        String password = new String(passwordField.getPassword()).trim();
+        boolean isAdmin = amministratoreCheck.isSelected();
+        String pin      = pinField.getText().trim();
+        String matricola = matricolaField != null ? matricolaField.getText().trim() : "";
 
-        if (nome.trim().isEmpty() || cognome.trim().isEmpty() || username.trim().isEmpty() || password.trim().isEmpty()) {
-            JOptionPane.showMessageDialog(null, "Compila tutti i campi obbligatori (Nome, Cognome, Username, Password).", "Errore", JOptionPane.ERROR_MESSAGE);
+        // ── Validazione campi obbligatori ─────────
+        if (nome.isEmpty() || cognome.isEmpty() || username.isEmpty() || password.isEmpty()) {
+            JOptionPane.showMessageDialog(null,
+                    "Compila tutti i campi obbligatori (Nome, Cognome, Username, Password).",
+                    "Errore", JOptionPane.ERROR_MESSAGE);
             return;
         }
 
-        if (isAmministratore && pin.trim().isEmpty()) {
-            JOptionPane.showMessageDialog(null, "Inserisci il PIN per registrarti come Amministratore.", "Errore PIN", JOptionPane.WARNING_MESSAGE);
+        if (isAdmin && pin.isEmpty()) {
+            JOptionPane.showMessageDialog(null,
+                    "Inserisci il PIN per registrarti come Amministratore.",
+                    "Errore PIN", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        JOptionPane.showMessageDialog(null, "Registrazione completata con successo!\nBenvenuto " + nome + " " + cognome);
-        tornaAlLogin();
+        // ── Chiama il controller ──────────────────
+        boolean successo = controller.registrazione(
+                username, password, nome, cognome, pin, isAdmin, matricola
+        );
+
+        if (successo) {
+            JOptionPane.showMessageDialog(null,
+                    "Registrazione completata con successo!\nBenvenuto " + nome + " " + cognome,
+                    "Successo", JOptionPane.INFORMATION_MESSAGE);
+            tornaAlLogin();
+        } else {
+            // ── Distingui il tipo di errore ───────
+            if (isAdmin && !pin.equals("1234")) {
+                JOptionPane.showMessageDialog(null,
+                        "PIN amministratore non valido!",
+                        "Errore PIN", JOptionPane.ERROR_MESSAGE);
+            } else {
+                JOptionPane.showMessageDialog(null,
+                        "Username '" + username + "' già esistente.\nScegli un username diverso.",
+                        "Username duplicato", JOptionPane.ERROR_MESSAGE);
+            }
+        }
     }
 
     private void tornaAlLogin() {
         JFrame currentFrame = (JFrame) SwingUtilities.getWindowAncestor(registerPanel);
-        if (currentFrame != null) {
-            currentFrame.dispose();
-        }
+        if (currentFrame != null) currentFrame.dispose();
         Login.main(null);
     }
 
-    private void applicaStilePulsantiCentrali(JButton bottone) {
-        Color coloreSfondoDefault = Color.WHITE; // Bianco di base
-        Color coloreTestoDefault = Color.BLACK;  // Testo nero
-
-        Color coloreSfondoHover = new Color(70, 132, 197); // Azzurro al passaggio del mouse
-        Color coloreTestoHover = Color.WHITE;              // Testo bianco sull'azzurro
-
-        impostaColoriEdEffetti(bottone, coloreSfondoDefault, coloreTestoDefault, coloreSfondoHover, coloreTestoHover);
+    // ── Metodo per ottenere il controller (usato da altre classi) ──
+    public static Controller getController() {
+        return controller;
     }
 
-    private void impostaColoriEdEffetti(JButton bottone, Color sfondoDefault, Color testoDefault, Color sfondoHover, Color testoHover) {
-        if (bottone == null) return;
+    private void applicaStilePulsantiCentrali(JButton bottone) {
+        Color sfondoDefault = Color.WHITE;
+        Color testoDefault  = Color.BLACK;
+        Color sfondoHover   = new Color(70, 132, 197);
+        Color testoHover    = Color.WHITE;
+        impostaColoriEdEffetti(bottone, sfondoDefault, testoDefault, sfondoHover, testoHover);
+    }
 
+    private void impostaColoriEdEffetti(JButton bottone, Color sfondoDefault, Color testoDefault,
+                                        Color sfondoHover, Color testoHover) {
+        if (bottone == null) return;
         bottone.setBackground(sfondoDefault);
         bottone.setForeground(testoDefault);
         bottone.setFocusPainted(false);
@@ -90,14 +124,11 @@ public class Registrazione {
         bottone.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         bottone.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) {
+            @Override public void mouseEntered(MouseEvent e) {
                 bottone.setBackground(sfondoHover);
                 bottone.setForeground(testoHover);
             }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
+            @Override public void mouseExited(MouseEvent e) {
                 bottone.setBackground(sfondoDefault);
                 bottone.setForeground(testoDefault);
             }
@@ -106,20 +137,16 @@ public class Registrazione {
 
     private void applicaStileLabelLink(JLabel label) {
         if (label == null) return;
-
-        label.setForeground(new Color(70, 132, 197)); // Colore azzurro tipico dei link
+        label.setForeground(new Color(70, 132, 197));
         label.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         label.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                String testo = label.getText().replace("<html><u>", "").replace("</u></html>", "");
+            @Override public void mouseEntered(MouseEvent e) {
+                String testo = label.getText().replace("<html><u>","").replace("</u></html>","");
                 label.setText("<html><u>" + testo + "</u></html>");
             }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-                String testo = label.getText().replace("<html><u>", "").replace("</u></html>", "");
+            @Override public void mouseExited(MouseEvent e) {
+                String testo = label.getText().replace("<html><u>","").replace("</u></html>","");
                 label.setText(testo);
             }
         });
@@ -128,9 +155,8 @@ public class Registrazione {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Registrazione");
-            Registrazione registrazioneLogic = new Registrazione();
-            frame.setContentPane(registrazioneLogic.registerPanel);
-
+            Registrazione r = new Registrazione();
+            frame.setContentPane(r.registerPanel);
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.setSize(1000, 680);
             frame.setResizable(false);

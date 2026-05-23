@@ -7,21 +7,21 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public class Registrazione {
-    private JPanel RegisterPanel;
+    private JPanel registerPanel;
 
     private JTextField nomeField;
     private JTextField cognomeField;
     private JTextField usernameField;
     private JPasswordField passwordField;
-    private JCheckBox AmministratoreCheck;
+    private JCheckBox amministratoreCheck;
     private JTextField pinField;
 
     private JButton registratiButton;
-    private JLabel AccediLabel;
+    private JLabel accediLabel;
 
     public Registrazione() {
         applicaStilePulsantiCentrali(registratiButton);
-        applicaStileLabelLink(AccediLabel);
+        applicaStileLabelLink(accediLabel);
 
         registratiButton.addMouseListener(new MouseAdapter() {
             @Override
@@ -30,7 +30,7 @@ public class Registrazione {
             }
         });
 
-        AccediLabel.addMouseListener(new MouseAdapter() {
+        accediLabel.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
                 tornaAlLogin();
@@ -43,7 +43,7 @@ public class Registrazione {
         String cognome = cognomeField.getText();
         String username = usernameField.getText();
         String password = new String(passwordField.getPassword());
-        boolean isAmministratore = AmministratoreCheck.isSelected();
+        boolean isAmministratore = amministratoreCheck.isSelected();
         String pin = pinField.getText();
 
         if (nome.trim().isEmpty() || cognome.trim().isEmpty() || username.trim().isEmpty() || password.trim().isEmpty()) {
@@ -61,7 +61,7 @@ public class Registrazione {
     }
 
     private void tornaAlLogin() {
-        JFrame currentFrame = (JFrame) SwingUtilities.getWindowAncestor(RegisterPanel);
+        JFrame currentFrame = (JFrame) SwingUtilities.getWindowAncestor(registerPanel);
         if (currentFrame != null) {
             currentFrame.dispose();
         }
@@ -129,7 +129,7 @@ public class Registrazione {
         SwingUtilities.invokeLater(() -> {
             JFrame frame = new JFrame("Registrazione");
             Registrazione registrazioneLogic = new Registrazione();
-            frame.setContentPane(registrazioneLogic.RegisterPanel);
+            frame.setContentPane(registrazioneLogic.registerPanel);
 
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.setSize(1000, 680);

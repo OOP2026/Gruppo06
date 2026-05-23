@@ -4,14 +4,6 @@ import java.util.Date;
 
 public class Amministratore extends Utente {
     //Richiamo classi
-    public Medico medico;
-    public Paziente paziente;
-    public Reparto reparto;
-    public Turno_Lavoro turno_lavoro;
-    public Letto letto;
-    public Stanza stanza;
-    public Assenza assenza;
-    public Ricovero ricovero;
 
 
     public Amministratore(String login, String password, String matricola) {
@@ -43,8 +35,8 @@ public class Amministratore extends Utente {
         return "Il paziente è stato dimesso";
     }
 
-    public boolean checkDisponibilitaLetto(){
-        return letto.checkLibero();
+    public void checkDisponibilitaLetto(){
+        //return letto.checkLibero();
     }
 
     public void ricercaDimissioni(){

@@ -29,7 +29,7 @@ public class Utente {
      * @param matricola
      * @return boolean
      */
-    public boolean login(String login, String password, String matricola) {
-        return ( login.equals(this.login) && password.equals(this.password) && matricola.equals(this.matricola));
+    public void login(String login, String password, String matricola) {
+       //
     }
 }

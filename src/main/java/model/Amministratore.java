@@ -4,10 +4,13 @@ import java.util.Date;
 
 public class Amministratore extends Utente {
     //Richiamo classi
-
+    protected String nome;
+    protected String cognome;
 
     public Amministratore(String login, String password, String matricola, String nome, String cognome) {
-        super(login, password, matricola, nome, cognome);
+        super(login, password, matricola);
+        this.nome = nome;
+        this.cognome = cognome;
     }
 
     public String getMatricola() {

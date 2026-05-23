@@ -3,7 +3,6 @@ import model.*;
 
 import java.util.ArrayList;
 
-
 /**
  * The type Controller.
  */
@@ -24,7 +23,8 @@ public class Controller {
 				"admin",
 				"AD4389",
 				"Matteo",
-				"Neri"
+				"Neri",
+				"3456"
 		);
 
 		Medico medico = new Medico(
@@ -45,15 +45,17 @@ public class Controller {
 	 * @param password the password
 	 * @return the boolean
 	 */
-	public boolean registrazione(String login, String password,String nome, String cognome, String pin, boolean isAdmin, String matricola) {
-		for (Utente u : utenteRegistrato){
-			if(u.getLogin().equals(login)){
+	public boolean registrazione(String login, String password, String nome, String cognome, String pin, boolean isAdmin, String matricola) {
+		for (Utente u : utenteRegistrato) {
+			if (u.getLogin().equals(login)) {
 				return false;
 			}
 		}
-		if(isAdmin){
+
+		if (isAdmin) {
+			model.Amministratore a = (Amministratore) utenteRegistrato.get(0);
 			if (pin.equals("1234")) {
-				Amministratore nuovoAdmin = new Amministratore(login, password, matricola, nome, pin);
+				Amministratore nuovoAdmin = new Amministratore(login, password, matricola, nome,cognome, pin);
 				utenteRegistrato.add(nuovoAdmin);
 				return true;
 			} else {
@@ -75,19 +77,28 @@ public class Controller {
 	 * @param matricola the matricola
 	 * @return the boolean
 	 */
-//Metodo di riconoscimento e futura impostazione schermata
-	public boolean whoIsAsking(String login,String password,String matricola) {
-		for(Utente utenteCorrente : utenteRegistrato) {
-			if (utenteCorrente instanceof Amministratore){
-				Amministratore admin = (Amministratore) utenteCorrente;
-				System.out.println("La Matricola" + admin.getMatricola() + "ha effettuato l'accesso come Admin");
-				return true;
-			}else if(utenteCorrente instanceof Medico){
-				System.out.println("Un medico ha effettuato l'accesso ");
-				return true;
+	//Metodo di riconoscimento e futura impostazione schermata
+	public boolean whoIsAsking(String login, String password, String matricola) {
+		System.out.println("=== TENTATIVO DI LOGIN ===");
+		System.out.println("Hai digitato -> User: [" + login + "] Pass: [" + password + "]");
+
+		for (Utente utenteCorrente : utenteRegistrato) {
+			System.out.println("Utente in memoria -> User: [" + utenteCorrente.getLogin() + "] Pass: [" + utenteCorrente.getPassword() + "]");
+
+			if (utenteCorrente.getLogin().equals(login) && utenteCorrente.getPassword().equals(password)) {
+
+				this.utenteLoggato = utenteCorrente;
+
+				if (utenteCorrente instanceof Amministratore) {
+					System.out.println("Accesso Admin confermato.");
+					return true;
+				} else if (utenteCorrente instanceof Medico) {
+					System.out.println("Accesso Medico confermato.");
+					return true;
+				}
 			}
 		}
-		//Se non trova nessun utente restituisce false
+		System.out.println("Nessuna corrispondenza trovata!");
 		return false;
-		}
 	}
+}

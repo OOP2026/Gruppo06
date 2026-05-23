@@ -31,8 +31,14 @@ public class Utente {
      */
     public void login(String login, String password, String matricola) {
     }
-
+    public String getPassword() {
+        return this.password = password;
+    }
     public String getLogin(){
         return this.login;
     }
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
 }

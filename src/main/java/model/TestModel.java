@@ -9,11 +9,12 @@ public class TestModel {
 				"admin",
 				"AD4389",
 				"Matteo",
-				"Neri"
+				"Neri",
+				"1234"
 		);
 
 		//Creazione oggetto Medico
-		Medico medico = new Medico(
+		Medico dottore = new Medico(
 				"DRossi",
 				"medico",
 				"MD1234",

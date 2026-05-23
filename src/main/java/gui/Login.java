@@ -9,14 +9,9 @@ import java.awt.event.MouseEvent;
 public class Login {
     private JPasswordField passwordField;
     private JButton accediButton;
-    private JPanel mainPanel;
+    public JPanel mainPanel;
     private JTextField usernameField;
     private JLabel RegistratiLabel;
-
-
-    private final String userMedico = "123";
-    private final String passMedico = "123";
-    private final String nomeCompletoMedico = "Dott. Mario Rossi";
 
     public Login() {
         applicaStilePulsantiCentrali(accediButton);
@@ -25,19 +20,7 @@ public class Login {
         accediButton.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                String username = usernameField.getText();
-                String password = new String(passwordField.getPassword());
-
-
-                if (username.equals(userMedico) && password.equals(passMedico)) {
-                    JFrame currentFrame = (JFrame) SwingUtilities.getWindowAncestor(accediButton);
-                    currentFrame.dispose();
-
-                    Schermata_Amministratore schermataAmministratoreFrame = new Schermata_Amministratore(nomeCompletoMedico);
-                    schermataAmministratoreFrame.setVisible(true);
-                } else {
-                    JOptionPane.showMessageDialog(null, "Credenziali errate. Riprova.");
-                }
+                effettuaLogin();
             }
         });
 
@@ -49,6 +32,45 @@ public class Login {
         });
     }
 
+    private void effettuaLogin() {
+        String username = usernameField.getText().trim();
+        String password = new String(passwordField.getPassword()).trim();
+
+        // Se non c'è un campo matricola nella schermata, passiamo stringa vuota
+        String matricola = "";
+
+        if (username.isEmpty() || password.isEmpty()) {
+            JOptionPane.showMessageDialog(null,
+                    "Inserisci Username e Password per accedere.",
+                    "Campi vuoti", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        // Chiamata al Controller condiviso per verificare l'utente
+        boolean accessoRiuscito = Registrazione.getController().whoIsAsking(username, password, matricola);
+
+        if (accessoRiuscito) {
+            JOptionPane.showMessageDialog(null,
+                    "Accesso eseguito con successo!",
+                    "Benvenuto", JOptionPane.INFORMATION_MESSAGE);
+
+            // 1. Chiude la finestra di login attuale
+            JFrame currentFrame = (JFrame) SwingUtilities.getWindowAncestor(mainPanel);
+            if (currentFrame != null) {
+                currentFrame.dispose();
+            }
+
+            // 2. Apre la schermata successiva passando l'username
+            Schermata_Amministratore schermataAmministratoreFrame = new Schermata_Amministratore(username);
+            schermataAmministratoreFrame.setVisible(true);
+
+        } else {
+            JOptionPane.showMessageDialog(null,
+                    "Credenziali errate. Utente non trovato o password sbagliata.",
+                    "Errore di accesso", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
     private void vaiAllaRegistrazione() {
         JFrame currentFrame = (JFrame) SwingUtilities.getWindowAncestor(mainPanel);
         if (currentFrame != null) {
@@ -57,13 +79,12 @@ public class Login {
         Registrazione.main(null); // Richiama il main della classe Registrazione
     }
 
-
     private void applicaStilePulsantiCentrali(JButton bottone) {
-        Color coloreSfondoDefault = Color.WHITE; // Bianco di base
-        Color coloreTestoDefault = Color.BLACK;  // Testo nero per essere leggibile sul bianco
+        Color coloreSfondoDefault = Color.WHITE;
+        Color coloreTestoDefault = Color.BLACK;
 
-        Color coloreSfondoHover = new Color(70, 132, 197); // Azzurro al passaggio del mouse
-        Color coloreTestoHover = Color.WHITE;              // Testo bianco sull'azzurro
+        Color coloreSfondoHover = new Color(70, 132, 197);
+        Color coloreTestoHover = Color.WHITE;
 
         impostaColoriEdEffetti(bottone, coloreSfondoDefault, coloreTestoDefault, coloreSfondoHover, coloreTestoHover);
     }
@@ -95,7 +116,7 @@ public class Login {
     private void applicaStileLabelLink(JLabel label) {
         if (label == null) return;
 
-        label.setForeground(new Color(70, 132, 197)); // Azzurro
+        label.setForeground(new Color(70, 132, 197));
         label.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         label.addMouseListener(new MouseAdapter() {
@@ -126,5 +147,4 @@ public class Login {
             frame.setVisible(true);
         });
     }
-
 }

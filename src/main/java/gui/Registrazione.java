@@ -22,7 +22,7 @@ public class Registrazione {
     private JButton registratiButton;
     private JLabel accediLabel;
 
-    // ── Controller condiviso ──────────────────────
+
     private static Controller controller = new Controller();
 
     public Registrazione() {
@@ -45,7 +45,7 @@ public class Registrazione {
     }
 
     private void effettuaRegistrazione() {
-        // ── Leggi i campi ─────────────────────────
+
         String nome     = nomeField.getText().trim();
         String cognome  = cognomeField.getText().trim();
         String username = usernameField.getText().trim();
@@ -54,7 +54,7 @@ public class Registrazione {
         String pin      = pinField.getText().trim();
         String matricola = matricolaField != null ? matricolaField.getText().trim() : "";
 
-        // ── Validazione campi obbligatori ─────────
+
         if (nome.isEmpty() || cognome.isEmpty() || username.isEmpty() || password.isEmpty()) {
             JOptionPane.showMessageDialog(null,
                     "Compila tutti i campi obbligatori (Nome, Cognome, Username, Password).",
@@ -69,7 +69,7 @@ public class Registrazione {
             return;
         }
 
-        // ── Chiama il controller ──────────────────
+
         boolean successo = controller.registrazione(
                 username, password, nome, cognome, pin, isAdmin, matricola
         );
@@ -80,7 +80,7 @@ public class Registrazione {
                     "Successo", JOptionPane.INFORMATION_MESSAGE);
             tornaAlLogin();
         } else {
-            // ── Distingui il tipo di errore ───────
+
             if (isAdmin && !pin.equals("1234")) {
                 JOptionPane.showMessageDialog(null,
                         "PIN amministratore non valido!",
@@ -99,7 +99,7 @@ public class Registrazione {
         Login.main(null);
     }
 
-    // ── Metodo per ottenere il controller (usato da altre classi) ──
+
     public static Controller getController() {
         return controller;
     }

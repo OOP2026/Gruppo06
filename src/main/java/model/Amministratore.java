@@ -11,7 +11,7 @@ public class Amministratore extends Utente {
     protected String cognome;
     protected String pin;
 
-    public Amministratore(String login, String password, String matricola, String nome, String cognome) {
+    public Amministratore(String nome, String cognome, String login, String password, String matricola, String pin) {
         super(login, password, matricola);
         this.nome = nome;
         this.cognome = cognome;
@@ -19,6 +19,9 @@ public class Amministratore extends Utente {
     }
 
 
+    public String getPin(){
+        return this.pin;
+    }
     public String getMatricola() {
         return this.matricola;
     }

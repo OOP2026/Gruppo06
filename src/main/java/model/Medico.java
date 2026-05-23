@@ -11,7 +11,7 @@ public class Medico extends Utente {
     protected String repartoDiAppartenenza;
 
 
-    public Medico(String login, String password, String matricola, String nome, String cognome) {
+    public Medico(String nome, String cognome, String login, String password, String matricola) {
         super(login, password, matricola);
         this.nome = nome;
         this.cognome = cognome;

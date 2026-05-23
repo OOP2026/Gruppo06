@@ -23,8 +23,9 @@ public class Ricovero extends JFrame {
 
     private JButton nuovoRicoveroButton;
     private JButton gestisciRicoveroButton;
-    private JSpinner spinner1;
     private JTextField textField1;
+    private JTextField textField2;
+    private JTextField textField3;
 
     private static final Color AZZURRO_HOME = new Color(70, 132, 197);
     private static final Color SELECTION_BG = new Color(187, 222, 247);
@@ -35,7 +36,7 @@ public class Ricovero extends JFrame {
 
     private static final String[] COLONNE = {
             "ID Paziente", "Paziente", "Codice Fiscale",
-            "Reparto di Ricovero", "Data Ingresso, Ora Ingresso"
+            "Reparto di Ricovero", "Data Ingresso", "Ora Ingresso"
     };
 
     private static final Object[][] DATI = {
@@ -57,21 +58,18 @@ public class Ricovero extends JFrame {
 
     private void initComponents() {
 
-            // 1. Configurazione Spinner per la DATA
             if (dataSpinner != null) {
                 SpinnerDateModel dateModel = new SpinnerDateModel(new Date(), null, null, Calendar.DAY_OF_MONTH);
                 dataSpinner.setModel(dateModel);
                 dataSpinner.setEditor(new JSpinner.DateEditor(dataSpinner, "dd/MM/yyyy"));
             }
 
-            // 2. Configurazione Spinner per l'ORA
             if (oraSpinner != null) {
                 SpinnerDateModel timeModel = new SpinnerDateModel(new Date(), null, null, Calendar.HOUR_OF_DAY);
                 oraSpinner.setModel(timeModel);
                 oraSpinner.setEditor(new JSpinner.DateEditor(oraSpinner, "HH:mm"));
             }
 
-            // ... [qui sotto lascia il resto del codice per le liste e la tabella] ...
 
         if (repartoList != null) {
             repartoList.setListData(new String[]{

@@ -67,7 +67,6 @@ public class Dimissioni extends JFrame {
             });
         }
 
-        // --- INSERIMENTO VOCI CORRETTE PER TIPO DIMISSIONE ---
         if (tipoDimissioneList != null) {
             tipoDimissioneList.setListData(new String[]{
                     "Ordinaria",

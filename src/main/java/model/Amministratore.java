@@ -6,8 +6,12 @@ public class Amministratore extends Utente {
     //Richiamo classi
 
 
-    public Amministratore(String login, String password, String matricola) {
-        super(login, password, matricola);
+    public Amministratore(String login, String password, String matricola, String nome, String cognome) {
+        super(login, password, matricola, nome, cognome);
+    }
+
+    public String getMatricola() {
+        return this.matricola;
     }
 
     public void anagraficaPaziente(){

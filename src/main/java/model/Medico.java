@@ -12,7 +12,7 @@ public class Medico extends Utente {
 
 
     public Medico(String login, String password, String matricola, String nome, String cognome) {
-        super(login, password, matricola);
+        super(login, password, matricola, nome, cognome);
         this.nome = nome;
         this.cognome = cognome;
     }

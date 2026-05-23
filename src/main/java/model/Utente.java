@@ -8,9 +8,6 @@ public class Utente {
 
     protected String matricola;
 
-    protected String nome;
-
-    protected String cognome;
 
     /**
      * Instantiates a new Utente.
@@ -18,10 +15,8 @@ public class Utente {
      * @param login     the login
      * @param password  the password
      * @param matricola the matricola
-     * @param nome
-     * @param cognome
      */
-    public Utente(String login, String password, String matricola, String nome, String cognome) {
+    public Utente(String login, String password, String matricola) {
         this.login = login;
         this.password = password;
         this.matricola = matricola;

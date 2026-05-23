@@ -46,7 +46,8 @@ public class Controller {
 	 * @return the boolean
 	 */
 	public boolean Registrazione(String login, String password){
-		
+		for (Utente u : utenteRegistrato)
+			if(u.get)
 	}
 
 	/**

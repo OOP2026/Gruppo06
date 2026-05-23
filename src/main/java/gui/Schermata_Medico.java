@@ -11,4 +11,9 @@ public class Schermata_Medico {
     private JButton lettiButton;
     private JButton dimissioniButton;
     private JButton prestazioniButton;
+    private JPanel AgendaPanel;
+    private JTextField DataField;
+    private JButton ricercaButton;
+    private JTable AgendaTable;
+    private JButton NewEventButton;
 }

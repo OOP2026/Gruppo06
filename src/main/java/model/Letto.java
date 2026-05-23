@@ -28,4 +28,8 @@ public class Letto {
            return false;
         }
     }
+
+    public int getNumero_letto() {
+        return numero_letto;
+    }
 }

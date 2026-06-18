@@ -36,7 +36,7 @@ public class Login {
         String username = usernameField.getText().trim();
         String password = new String(passwordField.getPassword()).trim();
 
-        // Se non c'è un campo matricola nella schermata, passiamo stringa vuota
+        // Se non c'è un campo matricola nella schermata, passiamo stringa vuota.
         String matricola = "";
 
         if (username.isEmpty() || password.isEmpty()) {

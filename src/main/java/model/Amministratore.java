@@ -22,35 +22,17 @@ public class Amministratore extends Utente {
     public String getPin(){
         return this.pin;
     }
-    public String getMatricola() {
-        return this.matricola;
+
+    public String getNome(){
+        return this.nome;
+    }
+
+    public String getCognome(){
+        return this.cognome;
     }
 
     public void anagraficaPaziente(){
-
-        Scanner scanner = new Scanner(System.in);
-        System.out.println("--Anagrafica Paziente--");
-
-        System.out.println("Sesso");
-        char sesso = scanner.nextLine().charAt(0);
-        System.out.println("Nome: ");
-        String nome = scanner.nextLine();
-        System.out.println("Cognome: ");
-        String cognome = scanner.nextLine();
-        System.out.println("Data di nascita (dd/MM/yyyy): ");
-        String dataNascita = scanner.nextLine();
-
-        //Calcolo età nascita
-        LocalDate dataDiNascita = LocalDate.parse(dataNascita, java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-        LocalDate oggi = LocalDate.now();
-        int eta = Period.between(dataDiNascita, oggi).getYears();
-        System.out.println("Età: " + eta);
-
-        System.out.println("Codice Fiscale: ");
-        String codiceFiscale = scanner.nextLine();
-        System.out.println("Indirizzo: ");
-        String indirizzo = scanner.nextLine();
-
+        //
     }
 
     public void assegnaLetto(){

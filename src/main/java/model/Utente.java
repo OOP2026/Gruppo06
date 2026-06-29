@@ -3,9 +3,7 @@ package model;
 public class Utente {
 
     protected String login;
-
     protected String password;
-
     protected String matricola;
 
 
@@ -22,23 +20,16 @@ public class Utente {
         this.matricola = matricola;
     }
 
-    /**
-     * Login boolean.
-     *
-     * @param login
-     * @param matricola
-     * @return boolean
-     */
-    public void login(String login, String password, String matricola) {
-    }
+
     public String getPassword() {
-        return this.password = password;
+        return this.password;
     }
     public String getLogin(){
         return this.login;
     }
-    public void setPassword(String password) {
-        this.password = password;
+    public String getMatricola(){
+        return this.matricola;
     }
+
 
 }

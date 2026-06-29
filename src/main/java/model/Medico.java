@@ -17,6 +17,14 @@ public class Medico extends Utente {
         this.cognome = cognome;
     }
 
+    public String getNome(){
+        return this.nome;
+    }
+
+    public String getCognome(){
+        return this.cognome;
+    }
+
     public Date setIscrizionAlbo() {
         this.iscrizioneAlbo = new Date(); // Imposta la data di iscrizione all'albo al momento della creazione del medico
         return this.iscrizioneAlbo;

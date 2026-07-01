@@ -50,11 +50,10 @@ public class Controller {
 	 *
 	 * @param login     the login
 	 * @param password  the password
-	 * @param matricola the matricola
 	 * @return the boolean
 	 */
 	//Metodo di riconoscimento e futura impostazione schermata
-	public boolean whoIsAsking(String login, String password, String matricola) {
+	public boolean whoIsAsking(String login, String password) {
 
 		Utente utenteCorrente = utenteDAO.getUtenteByLoginAndPassword(login, password);
 		if (utenteCorrente != null) {

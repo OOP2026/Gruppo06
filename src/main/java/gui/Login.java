@@ -1,6 +1,10 @@
 package gui;
 
 import controller.Controller;
+import model.Utente;
+import model.Amministratore;
+import model.Medico;
+
 
 import javax.swing.*;
 import java.awt.Color;
@@ -40,8 +44,6 @@ public class Login {
         String username = usernameField.getText().trim();
         String password = new String(passwordField.getPassword()).trim();
 
-        // Se non c'è un campo matricola nella schermata, passiamo stringa vuota
-        String matricola = "";
 
         if (username.isEmpty() || password.isEmpty()) {
             JOptionPane.showMessageDialog(null,
@@ -50,23 +52,17 @@ public class Login {
             return;
         }
 
-        // Chiamata al Controller per verificare l'utente
-        boolean accessoRiuscito = controller.whoIsAsking(username, password, matricola);
+        boolean accessoRiuscito = controller.whoIsAsking(username, password);
 
         if (accessoRiuscito) {
             JOptionPane.showMessageDialog(null,
                     "Accesso eseguito con successo!",
                     "Benvenuto", JOptionPane.INFORMATION_MESSAGE);
 
-            // 1. Chiude la finestra di login attuale
             JFrame currentFrame = (JFrame) SwingUtilities.getWindowAncestor(mainPanel);
             if (currentFrame != null) {
                 currentFrame.dispose();
             }
-
-            // 2. Apre la schermata successiva passando l'username
-            Schermata_Amministratore schermataAmministratoreFrame = new Schermata_Amministratore(username);
-            schermataAmministratoreFrame.setVisible(true);
 
         } else {
             JOptionPane.showMessageDialog(null,

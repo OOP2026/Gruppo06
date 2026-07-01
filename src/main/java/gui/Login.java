@@ -14,6 +14,7 @@ public class Login {
     public JPanel mainPanel;
     private JTextField usernameField;
     private JLabel RegistratiLabel;
+    private JPasswordField pinField;
     private Controller controller = new Controller();
 
     public Login() {

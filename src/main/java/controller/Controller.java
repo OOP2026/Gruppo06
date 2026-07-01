@@ -35,13 +35,13 @@ public class Controller {
 		if (isAdmin) {
 			if (pin.equals("1234")) {
 				Amministratore nuovoAdmin = new Amministratore(login, password, matricola, nome,cognome, pin);
-				return utenteDAO.aggiungiUtente(nuovoAdmin, isAdmin, pin);
+				return utenteDAO.aggiungiUtente(nuovoAdmin, pin);
 			} else {
 				return false;
 			}
 		} else {
 			Medico nuovoMedico = new Medico(nome, cognome, login, password, matricola);
-			return utenteDAO.aggiungiUtente(nuovoMedico, isAdmin, pin);
+			return utenteDAO.aggiungiUtente(nuovoMedico, pin);
 		}
 	}
 

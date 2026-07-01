@@ -1,5 +1,7 @@
 package gui;
 
+import controller.Controller;
+
 import javax.swing.*;
 import java.awt.Color;
 import java.awt.Cursor;
@@ -12,6 +14,7 @@ public class Login {
     public JPanel mainPanel;
     private JTextField usernameField;
     private JLabel RegistratiLabel;
+    private Controller controller = new Controller();
 
     public Login() {
         applicaStilePulsantiCentrali(accediButton);
@@ -46,8 +49,8 @@ public class Login {
             return;
         }
 
-        // Chiamata al Controller condiviso per verificare l'utente
-        boolean accessoRiuscito = Registrazione.getController().whoIsAsking(username, password, matricola);
+        // Chiamata al Controller per verificare l'utente
+        boolean accessoRiuscito = controller.whoIsAsking(username, password, matricola);
 
         if (accessoRiuscito) {
             JOptionPane.showMessageDialog(null,

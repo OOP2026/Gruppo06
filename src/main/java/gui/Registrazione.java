@@ -23,7 +23,7 @@ public class Registrazione {
     private JLabel accediLabel;
 
 
-    private static Controller controller = new Controller();
+    private Controller controller = new Controller();
 
     public Registrazione() {
         applicaStilePulsantiCentrali(registratiButton);
@@ -80,16 +80,9 @@ public class Registrazione {
                     "Successo", JOptionPane.INFORMATION_MESSAGE);
             tornaAlLogin();
         } else {
-
-            if (isAdmin && !pin.equals("1234")) {
-                JOptionPane.showMessageDialog(null,
-                        "PIN amministratore non valido!",
-                        "Errore PIN", JOptionPane.ERROR_MESSAGE);
-            } else {
-                JOptionPane.showMessageDialog(null,
-                        "Username '" + username + "' già esistente.\nScegli un username diverso.",
-                        "Username duplicato", JOptionPane.ERROR_MESSAGE);
-            }
+            JOptionPane.showMessageDialog(null,
+                    "Registrazione fallita!\nVerifica che l'username non sia già in uso e, se hai selezionato 'Amministratore', che il PIN di sicurezza sia corretto.",
+                    "Errore Registrazione", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -97,11 +90,6 @@ public class Registrazione {
         JFrame currentFrame = (JFrame) SwingUtilities.getWindowAncestor(registerPanel);
         if (currentFrame != null) currentFrame.dispose();
         Login.main(null);
-    }
-
-
-    public static Controller getController() {
-        return controller;
     }
 
     private void applicaStilePulsantiCentrali(JButton bottone) {

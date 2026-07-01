@@ -30,7 +30,7 @@ public class UtentePostgresDao implements UtenteDAO{
         }
 
         @Override
-        public boolean aggiungiUtente(Utente utente, boolean isAdmin, String pin) {
+        public boolean aggiungiUtente(Utente utente, String pin) {
             String query = "INSERT INTO utenti (login, password, matricola, nome, cognome, ruolo, pin) VALUES (?, ?, ?, ?, ?, ?, ?)";
             try (Connection conn = ConnessioneDatabase.getConnection();
                  PreparedStatement stmt = conn.prepareStatement(query)) {
@@ -39,14 +39,14 @@ public class UtentePostgresDao implements UtenteDAO{
                 stmt.setString(2, utente.getPassword());
                 stmt.setString(3, utente.getMatricola());
 
-                if (isAdmin) {
+                if (utente instanceof Amministratore) {
                     Amministratore admin = (Amministratore) utente;
                     stmt.setString(4, admin.getNome());
                     stmt.setString(5, admin.getCognome());
 
                     stmt.setString(6, "ADMIN");
                     stmt.setString(7, pin); //salva il pin per l'admin
-                } else {
+                } else if (utente instanceof Medico) {
                     Medico medico = (Medico) utente;
                     stmt.setString(4, medico.getNome());
                     stmt.setString(5, medico.getCognome());

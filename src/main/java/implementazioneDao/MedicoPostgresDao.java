@@ -22,7 +22,7 @@ public class MedicoPostgresDao implements MedicoDAO {
             stmt.setString(3, matricola);
             stmt.setString(4, nome);
             stmt.setString(5, cognome);
-            
+
             if (iscrizioneAlbo != null && !iscrizioneAlbo.trim().isEmpty()) {
                 stmt.setDate(6, java.sql.Date.valueOf(iscrizioneAlbo)); // Formato atteso: "YYYY-MM-DD"
             } else {
@@ -54,13 +54,13 @@ public class MedicoPostgresDao implements MedicoDAO {
                 datiMedico.add(rs.getString("login"));
                 datiMedico.add(rs.getString("password"));
                 datiMedico.add(rs.getString("matricola"));
-                
+
                 java.sql.Date dataIscrizione = rs.getDate("iscrizione_albo");
                 datiMedico.add(dataIscrizione != null ? dataIscrizione.toString() : "");
-                
+
                 datiMedico.add(rs.getString("specializzazione"));
                 datiMedico.add(rs.getString("reparto"));
-                
+
                 return datiMedico;
             }
         } catch (SQLException e) {
@@ -84,13 +84,13 @@ public class MedicoPostgresDao implements MedicoDAO {
                 datiMedico.add(rs.getString("login"));
                 datiMedico.add(rs.getString("password"));
                 datiMedico.add(rs.getString("matricola"));
-                
+
                 java.sql.Date dataIscrizione = rs.getDate("iscrizione_albo");
                 datiMedico.add(dataIscrizione != null ? dataIscrizione.toString() : "");
-                
+
                 datiMedico.add(rs.getString("specializzazione"));
                 datiMedico.add(rs.getString("reparto"));
-                
+
                 medici.add(datiMedico);
             }
         } catch (SQLException e) {
@@ -108,13 +108,13 @@ public class MedicoPostgresDao implements MedicoDAO {
             stmt.setString(2, cognome);
             stmt.setString(3, login);
             stmt.setString(4, password);
-            
+
             if (iscrizioneAlbo != null && !iscrizioneAlbo.trim().isEmpty()) {
                 stmt.setDate(5, java.sql.Date.valueOf(iscrizioneAlbo));
             } else {
                 stmt.setNull(5, java.sql.Types.DATE);
             }
-            
+
             stmt.setString(6, specializzazione);
             stmt.setString(7, reparto);
             stmt.setString(8, matricola);

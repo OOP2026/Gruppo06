@@ -17,7 +17,6 @@ public class Registrazione {
     private JPasswordField passwordField;
     private JCheckBox amministratoreCheck;
     private JTextField pinField;
-    private JTextField matricolaField; // assicurati di averla nel designer
 
     private JButton registratiButton;
     private JLabel accediLabel;
@@ -52,8 +51,6 @@ public class Registrazione {
         String password = new String(passwordField.getPassword()).trim();
         boolean isAdmin = amministratoreCheck.isSelected();
         String pin      = pinField.getText().trim();
-        String matricola = matricolaField != null ? matricolaField.getText().trim() : "";
-
 
         if (nome.isEmpty() || cognome.isEmpty() || username.isEmpty() || password.isEmpty()) {
             JOptionPane.showMessageDialog(null,
@@ -71,7 +68,7 @@ public class Registrazione {
 
 
         boolean successo = controller.registrazione(
-                username, password, nome, cognome, pin, isAdmin, matricola
+                username, password, nome, cognome, pin, isAdmin
         );
 
         if (successo) {

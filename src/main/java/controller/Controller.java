@@ -5,6 +5,8 @@ import implementazioneDao.*;
 import model.*;
 
 import java.util.ArrayList;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 /**
  * The type Controller.
@@ -14,6 +16,9 @@ public class Controller {
 	private MedicoDAO medicoDAO;
 	private Turno_LavoroDAO turnoDAO;
 	private AssenzaDAO assenzaDAO;
+	private PazienteDAO pazienteDAO;
+	private LettoDAO lettoDAO;
+	private RicoveroDAO ricoveroDAO;
 
 	private Utente utenteLoggato;
 
@@ -27,6 +32,9 @@ public class Controller {
 		medicoDAO = new MedicoPostgresDao();
 		turnoDAO = new Turno_LavoroPostgresDao();
 		assenzaDAO = new AssenzaPostgresDao();
+		pazienteDAO = new PazientePostgresDao();
+		lettoDAO = new LettoPostgresDao();
+		ricoveroDAO = new RicoveroPostgresDao();
 	}
 
 	/**
@@ -79,7 +87,7 @@ public class Controller {
 	public boolean whoIsAsking(String login, String password) {
 
 		ArrayList<String> datiUtente = utenteDAO.getUtenteByLoginAndPassword(login, password);
-		
+
 		if (datiUtente != null && !datiUtente.isEmpty()) {
 			String dbNome = datiUtente.get(0);
 			String dbCognome = datiUtente.get(1);
@@ -165,7 +173,7 @@ public class Controller {
 			System.err.println("Errore: Dati del turno incompleti.");
 			return false;
 		}
-		
+
 		// Business Logic: evitiamo di inserire un turno duplicato nello stesso giorno alla stessa ora di inizio
 		ArrayList<String> turnoEsistente = getTurno(matricola, data, inizioTurno);
 		if (turnoEsistente != null && !turnoEsistente.isEmpty()) {
@@ -225,5 +233,89 @@ public class Controller {
 
 	public boolean eliminaAssenza(String matricola, String dataInizio) {
 		return assenzaDAO.eliminaAssenza(matricola, dataInizio);
+	}
+
+	// =========================================================
+	// METODI AMMINISTRATORE (PAZIENTI, LETTI, RICOVERI E DIMISSIONI)
+	// =========================================================
+
+	public boolean anagraficaPaziente(String cf, String nome, String cognome, String dataNascita, String sesso, String residenza, String recapito) {
+		if (isNullOrEmpty(cf) || isNullOrEmpty(nome) || isNullOrEmpty(cognome)) {
+			System.err.println("Errore: CF, Nome e Cognome obbligatori.");
+			return false;
+		}
+		ArrayList<String> esiste = pazienteDAO.getPazienteByCf(cf);
+		if (esiste != null && !esiste.isEmpty()) {
+			System.err.println("Errore: Paziente già registrato con questo CF.");
+			return false;
+		}
+		return pazienteDAO.aggiungiPaziente(cf, nome, cognome, dataNascita, sesso, residenza, recapito);
+	}
+
+	public boolean assegnaLetto(String idLetto, boolean occupato) {
+		return lettoDAO.aggiornaStatoLetto(idLetto, occupato);
+	}
+
+	public String setDataOraInizio() {
+		LocalDateTime now = LocalDateTime.now();
+		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+		return now.format(formatter);
+	}
+
+	public boolean registraRicovero(String cfPaziente, String idLetto, String motivo) {
+		if (isNullOrEmpty(cfPaziente) || isNullOrEmpty(idLetto)) {
+			System.err.println("Errore: CF Paziente o ID Letto mancanti.");
+			return false;
+		}
+		
+		if (!checkDisponibilitaLetto(idLetto)) {
+			System.err.println("Errore: Letto non disponibile o inesistente.");
+			return false;
+		}
+
+		String dataInizio = setDataOraInizio();
+		boolean successo = ricoveroDAO.aggiungiRicovero(cfPaziente, idLetto, dataInizio, motivo);
+		
+		if (successo) {
+			lettoDAO.aggiornaStatoLetto(idLetto, true); // Cambia lo stato del letto ad occupato.
+			System.out.println("Ricovero registrato e letto assegnato con successo.");
+		}
+		return successo;
+	}
+
+	public String calcolaPrognosi(int giorniPrognosi) {
+		return "Il paziente ha una prognosi di " + giorniPrognosi + " giorni";
+	}
+
+	public boolean dimissioni(String cfPaziente, String esito, int giorniPrognosi) {
+		ArrayList<String> ricoveroAttivo = ricoveroDAO.getRicoveroAttivo(cfPaziente);
+		if (ricoveroAttivo == null || ricoveroAttivo.isEmpty()) {
+			System.err.println("Errore: Il paziente non ha un ricovero attivo.");
+			return false;
+		}
+		
+		String idRicovero = ricoveroAttivo.get(0);
+		String idLetto = ricoveroAttivo.get(2);
+		String dataFine = setDataOraInizio();
+		String prognosi = calcolaPrognosi(giorniPrognosi);
+
+		boolean successo = ricoveroDAO.aggiornaRicoveroDimissione(idRicovero, dataFine, prognosi, esito);
+		if (successo) {
+			lettoDAO.aggiornaStatoLetto(idLetto, false); // Libera il letto
+			System.out.println("Paziente dimesso e letto liberato.");
+		}
+		return successo;
+	}
+
+	public ArrayList<ArrayList<String>> ricercaDimissioni() {
+		return ricoveroDAO.getAllDimissioni();
+	}
+
+	public boolean checkDisponibilitaLetto(String idLetto) {
+		ArrayList<String> letto = lettoDAO.getLettoById(idLetto);
+		if (letto != null && !letto.isEmpty()) {
+			return "false".equals(letto.get(2)); // true se il letto (parametro occupato=false) è libero.
+		}
+		return false;
 	}
 }

@@ -1,14 +1,20 @@
 package controller;
-import dao.UtenteDAO;
-import implementazioneDao.UtentePostgresDao;
+
+import dao.*;
+import implementazioneDao.*;
 import model.*;
 
+import java.util.ArrayList;
 
 /**
  * The type Controller.
  */
 public class Controller {
 	private UtenteDAO utenteDAO;
+	private MedicoDAO medicoDAO;
+	private Turno_LavoroDAO turnoDAO;
+	private AssenzaDAO assenzaDAO;
+
 	private Utente utenteLoggato;
 
 	/**
@@ -18,6 +24,9 @@ public class Controller {
 
 		//inizializzazione DAO per Postgre
 		utenteDAO = new UtentePostgresDao();
+		medicoDAO = new MedicoPostgresDao();
+		turnoDAO = new Turno_LavoroPostgresDao();
+		assenzaDAO = new AssenzaPostgresDao();
 	}
 
 	/**
@@ -34,14 +43,12 @@ public class Controller {
 
 		if (isAdmin) {
 			if (pin.equals("1234")) {
-				Amministratore nuovoAdmin = new Amministratore(login, password, matricola, nome,cognome, pin);
-				return utenteDAO.aggiungiUtente(nuovoAdmin, pin);
+				return utenteDAO.aggiungiUtente(nome, cognome, login, password, matricola, pin);
 			} else {
 				return false;
 			}
 		} else {
-			Medico nuovoMedico = new Medico(nome, cognome, login, password, matricola);
-			return utenteDAO.aggiungiUtente(nuovoMedico, pin);
+			return utenteDAO.aggiungiUtente(nome, cognome, login, password, matricola, null);
 		}
 	}
 
@@ -56,18 +63,27 @@ public class Controller {
 	//Metodo di riconoscimento e futura impostazione schermata
 	public boolean whoIsAsking(String login, String password, String matricola) {
 
-		Utente utenteCorrente = utenteDAO.getUtenteByLoginAndPassword(login, password);
-		if (utenteCorrente != null) {
-			this.utenteLoggato = utenteCorrente;
+		ArrayList<String> datiUtente = utenteDAO.getUtenteByLoginAndPassword(login, password);
+		
+		if (datiUtente != null && !datiUtente.isEmpty()) {
+			String dbNome = datiUtente.get(0);
+			String dbCognome = datiUtente.get(1);
+			String dbLogin = datiUtente.get(2);
+			String dbPassword = datiUtente.get(3);
+			String dbMatricola = datiUtente.get(4);
+			String dbRuolo = datiUtente.get(5);
+			String dbPin = datiUtente.get(6);
 
-				if (utenteCorrente instanceof Amministratore) {
-					System.out.println("Accesso Admin confermato.");
-					return true;
-				} else if (utenteCorrente instanceof Medico) {
-					System.out.println("Accesso Medico confermato.");
-					return true;
-				}
+			if ("ADMIN".equals(dbRuolo) || "AMMINISTRATORE".equals(dbRuolo)) {
+				this.utenteLoggato = new Amministratore(dbLogin, dbPassword, dbMatricola, dbNome, dbCognome, dbPin);
+				System.out.println("Accesso Admin confermato.");
+				return true;
+			} else if ("MEDICO".equals(dbRuolo)) {
+				this.utenteLoggato = new Medico(dbNome, dbCognome, dbLogin, dbPassword, dbMatricola);
+				System.out.println("Accesso Medico confermato.");
+				return true;
 			}
+		}
 
 		System.out.println("Accesso negato, utente non trovato");
 		return false;

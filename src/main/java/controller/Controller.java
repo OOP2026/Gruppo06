@@ -103,4 +103,76 @@ public class Controller {
 		this.utenteLoggato = null;
 		System.out.println("Logout effettuato con successo.");
 	}
+
+	// =========================================================
+	// METODI PER LA GESTIONE DEI MEDICI
+	// =========================================================
+
+	public boolean aggiungiMedico(String nome, String cognome, String login, String password, String matricola, String iscrizioneAlbo, String specializzazione, String reparto) {
+		return medicoDAO.aggiungiMedico(nome, cognome, login, password, matricola, iscrizioneAlbo, specializzazione, reparto);
+	}
+
+	public ArrayList<String> getMedicoByMatricola(String matricola) {
+		return medicoDAO.getMedicoByMatricola(matricola);
+	}
+
+	public ArrayList<ArrayList<String>> getAllMedici() {
+		return medicoDAO.getAllMedici();
+	}
+
+	public boolean aggiornaMedico(String nome, String cognome, String login, String password, String matricola, String iscrizioneAlbo, String specializzazione, String reparto) {
+		return medicoDAO.aggiornaMedico(nome, cognome, login, password, matricola, iscrizioneAlbo, specializzazione, reparto);
+	}
+
+	public boolean eliminaMedico(String matricola) {
+		return medicoDAO.eliminaMedico(matricola);
+	}
+
+	// =========================================================
+	// METODI PER LA GESTIONE DEI TURNI DI LAVORO
+	// =========================================================
+
+	public boolean aggiungiTurno(String matricola, String data, String inizioTurno, String fineTurno) {
+		return turnoDAO.aggiungiTurno(matricola, data, inizioTurno, fineTurno);
+	}
+
+	public ArrayList<String> getTurno(String matricola, String data, String inizioTurno) {
+		return turnoDAO.getTurno(matricola, data, inizioTurno);
+	}
+
+	public ArrayList<ArrayList<String>> getTurniByMedico(String matricola) {
+		return turnoDAO.getTurniByMedico(matricola);
+	}
+
+	public boolean aggiornaTurno(String matricola, String data, String inizioTurno, String fineTurno) {
+		return turnoDAO.aggiornaTurno(matricola, data, inizioTurno, fineTurno);
+	}
+
+	public boolean eliminaTurno(String matricola, String data, String inizioTurno) {
+		return turnoDAO.eliminaTurno(matricola, data, inizioTurno);
+	}
+
+	// =========================================================
+	// METODI PER LA GESTIONE DELLE ASSENZE
+	// =========================================================
+
+	public boolean aggiungiAssenza(String matricola, String dataInizio, String dataFine, String motivazione, boolean approvazione) {
+		return assenzaDAO.aggiungiAssenza(matricola, dataInizio, dataFine, motivazione, approvazione);
+	}
+
+	public ArrayList<String> getAssenza(String matricola, String dataInizio) {
+		return assenzaDAO.getAssenza(matricola, dataInizio);
+	}
+
+	public ArrayList<ArrayList<String>> getAssenzeByMedico(String matricola) {
+		return assenzaDAO.getAssenzeByMedico(matricola);
+	}
+
+	public boolean aggiornaAssenza(String matricola, String dataInizio, String dataFine, String motivazione, boolean approvazione) {
+		return assenzaDAO.aggiornaAssenza(matricola, dataInizio, dataFine, motivazione, approvazione);
+	}
+
+	public boolean eliminaAssenza(String matricola, String dataInizio) {
+		return assenzaDAO.eliminaAssenza(matricola, dataInizio);
+	}
 }

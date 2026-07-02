@@ -10,7 +10,7 @@ import java.util.Date;
 
 public class Pazienti extends JFrame {
 
-    private JPanel panelPrincipale;
+    public JPanel panelPrincipale;
     private JTextField nomeField;
     private JTextField codiceField;
     private JLabel RepartoLabel;
@@ -39,21 +39,13 @@ public class Pazienti extends JFrame {
             "Sesso", "Residenza", "Stato"
     };
 
-    private static final Object[][] DATI = {
-            {"ID: 12345", "Mario Rossi", "RSSMRA80A01H501U", "Maschio", "Napoli", "Ricoverato"},
-            {"ID: 12346", "Luigi Bianchi", "BNCLGU85M21F839O", "Maschio", "Roma", "Dimesso"},
-            {"ID: 12347", "Giulia Verdi", "VRDGLI90C45A509Y", "Femmina", "Milano", "Ricoverato"},
-            {"ID: 12348", "Elena Neri", "NRELNE75P44L219J", "Femmina", "Torino", "In Trasferimento"},
-            {"ID: 12349", "Antonio Russo", "RSSNTN92B15F839V", "Maschio", "Palermo", "Dimesso"}
-    };
-
     public Pazienti() {
         initComponents();
         setupStyles();
     }
 
     private void initComponents() {
-        DefaultTableModel model = new DefaultTableModel(DATI, COLONNE) {
+        DefaultTableModel model = new DefaultTableModel(new Object[0][0], COLONNE) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
@@ -143,6 +135,30 @@ public class Pazienti extends JFrame {
                 bottone.setForeground(coloreTestoDefault);
             }
         });
+    }
+
+    // Metodo per permettere al sistema di ascoltare il bottone
+    // senza importare o conoscere il Controller nella GUI
+    public void addNuovoPazienteListener(java.awt.event.ActionListener listener) {
+        if (nuovoPazienteButton != null) {
+            nuovoPazienteButton.addActionListener(listener);
+        }
+    }
+
+    // Metodo per aggiornare la tabella con i dati reali dal database
+    public void aggiornaTabella(java.util.ArrayList<java.util.ArrayList<String>> datiPazienti) {
+        DefaultTableModel model = (DefaultTableModel) PazientiTable.getModel();
+        model.setRowCount(0); // Svuota i vecchi dati finti/obsoleti
+        
+        for (java.util.ArrayList<String> p : datiPazienti) {
+            String cf = p.get(0);
+            String nomeCognome = p.get(1) + " " + p.get(2);
+            String sesso = p.get(4);
+            String residenza = p.get(5);
+            String diagnosiOStato = p.get(6); // Posizioniamo la diagnosi nell'ultima colonna
+            
+            model.addRow(new Object[]{cf, nomeCognome, cf, sesso, residenza, diagnosiOStato});
+        }
     }
 
     public static void main(String[] args) {

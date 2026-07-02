@@ -7,6 +7,8 @@ import model.*;
 import java.util.ArrayList;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import javax.swing.*;
+import java.awt.*;
 
 /**
  * The type Controller.
@@ -239,7 +241,51 @@ public class Controller {
 	// METODI AMMINISTRATORE (PAZIENTI, LETTI, RICOVERI E DIMISSIONI)
 	// =========================================================
 
-	public boolean anagraficaPaziente(String cf, String nome, String cognome, String dataNascita, String sesso, String residenza, String recapito) {
+	public ArrayList<ArrayList<String>> getAllPazienti() {
+		return pazienteDAO.getAllPazienti();
+	}
+
+	public boolean gestisciCreazioneNuovoPaziente() {
+		JTextField cfInput = new JTextField();
+		JTextField nomeInput = new JTextField();
+		JTextField cognomeInput = new JTextField();
+		JTextField dataNascitaInput = new JTextField(); // YYYY-MM-DD
+		JTextField sessoInput = new JTextField(); // M o F
+		JTextField residenzaInput = new JTextField();
+		JTextField diagnosiInput = new JTextField();
+
+		JPanel panel = new JPanel(new GridLayout(7, 2, 10, 10));
+		panel.add(new JLabel("Codice Fiscale:")); panel.add(cfInput);
+		panel.add(new JLabel("Nome:")); panel.add(nomeInput);
+		panel.add(new JLabel("Cognome:")); panel.add(cognomeInput);
+		panel.add(new JLabel("Data Nascita (AAAA-MM-GG):")); panel.add(dataNascitaInput);
+		panel.add(new JLabel("Sesso (M/F):")); panel.add(sessoInput);
+		panel.add(new JLabel("Residenza:")); panel.add(residenzaInput);
+		panel.add(new JLabel("Diagnosi:")); panel.add(diagnosiInput);
+
+		int result = JOptionPane.showConfirmDialog(null, panel, "Registra Nuovo Paziente", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+		if (result == JOptionPane.OK_OPTION) {
+			String cf = cfInput.getText().trim();
+			String nome = nomeInput.getText().trim();
+			String cognome = cognomeInput.getText().trim();
+			String dataNascita = dataNascitaInput.getText().trim();
+			String sesso = sessoInput.getText().trim().toUpperCase();
+			String residenza = residenzaInput.getText().trim();
+			String diagnosi = diagnosiInput.getText().trim();
+
+			boolean successo = anagraficaPaziente(cf, nome, cognome, dataNascita, sesso, residenza, diagnosi);
+			if (successo) {
+				JOptionPane.showMessageDialog(null, "Paziente aggiunto con successo al database!", "Successo", JOptionPane.INFORMATION_MESSAGE);
+				return true;
+			} else {
+				JOptionPane.showMessageDialog(null, "Errore durante l'aggiunta. Controlla i dati o possibili CF duplicati.", "Errore", JOptionPane.ERROR_MESSAGE);
+			}
+		}
+		return false;
+	}
+
+	public boolean anagraficaPaziente(String cf, String nome, String cognome, String dataNascita, String sesso, String residenza, String diagnosi) {
 		if (isNullOrEmpty(cf) || isNullOrEmpty(nome) || isNullOrEmpty(cognome)) {
 			System.err.println("Errore: CF, Nome e Cognome obbligatori.");
 			return false;
@@ -249,7 +295,7 @@ public class Controller {
 			System.err.println("Errore: Paziente già registrato con questo CF.");
 			return false;
 		}
-		return pazienteDAO.aggiungiPaziente(cf, nome, cognome, dataNascita, sesso, residenza, recapito);
+		return pazienteDAO.aggiungiPaziente(cf, nome, cognome, dataNascita, sesso, residenza, diagnosi);
 	}
 
 	public boolean assegnaLetto(String idLetto, boolean occupato) {

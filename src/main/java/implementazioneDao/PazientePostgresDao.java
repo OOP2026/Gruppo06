@@ -11,18 +11,18 @@ import java.util.ArrayList;
 
 public class PazientePostgresDao implements PazienteDAO {
     @Override
-    public boolean aggiungiPaziente(String cf, String nome, String cognome, String dataNascita, String sesso, String residenza, String recapito) {
-        String query = "INSERT INTO pazienti (cf, nome, cognome, data_nascita, sesso, residenza, recapito) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    public boolean aggiungiPaziente(String cf, String nome, String cognome, String dataNascita, String sesso, String residenza, String diagnosi) {
+        String query = "INSERT INTO pazienti (nome, cognome, cf, data_nascita, sesso, residenza, diagnosi) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = ConnessioneDatabase.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
              
-            stmt.setString(1, cf);
-            stmt.setString(2, nome);
-            stmt.setString(3, cognome);
+            stmt.setString(1, nome);
+            stmt.setString(2, cognome);
+            stmt.setString(3, cf);
             stmt.setDate(4, java.sql.Date.valueOf(dataNascita));
             stmt.setString(5, sesso);
             stmt.setString(6, residenza);
-            stmt.setString(7, recapito);
+            stmt.setString(7, diagnosi);
             
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -48,7 +48,7 @@ public class PazientePostgresDao implements PazienteDAO {
                 paziente.add(dataDb != null ? dataDb.toString() : "");
                 paziente.add(rs.getString("sesso"));
                 paziente.add(rs.getString("residenza"));
-                paziente.add(rs.getString("recapito"));
+                paziente.add(rs.getString("diagnosi"));
                 return paziente;
             }
         } catch (SQLException e) {
@@ -74,7 +74,7 @@ public class PazientePostgresDao implements PazienteDAO {
                 paziente.add(dataDb != null ? dataDb.toString() : "");
                 paziente.add(rs.getString("sesso"));
                 paziente.add(rs.getString("residenza"));
-                paziente.add(rs.getString("recapito"));
+                paziente.add(rs.getString("diagnosi"));
                 pazienti.add(paziente);
             }
         } catch (SQLException e) {
@@ -84,7 +84,7 @@ public class PazientePostgresDao implements PazienteDAO {
     }
 
     @Override
-    public boolean aggiornaPaziente(String cf, String nome, String cognome, String dataNascita, String sesso, String residenza, String recapito) {
+    public boolean aggiornaPaziente(String cf, String nome, String cognome, String dataNascita, String sesso, String residenza, String diagnosi) {
         return false; // Da implementare secondo necessità similmente sopra
     }
 

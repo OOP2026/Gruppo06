@@ -12,7 +12,7 @@ import java.util.ArrayList;
 public class PazientePostgresDao implements PazienteDAO {
     @Override
     public boolean aggiungiPaziente(String cf, String nome, String cognome, String dataNascita, String sesso, String residenza, String diagnosi) {
-        String query = "INSERT INTO paziente (nome, cognome, cf, data_nascita, sesso, residenza, diagnosi) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String query = "INSERT INTO pazienti (nome, cognome, cf, data_nascita, sesso, residenza, diagnosi) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = ConnessioneDatabase.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
              
@@ -33,7 +33,7 @@ public class PazientePostgresDao implements PazienteDAO {
 
     @Override
     public ArrayList<String> getPazienteByCf(String cf) {
-        String query = "SELECT * FROM paziente WHERE cf = ?";
+        String query = "SELECT * FROM pazienti WHERE cf = ?";
         try (Connection conn = ConnessioneDatabase.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
              
@@ -85,7 +85,7 @@ public class PazientePostgresDao implements PazienteDAO {
 
     @Override
     public boolean aggiornaPaziente(String cf, String nome, String cognome, String dataNascita, String sesso, String residenza, String diagnosi) {
-        String query = "UPDATE paziente SET nome = ?, cognome = ?, data_nascita = ?, sesso = ?, residenza = ?, diagnosi = ? WHERE cf = ?";
+        String query = "UPDATE pazienti SET nome = ?, cognome = ?, data_nascita = ?, sesso = ?, residenza = ?, diagnosi = ? WHERE cf = ?";
         try (Connection conn = ConnessioneDatabase.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
 
@@ -106,7 +106,7 @@ public class PazientePostgresDao implements PazienteDAO {
 
     @Override
     public boolean eliminaPaziente(String cf) {
-        String query = "DELETE FROM paziente WHERE cf = ?";
+        String query = "DELETE FROM pazienti WHERE cf = ?";
         try (Connection conn = ConnessioneDatabase.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setString(1, cf);

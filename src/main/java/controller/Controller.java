@@ -172,9 +172,9 @@ public class Controller {
 	// METODI PER LA GESTIONE DEI TURNI DI LAVORO
 	// =========================================================
 
-	public boolean aggiungiTurno(String matricola, String data, String inizioTurno, String fineTurno) {
+	public boolean aggiungiTurno(String matricola, String data, String inizioTurno, String fineTurno, String id_agenda) {
 		// Validazione input
-		if (isNullOrEmpty(matricola) || isNullOrEmpty(data) || isNullOrEmpty(inizioTurno) || isNullOrEmpty(fineTurno)) {
+		if (isNullOrEmpty(matricola) || isNullOrEmpty(data) || isNullOrEmpty(inizioTurno) || isNullOrEmpty(fineTurno) || isNullOrEmpty(id_agenda)) {
 			System.err.println("Errore: Dati del turno incompleti.");
 			return false;
 		}
@@ -185,7 +185,7 @@ public class Controller {
 			System.err.println("Errore: Il medico " + matricola + " ha già un turno assegnato il " + data + " con inizio alle " + inizioTurno);
 			return false;
 		}
-		return turnoDAO.aggiungiTurno(matricola, data, inizioTurno, fineTurno);
+		return turnoDAO.aggiungiTurno(matricola, data, inizioTurno, fineTurno, id_agenda);
 	}
 
 	public ArrayList<String> getTurno(String matricola, String data, String inizioTurno) {
@@ -539,17 +539,19 @@ public class Controller {
 		JTextField dataInput = new JTextField("2026-05-21"); // YYYY-MM-DD
 		JTextField inizioInput = new JTextField("08:00:00");
 		JTextField fineInput = new JTextField("14:00:00");
+		JTextField idAgendaInput = new JTextField();
 
-		JPanel panel = new JPanel(new GridLayout(4, 2, 10, 10));
+		JPanel panel = new JPanel(new GridLayout(5, 2, 10, 10));
 		panel.add(new JLabel("Matricola Medico:")); panel.add(matricolaInput);
 		panel.add(new JLabel("Data (AAAA-MM-GG):")); panel.add(dataInput);
 		panel.add(new JLabel("Ora Inizio (HH:MM:SS):")); panel.add(inizioInput);
 		panel.add(new JLabel("Ora Fine (HH:MM:SS):")); panel.add(fineInput);
+		panel.add(new JLabel("ID Agenda:")); panel.add(idAgendaInput);
 
 		int result = JOptionPane.showConfirmDialog(null, panel, "Registra Nuovo Turno", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 
 		if (result == JOptionPane.OK_OPTION) {
-			boolean successo = aggiungiTurno(matricolaInput.getText().trim(), dataInput.getText().trim(), inizioInput.getText().trim(), fineInput.getText().trim());
+			boolean successo = aggiungiTurno(matricolaInput.getText().trim(), dataInput.getText().trim(), inizioInput.getText().trim(), fineInput.getText().trim(), idAgendaInput.getText().trim());
 			if (successo) {
 				JOptionPane.showMessageDialog(null, "Turno aggiunto con successo!", "Successo", JOptionPane.INFORMATION_MESSAGE);
 				return true;

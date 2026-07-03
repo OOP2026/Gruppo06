@@ -13,16 +13,18 @@ import java.util.ArrayList;
 public class Turno_LavoroPostgresDao implements Turno_LavoroDAO {
 
     @Override
-    public boolean aggiungiTurno(String matricola, String data, String inizioTurno, String fineTurno) {
-        String query = "INSERT INTO turni_lavoro (matricola, data, inizio_turno, fine_turno) VALUES (?, ?, ?, ?)";
+    public boolean aggiungiTurno(String matricola, String data, String inizioTurno, String fineTurno, String id_agenda) {
+        String query = "INSERT INTO turni_lavoro (id_turno, data, inizio_turno, fine_turno, matricola, id_agenda) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = ConnessioneDatabase.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
-             
-            stmt.setString(1, matricola);
+
+            stmt.setString(1, id_agenda);
             stmt.setDate(2, java.sql.Date.valueOf(data));
             stmt.setTimestamp(3, Timestamp.valueOf(inizioTurno));
             stmt.setTimestamp(4, Timestamp.valueOf(fineTurno));
-            
+            stmt.setString(5, matricola);
+            stmt.setString(6, id_agenda);
+
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();

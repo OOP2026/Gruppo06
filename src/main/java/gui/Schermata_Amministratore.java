@@ -65,70 +65,65 @@ public class Schermata_Amministratore extends JFrame {
         // --- POPOLA LA TABELLA DELL'AGENDA ---
         popolaTabellaAgenda();
 
-        // --- AZIONI DEI PULSANTI ---
-        esciButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                int conferma = JOptionPane.showConfirmDialog(null, "Sei sicuro di voler uscire?", "Conferma uscita", JOptionPane.YES_NO_OPTION);
-                if (conferma == JOptionPane.YES_OPTION) {
-                    dispose();
-                    Login loginFrame = new Login();
-                    loginFrame.main(null);
-                }
-            }
-        });
-
-        // Apre la schermata Pazienti
-        pazientiButton.addActionListener(e -> {
-            Pazienti pazientiFrame = new Pazienti();
-
-            if (pazientiFrame.panelPrincipale != null) {
-                pazientiFrame.setContentPane(pazientiFrame.panelPrincipale);
-            }
-
-
-            pazientiFrame.setTitle("Gestione Pazienti");
-            pazientiFrame.setSize(1100, 750);
-            pazientiFrame.setLocationRelativeTo(null);
-            pazientiFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-            pazientiFrame.setVisible(true);
-        });
-
-        // Apre la schermata Letti
-        lettiButton.addActionListener(e -> {
-            Letti lettiFrame = new Letti();
-
-            if (lettiFrame.LettiPanel != null) {
-                lettiFrame.setContentPane(lettiFrame.LettiPanel);
-            }
-
-            lettiFrame.setTitle("Ricerca Letti Ospedalieri");
-            lettiFrame.setSize(1100, 750);
-            lettiFrame.setLocationRelativeTo(null);
-            lettiFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-            lettiFrame.setVisible(true);
-        });
-
-        // Apre la schermata Prestazioni
-        prestazioniButton.addActionListener(e -> {
-            Prestazioni prestazioniFrame = new Prestazioni();
-
-            if (prestazioniFrame.mainPanel != null) {
-                prestazioniFrame.setContentPane(prestazioniFrame.mainPanel);
-            }
-
-            prestazioniFrame.setTitle("Ricerca Prestazioni Mediche");
-            prestazioniFrame.setSize(1000, 680);
-            prestazioniFrame.setLocationRelativeTo(null);
-            prestazioniFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-            prestazioniFrame.setVisible(true);
-        });
-
         // Esempio logica "Nuovo Evento"
         if (NewEventButton != null) {
             NewEventButton.addActionListener(e -> {
                 JOptionPane.showMessageDialog(this, "Apertura modulo per un nuovo evento...", "Nuovo Evento", JOptionPane.INFORMATION_MESSAGE);
             });
+        }
+    }
+
+    // =========================================================
+    // METODI PUBBLICI PER ESPORRE I BOTTONI AL CONTROLLER ESTERNO
+    // =========================================================
+
+    public void addPazientiListener(ActionListener listener) {
+        if (pazientiButton != null) pazientiButton.addActionListener(listener);
+    }
+
+    public void addLettiListener(ActionListener listener) {
+        if (lettiButton != null) lettiButton.addActionListener(listener);
+    }
+
+    public void addPrestazioniListener(ActionListener listener) {
+        if (prestazioniButton != null) prestazioniButton.addActionListener(listener);
+    }
+
+    public void addEsciListener(ActionListener listener) {
+        if (esciButton != null) esciButton.addActionListener(listener);
+    }
+
+    public void addMediciListener(ActionListener listener) {
+        if (mediciButton != null) mediciButton.addActionListener(listener);
+    }
+
+    public void addDimissioniListener(ActionListener listener) {
+        if (dimissioniButton != null) dimissioniButton.addActionListener(listener);
+    }
+
+    public void addRicoveroListener(ActionListener listener) {
+        if (ricoveroButton != null) ricoveroButton.addActionListener(listener);
+    }
+
+    public void addTurniListener(ActionListener listener) {
+        if (turniButton != null) turniButton.addActionListener(listener);
+    }
+
+    public void addRicercaAgendaListener(ActionListener listener) {
+        if (ricercaButton != null) ricercaButton.addActionListener(listener);
+    }
+
+    public void addNewEventListener(ActionListener listener) {
+        if (NewEventButton != null) NewEventButton.addActionListener(listener);
+    }
+
+    public void aggiornaAgenda(Object[][] dati) {
+        if (AgendaTable != null) {
+            DefaultTableModel model = (DefaultTableModel) AgendaTable.getModel();
+            model.setRowCount(0); // Svuota la tabella dai vecchi dati
+            for (Object[] riga : dati) {
+                model.addRow(riga);
+            }
         }
     }
 
@@ -140,17 +135,8 @@ public class Schermata_Amministratore extends JFrame {
             // Definisce le colonne
             String[] colonne = {"Ora", "Evento"};
 
-            // Definisce i dati di esempio da inserire
-            Object[][] dati = {
-                    {"08:30", "Giro Visite Reparto A"},
-                    {"10:00", "Riunione Staff Medico"},
-                    {"11:45", "Consulto Dott. Verdi"},
-                    {"14:00", "Controllo Paziente Letti 3-4"},
-                    {"16:30", "Dimissioni Programmate"}
-            };
-
             // Crea un modello personalizzato per impedire la modifica diretta del testo nelle celle
-            DefaultTableModel model = new DefaultTableModel(dati, colonne) {
+            DefaultTableModel model = new DefaultTableModel(new Object[0][0], colonne) {
                 @Override
                 public boolean isCellEditable(int row, int column) {
                     return false;
@@ -177,8 +163,9 @@ public class Schermata_Amministratore extends JFrame {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            Schermata_Amministratore h = new Schermata_Amministratore("Dott. Mario Rossi");
-            h.setVisible(true);
+            // Avviamo tramite il Controller per agganciare i bottoni!
+            controller.Controller ctrl = new controller.Controller();
+            ctrl.avviaSchermataAmministratore("Dott. Mario Rossi (TEST)");
         });
     }
 

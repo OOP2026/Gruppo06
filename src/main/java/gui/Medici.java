@@ -35,21 +35,24 @@ public class Medici extends JFrame {
             "Matricola", "Cognome e Nome", "Specializzazione",
             "Reparto Assegnato", "Stato", "Note/Contatto"
     };
-    //Definizione dati per Medici
-    private static final Object[][] DATI = {
-            {"M-001", "Rossi Mario", "Chirurgia Generale", "Blocco Operatorio", "Attivo", "Primario"},
-            {"M-002", "Bianchi Giulia", "Cardiologia", "Terapia Intensiva", "Attivo", "Turno Notturno"},
-            {"M-003", "Verdi Luca", "Neurologia", "Neuroradiologia", "Ferie", "-"},
-            {"M-004", "Neri Anna", "Anestesia", "Blocco Operatorio", "Attivo", "Reperibilità"},
-            {"M-005", "Gialli Marco", "Chirurgia Toracica", "Chirurgia Toracica", "Attivo", "-"},
-            {"M-006", "Viola Elena", "Ematologia", "Laboratorio Analisi", "Maternità", "-"}
-    };
+    
+    private Object[][] datiMedici = new Object[0][0];
+    
     //Dichiarazione Costruttore
     public Medici() {
         initComponents();
         setupStyles();
         setupListeners();
         loadTableData(null, null, null, null);
+    }
+
+    public void aggiornaTabella(Object[][] dati) {
+        this.datiMedici = dati != null ? dati : new Object[0][0];
+        loadTableData(null, null, null, null);
+    }
+
+    public void addNuovoMedicoListener(java.awt.event.ActionListener listener) {
+        if (newMedico != null) newMedico.addActionListener(listener);
     }
     //Inserimento parametri list e definizione modelli Table
     private void initComponents() {
@@ -179,7 +182,7 @@ public class Medici extends JFrame {
         DefaultTableModel m = (DefaultTableModel) mediciTable.getModel();
         m.setRowCount(0);
 
-        for (Object[] row : DATI) {
+        for (Object[] row : datiMedici) {
             String rMatricola = ((String) row[0]).toLowerCase();
             String rNome = ((String) row[1]).toLowerCase();
             String rSpec = (String) row[2];

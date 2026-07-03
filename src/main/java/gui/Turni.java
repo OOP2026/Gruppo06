@@ -36,20 +36,24 @@ public class Turni extends JFrame {
     private static final String[] COLONNE = {
             "Data", "Matricola", "Dipendente", "Ruolo", "Reparto", "Orario Effettivo"
     };
-    // Dichiarazione dati pre-popolazione JTable
-    private static final Object[][] DATI_TURNI = {
-            {"21/05/2026", "M-012", "Dr. Marco Bianchi", "Medico", "Blocco Operatorio", "08:00 - 14:00"},
-            {"21/05/2026", "I-034", "Sara Esposito", "Infermiere", "Terapia Intensiva", "14:00 - 20:00"},
-            {"21/05/2026", "OSS-101", "Luigi Verdi", "OSS", "Pronto Soccorso", "20:00 - 08:00"},
-            {"21/05/2026", "T-055", "Elena Viola", "Tecnico", "Neuroradiologia", "08:00 - 14:00"},
-            {"21/05/2026", "I-035", "Anna Neri", "Infermiere", "Blocco Op.", "08:00 - 14:00"}
-    };
+    
+    private Object[][] datiTurni = new Object[0][0];
+    
     //Dichiarazione Costruttore
     public Turni() {
         initComponents();
         setupStyles();
         setupListeners();
         loadTableData(null, null, null, null);
+    }
+
+    public void aggiornaTabella(Object[][] dati) {
+        this.datiTurni = dati != null ? dati : new Object[0][0];
+        loadTableData(null, null, null, null);
+    }
+
+    public void addNuovoTurnoListener(java.awt.event.ActionListener listener) {
+        if (nuovoTurnoButton1 != null) nuovoTurnoButton1.addActionListener(listener);
     }
     //Inizializzazione Componenti
     private void initComponents() {
@@ -183,7 +187,7 @@ public class Turni extends JFrame {
         DefaultTableModel m = (DefaultTableModel) turniTable.getModel();
         m.setRowCount(0);
 
-        for (Object[] row : DATI_TURNI) {
+        for (Object[] row : datiTurni) {
             String rMatricola = ((String) row[1]).toLowerCase();
             String rNome = ((String) row[2]).toLowerCase();
             String rRuolo = (String) row[3];

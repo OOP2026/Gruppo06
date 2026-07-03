@@ -1,7 +1,5 @@
 package gui;
 
-import model.*;
-import controller.Controller;
 import javax.swing.*;
 import java.awt.Color;
 import java.awt.Cursor;
@@ -9,7 +7,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public class Registrazione {
-    private JPanel registerPanel;
+    public JPanel registerPanel;
 
     private JTextField nomeField;
     private JTextField cognomeField;
@@ -21,72 +19,45 @@ public class Registrazione {
     private JButton registratiButton;
     private JLabel accediLabel;
 
-
-    private Controller controller = new Controller();
-
     public Registrazione() {
         applicaStilePulsantiCentrali(registratiButton);
         applicaStileLabelLink(accediLabel);
-
-        registratiButton.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                effettuaRegistrazione();
-            }
-        });
-
-        accediLabel.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                tornaAlLogin();
-            }
-        });
     }
 
-    private void effettuaRegistrazione() {
-
-        String nome     = nomeField.getText().trim();
-        String cognome  = cognomeField.getText().trim();
-        String username = usernameField.getText().trim();
-        String password = new String(passwordField.getPassword()).trim();
-        boolean isAdmin = amministratoreCheck.isSelected();
-        String pin      = pinField.getText().trim();
-
-        if (nome.isEmpty() || cognome.isEmpty() || username.isEmpty() || password.isEmpty()) {
-            JOptionPane.showMessageDialog(null,
-                    "Compila tutti i campi obbligatori (Nome, Cognome, Username, Password).",
-                    "Errore", JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        if (isAdmin && pin.isEmpty()) {
-            JOptionPane.showMessageDialog(null,
-                    "Inserisci il PIN per registrarti come Amministratore.",
-                    "Errore PIN", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-
-        boolean successo = controller.registrazione(
-                username, password, nome, cognome, pin, isAdmin
-        );
-
-        if (successo) {
-            JOptionPane.showMessageDialog(null,
-                    "Registrazione completata con successo!\nBenvenuto " + nome + " " + cognome,
-                    "Successo", JOptionPane.INFORMATION_MESSAGE);
-            tornaAlLogin();
-        } else {
-            JOptionPane.showMessageDialog(null,
-                    "Registrazione fallita!\nVerifica che l'username non sia già in uso e, se hai selezionato 'Amministratore', che il PIN di sicurezza sia corretto.",
-                    "Errore Registrazione", JOptionPane.ERROR_MESSAGE);
-        }
+    public String getNome() {
+        return nomeField.getText().trim();
     }
 
-    private void tornaAlLogin() {
-        JFrame currentFrame = (JFrame) SwingUtilities.getWindowAncestor(registerPanel);
-        if (currentFrame != null) currentFrame.dispose();
-        Login.main(null);
+    public String getCognome() {
+        return cognomeField.getText().trim();
+    }
+
+    public String getUsername() {
+        return usernameField.getText().trim();
+    }
+
+    public String getPassword() {
+        return new String(passwordField.getPassword()).trim();
+    }
+
+    public boolean isAdmin() {
+        return amministratoreCheck.isSelected();
+    }
+
+    public String getPin() {
+        return pinField.getText().trim();
+    }
+
+    public void addRegisterListener(java.awt.event.ActionListener listener) {
+        registratiButton.addActionListener(listener);
+    }
+
+    public void addLoginListener(java.awt.event.MouseListener listener) {
+        accediLabel.addMouseListener(listener);
+    }
+
+    public void showMessage(String title, String message, int messageType) {
+        JOptionPane.showMessageDialog(registerPanel, message, title, messageType);
     }
 
     private void applicaStilePulsantiCentrali(JButton bottone) {
@@ -134,19 +105,6 @@ public class Registrazione {
                 String testo = label.getText().replace("<html><u>","").replace("</u></html>","");
                 label.setText(testo);
             }
-        });
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Registrazione");
-            Registrazione r = new Registrazione();
-            frame.setContentPane(r.registerPanel);
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(1000, 680);
-            frame.setResizable(false);
-            frame.setLocationRelativeTo(null);
-            frame.setVisible(true);
         });
     }
 }

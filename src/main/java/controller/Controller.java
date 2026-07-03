@@ -24,6 +24,7 @@ public class Controller {
 	private AgendaDAO agendaDAO;
 
 	private Utente utenteLoggato;
+	private JFrame finestraAttiva = null;
 
 	/**
 	 * Instantiates a new Controller.
@@ -424,5 +425,540 @@ public class Controller {
 			if (siSovrappone) return true; // Trovata una sovrapposizione
 		}
 		return false; // Nessuna sovrapposizione
+	}
+
+	public boolean gestisciCreazioneNuovoMedico() {
+		JTextField nomeInput = new JTextField();
+		JTextField cognomeInput = new JTextField();
+		JTextField loginInput = new JTextField();
+		JPasswordField passwordInput = new JPasswordField();
+		JTextField matricolaInput = new JTextField();
+		JTextField iscrizioneInput = new JTextField(); // YYYY-MM-DD
+		JTextField specializzazioneInput = new JTextField();
+		JTextField repartoInput = new JTextField();
+
+		JPanel panel = new JPanel(new GridLayout(8, 2, 10, 10));
+		panel.add(new JLabel("Nome:")); panel.add(nomeInput);
+		panel.add(new JLabel("Cognome:")); panel.add(cognomeInput);
+		panel.add(new JLabel("Username (Login):")); panel.add(loginInput);
+		panel.add(new JLabel("Password:")); panel.add(passwordInput);
+		panel.add(new JLabel("Matricola:")); panel.add(matricolaInput);
+		panel.add(new JLabel("Data Iscrizione Albo (AAAA-MM-GG):")); panel.add(iscrizioneInput);
+		panel.add(new JLabel("Specializzazione:")); panel.add(specializzazioneInput);
+		panel.add(new JLabel("Reparto:")); panel.add(repartoInput);
+
+		int result = JOptionPane.showConfirmDialog(null, panel, "Registra Nuovo Medico", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+		if (result == JOptionPane.OK_OPTION) {
+			String nome = nomeInput.getText().trim();
+			String cognome = cognomeInput.getText().trim();
+			String login = loginInput.getText().trim();
+			String password = new String(passwordInput.getPassword()).trim();
+			String matricola = matricolaInput.getText().trim();
+			String iscrizioneAlbo = iscrizioneInput.getText().trim();
+			String specializzazione = specializzazioneInput.getText().trim();
+			String reparto = repartoInput.getText().trim();
+
+			boolean successo = aggiungiMedico(nome, cognome, login, password, matricola, iscrizioneAlbo, specializzazione, reparto);
+			if (successo) {
+				JOptionPane.showMessageDialog(null, "Medico aggiunto con successo al database!", "Successo", JOptionPane.INFORMATION_MESSAGE);
+				return true;
+			} else {
+				JOptionPane.showMessageDialog(null, "Errore durante l'aggiunta. Controlla i dati.", "Errore", JOptionPane.ERROR_MESSAGE);
+			}
+		}
+        return false;
+	}
+
+	public boolean gestisciCreazioneNuovoTurno() {
+		JTextField matricolaInput = new JTextField();
+		JTextField dataInput = new JTextField("2026-05-21"); // YYYY-MM-DD
+		JTextField inizioInput = new JTextField("08:00:00");
+		JTextField fineInput = new JTextField("14:00:00");
+
+		JPanel panel = new JPanel(new GridLayout(4, 2, 10, 10));
+		panel.add(new JLabel("Matricola Medico:")); panel.add(matricolaInput);
+		panel.add(new JLabel("Data (AAAA-MM-GG):")); panel.add(dataInput);
+		panel.add(new JLabel("Ora Inizio (HH:MM:SS):")); panel.add(inizioInput);
+		panel.add(new JLabel("Ora Fine (HH:MM:SS):")); panel.add(fineInput);
+
+		int result = JOptionPane.showConfirmDialog(null, panel, "Registra Nuovo Turno", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+		if (result == JOptionPane.OK_OPTION) {
+			boolean successo = aggiungiTurno(matricolaInput.getText().trim(), dataInput.getText().trim(), inizioInput.getText().trim(), fineInput.getText().trim());
+			if (successo) {
+				JOptionPane.showMessageDialog(null, "Turno aggiunto con successo!", "Successo", JOptionPane.INFORMATION_MESSAGE);
+				return true;
+			} else {
+				JOptionPane.showMessageDialog(null, "Errore durante l'aggiunta. Controlla i dati.", "Errore", JOptionPane.ERROR_MESSAGE);
+			}
+		}
+        return false;
+	}
+
+	public boolean gestisciCreazioneNuovoRicovero() {
+		JTextField cfInput = new JTextField();
+		JTextField lettoInput = new JTextField();
+		JTextField motivoInput = new JTextField();
+
+		JPanel panel = new JPanel(new GridLayout(3, 2, 10, 10));
+		panel.add(new JLabel("CF Paziente:")); panel.add(cfInput);
+		panel.add(new JLabel("ID Letto:")); panel.add(lettoInput);
+		panel.add(new JLabel("Motivo:")); panel.add(motivoInput);
+
+		int result = JOptionPane.showConfirmDialog(null, panel, "Registra Nuovo Ricovero", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+		if (result == JOptionPane.OK_OPTION) {
+			boolean successo = registraRicovero(cfInput.getText().trim(), lettoInput.getText().trim(), motivoInput.getText().trim());
+			if (successo) {
+				JOptionPane.showMessageDialog(null, "Ricovero aggiunto con successo!", "Successo", JOptionPane.INFORMATION_MESSAGE);
+				return true;
+			} else {
+				JOptionPane.showMessageDialog(null, "Errore durante l'aggiunta. Controlla disponibilità letto e CF.", "Errore", JOptionPane.ERROR_MESSAGE);
+			}
+		}
+        return false;
+	}
+
+	public boolean gestisciArchiviaDimissione() {
+		JTextField cfInput = new JTextField();
+		JTextField esitoInput = new JTextField();
+		JTextField prognosiInput = new JTextField("0");
+
+		JPanel panel = new JPanel(new GridLayout(3, 2, 10, 10));
+		panel.add(new JLabel("CF Paziente (Ricoverato):")); panel.add(cfInput);
+		panel.add(new JLabel("Esito:")); panel.add(esitoInput);
+		panel.add(new JLabel("Giorni Prognosi:")); panel.add(prognosiInput);
+
+		int result = JOptionPane.showConfirmDialog(null, panel, "Archivia Dimissione", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+		if (result == JOptionPane.OK_OPTION) {
+            try {
+			    boolean successo = dimissioni(cfInput.getText().trim(), esitoInput.getText().trim(), Integer.parseInt(prognosiInput.getText().trim()));
+			    if (successo) {
+				    JOptionPane.showMessageDialog(null, "Dimissione registrata con successo!", "Successo", JOptionPane.INFORMATION_MESSAGE);
+				    return true;
+			    } else {
+				    JOptionPane.showMessageDialog(null, "Errore durante l'archiviazione. Il paziente è ricoverato?", "Errore", JOptionPane.ERROR_MESSAGE);
+			    }
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(null, "Inserisci un numero valido per la prognosi.", "Errore", JOptionPane.ERROR_MESSAGE);
+            }
+		}
+        return false;
+	}
+
+	// =========================================================
+	// METODI DI NAVIGAZIONE E GESTIONE SCHERMATE (ORCHESTRAZIONE GUI)
+	// =========================================================
+
+	private void mostraFinestraSecondaria(JFrame nuovaFinestra) {
+		// Chiude la finestra secondaria aperta in precedenza, se esiste
+		if (finestraAttiva != null && finestraAttiva.isVisible()) {
+			finestraAttiva.dispose();
+		}
+		finestraAttiva = nuovaFinestra;
+		finestraAttiva.setVisible(true);
+	}
+
+	public void avviaSchermataAmministratore(String nomeUtente) {
+		gui.Schermata_Amministratore adminFrame = new gui.Schermata_Amministratore(nomeUtente);
+		
+		// Il Controller si iscrive agli eventi della GUI "stupida"
+		adminFrame.addPazientiListener(e -> apriSchermataPazienti());
+		adminFrame.addLettiListener(e -> apriSchermataLetti());
+		adminFrame.addPrestazioniListener(e -> apriSchermataPrestazioni());
+		adminFrame.addMediciListener(e -> apriSchermataMedici());
+		adminFrame.addDimissioniListener(e -> apriSchermataDimissioni());
+		adminFrame.addRicoveroListener(e -> apriSchermataRicoveri());
+		adminFrame.addTurniListener(e -> apriSchermataTurni());
+		
+		adminFrame.addRicercaAgendaListener(e -> aggiornaAgendaGUI(adminFrame));
+		adminFrame.addNewEventListener(e -> {
+            if (gestisciNuovoEvento()) aggiornaAgendaGUI(adminFrame);
+        });
+
+        aggiornaAgendaGUI(adminFrame);
+		
+		// Gestione del tasto esci
+		adminFrame.addEsciListener(e -> {
+			int conferma = JOptionPane.showConfirmDialog(null, "Sei sicuro di voler uscire?", "Conferma uscita", JOptionPane.YES_NO_OPTION);
+			if (conferma == JOptionPane.YES_OPTION) {
+				if (finestraAttiva != null) finestraAttiva.dispose(); // Chiude eventuali finestre figlie aperte
+				adminFrame.dispose();
+				logout();
+				avviaSchermataLogin(); // Routing al login centralizzato
+			}
+		});
+
+		adminFrame.setVisible(true);
+	}
+
+	public void apriSchermataPazienti() {
+		gui.Pazienti pazientiFrame = new gui.Pazienti();
+		if (pazientiFrame.panelPrincipale != null) {
+			pazientiFrame.setContentPane(pazientiFrame.panelPrincipale);
+		}
+		
+		pazientiFrame.setTitle("Gestione Pazienti");
+		pazientiFrame.setSize(1100, 750);
+		pazientiFrame.setLocationRelativeTo(null);
+		pazientiFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+        pazientiFrame.addNuovoPazienteListener(e -> {
+            if (gestisciCreazioneNuovoPaziente()) {
+                pazientiFrame.aggiornaTabella(getAllPazienti());
+            }
+        });
+
+        pazientiFrame.aggiornaTabella(getAllPazienti());
+		mostraFinestraSecondaria(pazientiFrame);
+	}
+
+	public void apriSchermataLetti() {
+		gui.Letti lettiFrame = new gui.Letti();
+		if (lettiFrame.LettiPanel != null) {
+			lettiFrame.setContentPane(lettiFrame.LettiPanel);
+		}
+		
+		lettiFrame.setTitle("Ricerca Letti Ospedalieri");
+		lettiFrame.setSize(1100, 750);
+		lettiFrame.setLocationRelativeTo(null);
+		lettiFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		lettiFrame.aggiornaTabella(new Object[0][0]); // TODO: Integrare con LettoDAO per DB
+		mostraFinestraSecondaria(lettiFrame);
+	}
+
+	public void apriSchermataPrestazioni() {
+		gui.Prestazioni prestazioniFrame = new gui.Prestazioni();
+		if (prestazioniFrame.mainPanel != null) {
+			prestazioniFrame.setContentPane(prestazioniFrame.mainPanel);
+		}
+		prestazioniFrame.setTitle("Ricerca Prestazioni Mediche");
+		prestazioniFrame.setSize(1000, 680);
+		prestazioniFrame.setLocationRelativeTo(null);
+		prestazioniFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		prestazioniFrame.aggiornaTabella(new Object[0][0]); // TODO: Integrare con relativo DAO per DB
+		mostraFinestraSecondaria(prestazioniFrame);
+	}
+
+	public void avviaSchermataMedico(String nomeUtente) {
+		gui.Schermata_Medico medicoHome = new gui.Schermata_Medico(nomeUtente);
+		
+		// Esposizione e deleghe per il Medico
+		medicoHome.addPazientiListener(e -> apriSchermataPazienti());
+		medicoHome.addLettiListener(e -> apriSchermataLetti());
+		medicoHome.addPrestazioniListener(e -> apriSchermataPrestazioni());
+		medicoHome.addDimissioniListener(e -> apriSchermataDimissioni());
+		medicoHome.addRicoveroListener(e -> apriSchermataRicoveri());
+		medicoHome.addTurniListener(e -> apriSchermataTurni());
+		
+		medicoHome.addRicercaAgendaListener(e -> aggiornaAgendaGUI(medicoHome));
+		medicoHome.addNewEventListener(e -> {
+            if (gestisciNuovoEvento()) aggiornaAgendaGUI(medicoHome);
+        });
+
+        aggiornaAgendaGUI(medicoHome);
+		
+		medicoHome.addEsciListener(e -> {
+			int conferma = JOptionPane.showConfirmDialog(null, "Sei sicuro di voler uscire?", "Conferma uscita", JOptionPane.YES_NO_OPTION);
+			if (conferma == JOptionPane.YES_OPTION) {
+				if (finestraAttiva != null) finestraAttiva.dispose(); // Chiude eventuali finestre figlie aperte
+				medicoHome.dispose();
+				logout();
+				avviaSchermataLogin(); // Routing al login centralizzato
+			}
+		});
+
+		medicoHome.setVisible(true);
+	}
+
+	public void apriSchermataMedici() {
+		gui.Medici mediciFrame = new gui.Medici();
+		if (mediciFrame.mainPanel != null) {
+			mediciFrame.setContentPane(mediciFrame.mainPanel);
+		}
+		mediciFrame.setTitle("Gestione Medici");
+		mediciFrame.setSize(1000, 680);
+		mediciFrame.setLocationRelativeTo(null);
+		mediciFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+        mediciFrame.addNuovoMedicoListener(e -> {
+            if (gestisciCreazioneNuovoMedico()) {
+                mediciFrame.aggiornaTabella(formattaDatiMedici(getAllMedici()));
+            }
+        });
+
+		mediciFrame.aggiornaTabella(formattaDatiMedici(getAllMedici()));
+		mostraFinestraSecondaria(mediciFrame);
+	}
+
+	public void apriSchermataDimissioni() {
+		gui.Dimissioni dimissioniFrame = new gui.Dimissioni();
+		if (dimissioniFrame.JpanelPrincipale != null) {
+			dimissioniFrame.setContentPane(dimissioniFrame.JpanelPrincipale);
+		}
+		dimissioniFrame.setTitle("Ricerca Dimissioni");
+		dimissioniFrame.setSize(1164, 680);
+		dimissioniFrame.setLocationRelativeTo(null);
+		dimissioniFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+        dimissioniFrame.addArchiviaDimissioneListener(e -> {
+            if (gestisciArchiviaDimissione()) {
+                dimissioniFrame.aggiornaTabella(formattaDatiDimissioni(ricercaDimissioni()));
+            }
+        });
+
+		dimissioniFrame.aggiornaTabella(formattaDatiDimissioni(ricercaDimissioni()));
+		mostraFinestraSecondaria(dimissioniFrame);
+	}
+
+	public void apriSchermataRicoveri() {
+		gui.Ricovero ricoveroFrame = new gui.Ricovero();
+		if (ricoveroFrame.JPanelPrincipale != null) {
+			ricoveroFrame.setContentPane(ricoveroFrame.JPanelPrincipale);
+		}
+		ricoveroFrame.setTitle("Ricerca Ricovero");
+		ricoveroFrame.setSize(1024, 680);
+		ricoveroFrame.setLocationRelativeTo(null);
+		ricoveroFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+        ricoveroFrame.addNuovoRicoveroListener(e -> {
+            if (gestisciCreazioneNuovoRicovero()) {
+                // ricoveroFrame.aggiornaTabella(getRicoveriDaDB()); // TODO
+            }
+        });
+
+		ricoveroFrame.aggiornaTabella(new Object[0][0]); // TODO: Integrare con RicoveroDAO per DB
+		mostraFinestraSecondaria(ricoveroFrame);
+	}
+
+	public void apriSchermataTurni() {
+		gui.Turni turniFrame = new gui.Turni();
+		if (turniFrame.panelHome != null) {
+			turniFrame.setContentPane(turniFrame.panelHome);
+		}
+		turniFrame.setTitle("Gestione Turni Lavorativi");
+		turniFrame.setSize(1044, 680);
+		turniFrame.setLocationRelativeTo(null);
+		turniFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+
+        turniFrame.addNuovoTurnoListener(e -> {
+            if (gestisciCreazioneNuovoTurno()) {
+                // turniFrame.aggiornaTabella(getTurniDaDB()); // TODO
+            }
+        });
+
+		turniFrame.aggiornaTabella(new Object[0][0]); // TODO: Integrare con TurnoDAO per DB
+		mostraFinestraSecondaria(turniFrame);
+	}
+
+	public boolean gestisciNuovoEvento() {
+		JTextField idEventoInput = new JTextField();
+		String defaultMatricola = utenteLoggato != null ? utenteLoggato.getMatricola() : "";
+		JTextField matricolaInput = new JTextField(defaultMatricola);
+		JTextField dataInput = new JTextField("2026-05-21");
+		JTextField oraInizioInput = new JTextField("08:30:00");
+		JTextField oraFineInput = new JTextField("10:00:00");
+		JTextField titoloInput = new JTextField("Nuova Visita");
+		JTextField descrizioneInput = new JTextField("-");
+
+		JPanel panel = new JPanel(new GridLayout(7, 2, 10, 10));
+		panel.add(new JLabel("ID Evento:")); panel.add(idEventoInput);
+		panel.add(new JLabel("Matricola Medico:")); panel.add(matricolaInput);
+		panel.add(new JLabel("Data (AAAA-MM-GG):")); panel.add(dataInput);
+		panel.add(new JLabel("Ora Inizio (HH:MM:SS):")); panel.add(oraInizioInput);
+		panel.add(new JLabel("Ora Fine (HH:MM:SS):")); panel.add(oraFineInput);
+		panel.add(new JLabel("Titolo:")); panel.add(titoloInput);
+		panel.add(new JLabel("Descrizione:")); panel.add(descrizioneInput);
+
+		int result = JOptionPane.showConfirmDialog(null, panel, "Nuovo Evento Agenda", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+		
+		if (result == JOptionPane.OK_OPTION) {
+			String matricola = matricolaInput.getText().trim();
+			String inizio = dataInput.getText().trim() + " " + oraInizioInput.getText().trim();
+			String fine = dataInput.getText().trim() + " " + oraFineInput.getText().trim();
+			String titolo = titoloInput.getText().trim();
+			String descrizione = descrizioneInput.getText().trim();
+			
+            try {
+			    int idEvento = Integer.parseInt(idEventoInput.getText().trim());
+			    java.sql.Timestamp tsInizio = java.sql.Timestamp.valueOf(inizio);
+			    java.sql.Timestamp tsFine = java.sql.Timestamp.valueOf(fine);
+
+			    Agenda nuovoEvento = new Agenda(idEvento, matricola, titolo, descrizione, tsInizio, tsFine);
+			    boolean successo = addEvento(nuovoEvento);
+                if (successo) {
+                    JOptionPane.showMessageDialog(null, "Evento inserito con successo nel DB!");
+                    return true;
+                } else {
+                    JOptionPane.showMessageDialog(null, "Errore. Verifica eventuali sovrapposizioni.", "Errore", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(null, "L'ID Evento deve essere un numero intero valido.", "Errore Input", JOptionPane.ERROR_MESSAGE);
+            } catch (IllegalArgumentException ex) {
+                JOptionPane.showMessageDialog(null, "Formato data o ora non valido.", "Errore", JOptionPane.ERROR_MESSAGE);
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null, "Errore nella creazione dell'evento.", "Errore", JOptionPane.ERROR_MESSAGE);
+            }
+		}
+        return false;
+	}
+
+	private Object[][] formattaDatiMedici(ArrayList<ArrayList<String>> mediciDb) {
+		if (mediciDb == null) return new Object[0][0];
+		Object[][] dati = new Object[mediciDb.size()][6];
+		for (int i = 0; i < mediciDb.size(); i++) {
+			ArrayList<String> m = mediciDb.get(i);
+			try {
+				dati[i][0] = m.size() > 4 ? m.get(4) : "-"; // Matricola
+				dati[i][1] = (m.size() > 1 ? m.get(1) : "") + " " + (m.size() > 0 ? m.get(0) : ""); // Cognome Nome
+				dati[i][2] = m.size() > 6 ? m.get(6) : "-"; // Specializzazione
+				dati[i][3] = m.size() > 7 ? m.get(7) : "-"; // Reparto Assegnato
+				dati[i][4] = "Attivo"; // Stato
+				dati[i][5] = "-"; // Note
+			} catch (Exception e) { }
+		}
+		return dati;
+	}
+
+	private Object[][] formattaDatiDimissioni(ArrayList<ArrayList<String>> dimDb) {
+		if (dimDb == null) return new Object[0][0];
+		Object[][] dati = new Object[dimDb.size()][6];
+		for (int i = 0; i < dimDb.size(); i++) {
+			ArrayList<String> d = dimDb.get(i);
+			try {
+				dati[i][0] = d.size() > 0 ? d.get(0) : "-"; // ID Paziente / CF
+				dati[i][1] = d.size() > 1 ? d.get(1) : "-"; // Paziente
+				dati[i][2] = d.size() > 2 ? d.get(2) : "-"; // CF
+				dati[i][3] = d.size() > 3 ? d.get(3) : "-"; // Reparto
+				dati[i][4] = d.size() > 4 ? d.get(4) : "-"; // Tipo (Esito)
+				dati[i][5] = d.size() > 5 ? d.get(5) : "-"; // Data
+			} catch (Exception e) { }
+		}
+		return dati;
+	}
+
+	private Object[][] formattaDatiAgenda(ArrayList<Agenda> eventi) {
+        if (eventi == null) return new Object[0][0];
+		Object[][] dati = new Object[eventi.size()][2];
+		for (int i = 0; i < eventi.size(); i++) {
+			Agenda ev = eventi.get(i);
+			String ora = ev.getDataOraInizio() != null ? ev.getDataOraInizio().toString() : "N/D";
+			String descrizione = ev.getTitolo() != null ? ev.getTitolo() : "Evento #" + ev.getIdEvento();
+			dati[i][0] = ora;
+			dati[i][1] = descrizione;
+		}
+		return dati;
+	}
+
+    private void aggiornaAgendaGUI(JFrame frame) {
+        if (utenteLoggato == null) return;
+        Object[][] dati = formattaDatiAgenda(getEventiPerMedico(utenteLoggato.getMatricola()));
+        if (frame instanceof gui.Schermata_Amministratore) ((gui.Schermata_Amministratore) frame).aggiornaAgenda(dati);
+        if (frame instanceof gui.Schermata_Medico) ((gui.Schermata_Medico) frame).aggiornaAgenda(dati);
+    }
+
+	// =========================================================
+	// METODI DI AVVIO PRINCIPALE APP E AUTENTICAZIONE
+	// =========================================================
+
+	public void avvia() {
+		avviaSchermataLogin();
+	}
+
+	private void avviaSchermataLogin() {
+		gui.Login loginView = new gui.Login();
+		JFrame frame = new JFrame("Login - Ospedale San Raffaele");
+		frame.setContentPane(loginView.mainPanel);
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setSize(1000, 680);
+		frame.setResizable(false);
+		frame.setLocationRelativeTo(null);
+
+		// Listener delegato dal bottone Accedi nella GUI
+		loginView.addLoginListener(e -> {
+			String username = loginView.getUsername();
+			String password = loginView.getPassword();
+
+			if (username.isEmpty() || password.isEmpty()) {
+				loginView.showMessage("Campi vuoti", "Inserisci Username e Password per accedere.", JOptionPane.WARNING_MESSAGE);
+				return;
+			}
+
+			if (whoIsAsking(username, password)) {
+				frame.dispose(); // Chiude la schermata di login
+				Utente utente = getUtenteLoggato();
+				if (utente instanceof Amministratore) {
+					Amministratore admin = (Amministratore) utente;
+					avviaSchermataAmministratore("Dott. " + admin.getNome() + " " + admin.getCognome());
+				} else if (utente instanceof Medico) {
+					Medico medico = (Medico) utente;
+					avviaSchermataMedico("Dott. " + medico.getNome() + " " + medico.getCognome());
+				}
+			} else {
+				loginView.showMessage("Errore di accesso", "Credenziali errate. Utente non trovato o password sbagliata.", JOptionPane.ERROR_MESSAGE);
+			}
+		});
+
+		// Listener delegato dal bottone (testo) "Registrati" nella GUI
+		loginView.addRegisterListener(new java.awt.event.MouseAdapter() {
+			@Override
+			public void mouseClicked(java.awt.event.MouseEvent e) {
+				frame.dispose();
+				avviaSchermataRegistrazione();
+			}
+		});
+
+		frame.setVisible(true);
+	}
+
+	private void avviaSchermataRegistrazione() {
+		gui.Registrazione regView = new gui.Registrazione();
+		JFrame frame = new JFrame("Registrazione - Ospedale San Raffaele");
+		frame.setContentPane(regView.registerPanel);
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setSize(1000, 680);
+		frame.setResizable(false);
+		frame.setLocationRelativeTo(null);
+
+		regView.addRegisterListener(e -> {
+			String nome = regView.getNome();
+			String cognome = regView.getCognome();
+			String username = regView.getUsername();
+			String password = regView.getPassword();
+			boolean isAdmin = regView.isAdmin();
+			String pin = regView.getPin();
+
+			if (nome.isEmpty() || cognome.isEmpty() || username.isEmpty() || password.isEmpty()) {
+				regView.showMessage("Errore", "Compila tutti i campi obbligatori (Nome, Cognome, Username, Password).", JOptionPane.ERROR_MESSAGE);
+				return;
+			}
+
+			if (isAdmin && pin.isEmpty()) {
+				regView.showMessage("Errore PIN", "Inserisci il PIN per registrarti come Amministratore.", JOptionPane.WARNING_MESSAGE);
+				return;
+			}
+
+			boolean successo = registrazione(username, password, nome, cognome, pin, isAdmin);
+
+			if (successo) {
+				regView.showMessage("Successo", "Registrazione completata con successo!\nBenvenuto " + nome + " " + cognome, JOptionPane.INFORMATION_MESSAGE);
+				frame.dispose();
+				avviaSchermataLogin(); // Torna al login
+			} else {
+				regView.showMessage("Errore Registrazione", "Registrazione fallita!\nVerifica che l'username non sia già in uso e, se hai selezionato 'Amministratore', che il PIN di sicurezza sia corretto.", JOptionPane.ERROR_MESSAGE);
+			}
+		});
+
+		regView.addLoginListener(new java.awt.event.MouseAdapter() {
+			@Override
+			public void mouseClicked(java.awt.event.MouseEvent e) {
+				frame.dispose();
+				avviaSchermataLogin();
+			}
+		});
+
+		frame.setVisible(true);
 	}
 }

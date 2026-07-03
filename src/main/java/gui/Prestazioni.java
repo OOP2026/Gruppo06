@@ -35,23 +35,22 @@ public class Prestazioni extends JFrame {
             "Tipo", "Reparto Erog.", "Note/Dettagli"
     };
 
-    private static final Object[][] DATI = {
-            {"ID: P001", "D001", "Intervento Chirurgia Bariatrica", "Chirurgia Gen.", "Blocco Operatorio", "Team spec."},
-            {"ID: P002", "R005", "RM Cardiaca con Contrasto", "Diagnostica Av.", "Neuroradiologia", "Cardiologo pres."},
-            {"ID: P003", "E101", "Colonscopia Robotica", "Procedure Endo.", "Blocco Operatorio", "Sedazione"},
-            {"ID: P004", "R201", "TC Cranio Alta Risoluzione", "Radiologia Inter.", "Blocco Operatorio", "Urgenze priorità"},
-            {"ID: P005", "D005", "TC Cranio Alta Risoluzione", "Radiologia Inter.", "Neuroradiologia", "Esame base"},
-            {"ID: P006", "D006", "TC Cranio (base)", "Diagnostica Av.", "Laboratorio Analisi", "Esame base"},
-            {"ID: P007", "D007", "Intervento Chirurgia Bariatrica", "Diagnostica Av.", "Neuroradiologia", "Team spec."},
-            {"ID: P008", "D008", "Intervento Chirurgia Assistita", "Procedure Endo.", "Neuroradiologia", "Sedazione"},
-            {"ID: P009", "D009", "Intervento Chirurgia Bariatrica", "Procedure Endo.", "Neuroradiologia", "Cardiologo pres."},
-    };
+    private Object[][] datiPrestazioni = new Object[0][0];
 
     public Prestazioni() {
         initComponents();
         setupStyles();
         setupListeners();
         loadTableData(null, null, null, null);
+    }
+
+    public void aggiornaTabella(Object[][] dati) {
+        this.datiPrestazioni = dati != null ? dati : new Object[0][0];
+        loadTableData(null, null, null, null);
+    }
+
+    public void addNuovaPrestazioneListener(java.awt.event.ActionListener listener) {
+        if (newprestazioneButton != null) newprestazioneButton.addActionListener(listener);
     }
 
     private void initComponents() {
@@ -181,7 +180,7 @@ public class Prestazioni extends JFrame {
         DefaultTableModel m = (DefaultTableModel) prestazioniTable.getModel();
         m.setRowCount(0);
 
-        for (Object[] row : DATI) {
+        for (Object[] row : datiPrestazioni) {
             String rCodice = ((String) row[1]).toLowerCase();
             String rNome = ((String) row[2]).toLowerCase();
             String rTipo = (String) row[3];

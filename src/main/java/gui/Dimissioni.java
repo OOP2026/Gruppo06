@@ -10,7 +10,7 @@ import java.util.Date;
 
 public class Dimissioni extends JFrame {
 
-    private JPanel JpanelPrincipale;
+    public JPanel JpanelPrincipale;
     private JTextField nomeCognomeField1;
     private JTextField codiceField;
     private JTextField idPazienteField;
@@ -35,21 +35,29 @@ public class Dimissioni extends JFrame {
             "Reparto Dimissione", "Tipo Dimissione", "Data Dimissione"
     };
 
-    private static final Object[][] DATI = {
-            {"ID: 12345", "Mario Rossi", "RSSMRA80A01H501U", "Chirurgia Generale", "Ordinaria", "10/05/2026"},
-            {"ID: 12346", "Luigi Bianchi", "BNCLGU85M21F839O", "Radiologia Interventistica", "Trasferimento", "12/05/2026"},
-            {"ID: 12347", "Giulia Verdi", "VRDGLI90C45A509Y", "Bariatria", "Ordinaria", "15/05/2026"},
-            {"ID: 12348", "Elena Neri", "NRELNE75P44L219J", "Chirurgia Generale", "Volontaria", "18/05/2026"},
-            {"ID: 12349", "Antonio Russo", "RSSNTN92B15F839V", "Radiologia Interventistica", "Ordinaria", "20/05/2026"}
-    };
-
     public Dimissioni() {
         initComponents();
         setupStyles();
     }
 
+    public void aggiornaTabella(Object[][] dati) {
+        if (PazientiTable != null) {
+            DefaultTableModel model = (DefaultTableModel) PazientiTable.getModel();
+            model.setRowCount(0);
+            if (dati != null) {
+                for (Object[] riga : dati) {
+                    model.addRow(riga);
+                }
+            }
+        }
+    }
+
+    public void addArchiviaDimissioneListener(java.awt.event.ActionListener listener) {
+        if (archiviaDimissioneButton != null) archiviaDimissioneButton.addActionListener(listener);
+    }
+
     private void initComponents() {
-        DefaultTableModel model = new DefaultTableModel(DATI, COLONNE) {
+        DefaultTableModel model = new DefaultTableModel(new Object[0][0], COLONNE) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;

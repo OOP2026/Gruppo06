@@ -13,7 +13,7 @@ public class RicoveroPostgresDao implements RicoveroDAO {
 
     @Override
     public boolean aggiungiRicovero(String cfPaziente, String idLetto, String dataInizio, String motivo) {
-        String query = "INSERT INTO ricoveri (cf_paziente, id_letto, data_inizio, motivo) VALUES (?, ?, ?, ?)";
+        String query = "INSERT INTO ricovero (cf_paziente, id_letto, data_inizio, motivo) VALUES (?, ?, ?, ?)";
         try (Connection conn = ConnessioneDatabase.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setString(1, cfPaziente);
@@ -29,7 +29,7 @@ public class RicoveroPostgresDao implements RicoveroDAO {
 
     @Override
     public boolean aggiornaRicoveroDimissione(String idRicovero, String dataFine, String prognosi, String esito) {
-        String query = "UPDATE ricoveri SET data_fine = ?, prognosi = ?, esito = ? WHERE id_ricovero = ?";
+        String query = "UPDATE ricovero SET data_fine = ?, prognosi = ?, esito = ? WHERE id_ricovero = ?";
         try (Connection conn = ConnessioneDatabase.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setTimestamp(1, java.sql.Timestamp.valueOf(dataFine));
@@ -45,7 +45,7 @@ public class RicoveroPostgresDao implements RicoveroDAO {
 
     @Override
     public ArrayList<String> getRicoveroAttivo(String cfPaziente) {
-        String query = "SELECT * FROM ricoveri WHERE cf_paziente = ? AND data_fine IS NULL";
+        String query = "SELECT * FROM ricovero WHERE cf_paziente = ? AND data_fine IS NULL";
         try (Connection conn = ConnessioneDatabase.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setString(1, cfPaziente);
@@ -74,7 +74,7 @@ public class RicoveroPostgresDao implements RicoveroDAO {
     @Override
     public ArrayList<ArrayList<String>> getAllDimissioni() {
         ArrayList<ArrayList<String>> dimissioni = new ArrayList<>();
-        String query = "SELECT * FROM ricoveri WHERE data_fine IS NOT NULL ORDER BY data_fine DESC";
+        String query = "SELECT * FROM ricovero WHERE data_fine IS NOT NULL ORDER BY data_fine DESC";
         try (Connection conn = ConnessioneDatabase.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query);
              ResultSet rs = stmt.executeQuery()) {

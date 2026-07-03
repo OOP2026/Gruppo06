@@ -37,20 +37,18 @@ public class Letti extends JFrame {
             "ID Letto", "Stanza", "Piano", "Reparto", "Tipo Letto", "Stato", "Paziente", "ID Paziente", "Data Amm."
     };
 
-    private static final Object[][] DATI = {
-            {"L001", "R101", "1", "Medicina Interna", "Standard", "Disponibile", "-", "-", "-"},
-            {"L002", "R102", "1", "Medicina Interna", "Standard", "Occupato", "Rossi Mario", "12345", "12/10/2023"},
-            {"L003", "R103", "1", "Chirurgia Generale", "Standard", "Occupato", "Bianchi Luigi", "23456", "14/10/2023"},
-            {"L004", "R201", "2", "Bariatria", "Monitorato", "Disponibile", "-", "-", "-"},
-            {"L005", "R202", "2", "Bariatria", "Monitorato", "Occupato", "Verdi Luca", "34567", "15/10/2023"},
-            {"L006", "R301", "3", "Terapia Intensiva", "ICU", "Occupato", "Neri Anna", "45678", "16/10/2023"},
-    };
+    private Object[][] datiLetti = new Object[0][0];
 
     public Letti() {
 
         initComponents();
         setupStyles();
         setupListeners();
+        loadTableData(null, null, "Tutti", "", "");
+    }
+
+    public void aggiornaTabella(Object[][] dati) {
+        this.datiLetti = dati != null ? dati : new Object[0][0];
         loadTableData(null, null, "Tutti", "", "");
     }
 
@@ -208,7 +206,7 @@ public class Letti extends JFrame {
         DefaultTableModel m = (DefaultTableModel) prestazioniTable.getModel();
         m.setRowCount(0);
 
-        for (Object[] row : DATI) {
+        for (Object[] row : datiLetti) {
             String rStanza = ((String) row[1]).toLowerCase();
             String rPiano = ((String) row[2]).toLowerCase();
             String rReparto = (String) row[3];

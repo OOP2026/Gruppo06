@@ -1,11 +1,5 @@
 package gui;
 
-import controller.Controller;
-import model.Utente;
-import model.Amministratore;
-import model.Medico;
-
-
 import javax.swing.*;
 import java.awt.Color;
 import java.awt.Cursor;
@@ -19,64 +13,30 @@ public class Login {
     private JTextField usernameField;
     private JLabel RegistratiLabel;
     private JPasswordField pinField;
-    private Controller controller = new Controller();
 
     public Login() {
         applicaStilePulsantiCentrali(accediButton);
         applicaStileLabelLink(RegistratiLabel);
-
-        accediButton.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                effettuaLogin();
-            }
-        });
-
-        RegistratiLabel.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                vaiAllaRegistrazione();
-            }
-        });
     }
 
-    private void effettuaLogin() {
-        String username = usernameField.getText().trim();
-        String password = new String(passwordField.getPassword()).trim();
-
-
-        if (username.isEmpty() || password.isEmpty()) {
-            JOptionPane.showMessageDialog(null,
-                    "Inserisci Username e Password per accedere.",
-                    "Campi vuoti", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
-
-        boolean accessoRiuscito = controller.whoIsAsking(username, password);
-
-        if (accessoRiuscito) {
-            JOptionPane.showMessageDialog(null,
-                    "Accesso eseguito con successo!",
-                    "Benvenuto", JOptionPane.INFORMATION_MESSAGE);
-
-            JFrame currentFrame = (JFrame) SwingUtilities.getWindowAncestor(mainPanel);
-            if (currentFrame != null) {
-                currentFrame.dispose();
-            }
-
-        } else {
-            JOptionPane.showMessageDialog(null,
-                    "Credenziali errate. Utente non trovato o password sbagliata.",
-                    "Errore di accesso", JOptionPane.ERROR_MESSAGE);
-        }
+    public String getUsername() {
+        return usernameField.getText().trim();
     }
 
-    private void vaiAllaRegistrazione() {
-        JFrame currentFrame = (JFrame) SwingUtilities.getWindowAncestor(mainPanel);
-        if (currentFrame != null) {
-            currentFrame.dispose();
-        }
-        Registrazione.main(null); // Richiama il main della classe Registrazione
+    public String getPassword() {
+        return new String(passwordField.getPassword()).trim();
+    }
+
+    public void addLoginListener(java.awt.event.ActionListener listener) {
+        accediButton.addActionListener(listener);
+    }
+
+    public void addRegisterListener(java.awt.event.MouseListener listener) {
+        RegistratiLabel.addMouseListener(listener);
+    }
+
+    public void showMessage(String title, String message, int messageType) {
+        JOptionPane.showMessageDialog(mainPanel, message, title, messageType);
     }
 
     private void applicaStilePulsantiCentrali(JButton bottone) {
@@ -136,15 +96,9 @@ public class Login {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Login");
-            Login loginLogic = new Login();
-            frame.setContentPane(loginLogic.mainPanel);
-
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.setSize(1000, 680);
-            frame.setResizable(false);
-            frame.setLocationRelativeTo(null);
-            frame.setVisible(true);
+            // Il Controller ora gestisce l'avvio dell'applicazione e le logiche!
+            controller.Controller controller = new controller.Controller();
+            controller.avvia();
         });
     }
 }

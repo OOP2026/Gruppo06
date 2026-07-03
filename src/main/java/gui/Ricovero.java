@@ -39,21 +39,22 @@ public class Ricovero extends JFrame {
             "Reparto di Ricovero", "Data Ingresso", "Ora Ingresso"
     };
 
-    private static final Object[][] DATI = {
-            {"1", "Mario Rossi", "RSSMRA80A01H501U", "Cardiologia", "10/05/2026", "08:30"},
-            {"2", "Luigi Bianchi", "BNCLGU85M21F839O", "Cardiologia", "10/05/2026", "09:15"},
-            {"3", "Giulia Verdi", "VRDGLI90C45A509Y", "Chirurgia Generale", "21/05/2026", "11:00"},
-            {"4", "Elena Neri", "NRELNE75P44L219J", "Cardiologia", "21/05/2026", "14:45"},
-            {"5", "Antonio Russo", "RSSNTN92B15F839V", "Cardiologia", "21/05/2026", "16:20"},
-            {"6", "Sara Esposito", "SRAESP95M41F839X", "Terapia Intensiva", "22/05/2026", "02:10"},
-            {"7", "Gennaro Savastano", "GNRSVS70B12H501Z", "Ortopedia", "15/05/2026", "10:05"}
-    };
+    private Object[][] datiRicoveri = new Object[0][0];
 
     public Ricovero() {
         initComponents();
         setupStyles();
         setupListeners();
         loadTableData(null, null, null);
+    }
+
+    public void aggiornaTabella(Object[][] dati) {
+        this.datiRicoveri = dati != null ? dati : new Object[0][0];
+        loadTableData(null, null, null);
+    }
+
+    public void addNuovoRicoveroListener(java.awt.event.ActionListener listener) {
+        if (nuovoRicoveroButton != null) nuovoRicoveroButton.addActionListener(listener);
     }
 
     private void initComponents() {
@@ -194,7 +195,7 @@ public class Ricovero extends JFrame {
         DefaultTableModel m = (DefaultTableModel) PazientiTable.getModel();
         m.setRowCount(0);
 
-        for (Object[] row : DATI) {
+        for (Object[] row : datiRicoveri) {
             String rNome = ((String) row[1]).toLowerCase();
             String rCodice = ((String) row[2]).toLowerCase();
             String rReparto = (String) row[3];

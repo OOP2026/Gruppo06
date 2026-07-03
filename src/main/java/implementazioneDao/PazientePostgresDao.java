@@ -60,7 +60,7 @@ public class PazientePostgresDao implements PazienteDAO {
     @Override
     public ArrayList<ArrayList<String>> getAllPazienti() {
         ArrayList<ArrayList<String>> pazienti = new ArrayList<>();
-        String query = "SELECT * FROM paziente";
+        String query = "SELECT * FROM pazienti";
         try (Connection conn = ConnessioneDatabase.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query);
              ResultSet rs = stmt.executeQuery()) {

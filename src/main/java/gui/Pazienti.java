@@ -41,6 +41,8 @@ public class Pazienti extends JFrame {
             "Sesso", "Residenza", "Stato Ricovero"
     };
 
+    private TableRowSorter<DefaultTableModel> sorter;
+
     public Pazienti() {
         initComponents();
         setupStyles();
@@ -54,6 +56,16 @@ public class Pazienti extends JFrame {
             }
         };
         PazientiTable.setModel(model);
+
+        sorter = new TableRowSorter<>(model);
+        PazientiTable.setRowSorter(sorter);
+
+        if (cercaButton != null) {
+            cercaButton.addActionListener(e -> eseguiRicerca());
+        }
+        if (resetButton != null) {
+            resetButton.addActionListener(e -> resettaRicerca());
+        }
 
         if (tipologiaList != null) {
             tipologiaList.setListData(new String[]{
@@ -165,7 +177,7 @@ public class Pazienti extends JFrame {
     }
 
     // Metodo per aggiornare la tabella con i dati reali dal database
-    public void aggiornaTabella(@org.checkerframework.checker.nullness.qual.MonotonicNonNull List<ArrayList<String>> datiPazienti) {
+    public void aggiornaTabella(List<ArrayList<String>> datiPazienti) {
         DefaultTableModel model = (DefaultTableModel) PazientiTable.getModel();
         model.setRowCount(0); // Svuota i vecchi dati finti/obsoleti
 
@@ -180,6 +192,41 @@ public class Pazienti extends JFrame {
 
             model.addRow(new Object[]{cf, nomeCognome, cf, sesso, residenza, statoRicovero});
         }
+    }
+
+    private void eseguiRicerca() {
+        if (sorter == null) return;
+        List<RowFilter<Object, Object>> filters = new ArrayList<>();
+
+        if (nomeField != null && !nomeField.getText().trim().isEmpty()) {
+            filters.add(RowFilter.regexFilter("(?i)" + nomeField.getText().trim(), 1)); // Colonna Nome
+        }
+        if (codiceField != null && !codiceField.getText().trim().isEmpty()) {
+            filters.add(RowFilter.regexFilter("(?i)" + codiceField.getText().trim(), 2)); // Colonna CF
+        }
+        if (residenzaField != null && !residenzaField.getText().trim().isEmpty()) {
+            filters.add(RowFilter.regexFilter("(?i)" + residenzaField.getText().trim(), 4)); // Colonna Residenza
+        }
+        if (maschioRadioButton != null && maschioRadioButton.isSelected()) {
+            filters.add(RowFilter.regexFilter("(?i)^M$", 3)); // Colonna Sesso
+        } else if (femminaRadioButton != null && femminaRadioButton.isSelected()) {
+            filters.add(RowFilter.regexFilter("(?i)^F$", 3)); // Colonna Sesso
+        }
+
+        if (filters.isEmpty()) {
+            sorter.setRowFilter(null);
+        } else {
+            sorter.setRowFilter(RowFilter.andFilter(filters));
+        }
+    }
+
+    private void resettaRicerca() {
+        if (nomeField != null) nomeField.setText("");
+        if (codiceField != null) codiceField.setText("");
+        if (residenzaField != null) residenzaField.setText("");
+        if (maschioRadioButton != null) maschioRadioButton.setSelected(false);
+        if (femminaRadioButton != null) femminaRadioButton.setSelected(false);
+        if (sorter != null) sorter.setRowFilter(null);
     }
 
     public static void main(String[] args) {

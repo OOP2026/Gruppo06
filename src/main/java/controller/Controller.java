@@ -84,7 +84,7 @@ public class Controller {
 		}
 
 		if (utenteDAO.checkLoginEsistente(login)) {
-			LOGGER.warning("Errore di registrazione: l'username '" + login + "' è già in uso.");
+			LOGGER.warning(() -> "Errore di registrazione: l'username '" + login + "' è già in uso.");
 			return false;
 		}
 
@@ -164,7 +164,7 @@ public class Controller {
 		// Business Logic: controlliamo se esiste già un medico con questa matricola
 		List<String> medicoEsistente = getMedicoByMatricola(matricola);
 		if (medicoEsistente != null && !medicoEsistente.isEmpty()) {
-			LOGGER.warning("Errore: Impossibile aggiungere. Esiste già un medico con matricola " + matricola);
+			LOGGER.warning(() -> "Errore: Impossibile aggiungere. Esiste già un medico con matricola " + matricola);
 			return false;
 		}
 		return medicoDAO.aggiungiMedico(nome, cognome, login, password, matricola, iscrizioneAlbo, specializzazione, reparto);
@@ -200,7 +200,7 @@ public class Controller {
 		// Business Logic: evitiamo di inserire un turno duplicato nello stesso giorno alla stessa ora di inizio
 		List<String> turnoEsistente = getTurno(matricola, data, inizioTurno);
 		if (turnoEsistente != null && !turnoEsistente.isEmpty()) {
-			LOGGER.warning("Errore: Il medico " + matricola + " ha già un turno assegnato il " + data + " con inizio alle " + inizioTurno);
+			LOGGER.warning(() -> "Errore: Il medico " + matricola + " ha già un turno assegnato il " + data + " con inizio alle " + inizioTurno);
 			return false;
 		}
 		return turnoDAO.aggiungiTurno(matricola, data, inizioTurno, fineTurno, idAgenda);
@@ -236,7 +236,7 @@ public class Controller {
 		// Business Logic: verificare se l'assenza esiste già (per evitare richieste duplicate)
 		List<String> assenzaEsistente = getAssenza(matricola, dataInizio);
 		if (assenzaEsistente != null && !assenzaEsistente.isEmpty()) {
-			LOGGER.warning("Errore: Esiste già una richiesta di assenza registrata a partire dal " + dataInizio + " per il medico " + matricola);
+			LOGGER.warning(() -> "Errore: Esiste già una richiesta di assenza registrata a partire dal " + dataInizio + " per il medico " + matricola);
 			return false;
 		}
 		return assenzaDAO.aggiungiAssenza(matricola, dataInizio, dataFine, motivazione, approvazione);
@@ -964,7 +964,8 @@ public class Controller {
 				dati[i][4] = "Attivo"; // Stato
 				dati[i][5] = "-"; // Note
 			} catch (Exception e) {
-				LOGGER.warning("Errore nella formattazione dei dati medici alla riga " + i + ": " + e.getMessage());
+				final int riga = i;
+				LOGGER.warning(() -> "Errore nella formattazione dei dati medici alla riga " + riga + ": " + e.getMessage());
 			}
 		}
 		return dati;
@@ -983,7 +984,8 @@ public class Controller {
 				dati[i][4] = d.size() > 4 ? d.get(4) : "-"; // Tipo (Esito)
 				dati[i][5] = d.size() > 5 ? d.get(5) : "-"; // Data
 			} catch (Exception e) {
-				LOGGER.warning("Errore nella formattazione dei dati dimissioni alla riga " + i + ": " + e.getMessage());
+				final int riga = i;
+				LOGGER.warning(() -> "Errore nella formattazione dei dati dimissioni alla riga " + riga + ": " + e.getMessage());
 			}
 		}
 		return dati;

@@ -64,13 +64,6 @@ public class Schermata_Amministratore extends JFrame {
 
         // --- POPOLA LA TABELLA DELL'AGENDA ---
         popolaTabellaAgenda();
-
-        // Esempio logica "Nuovo Evento"
-        if (newEventButton != null) {
-            newEventButton.addActionListener(e -> {
-                JOptionPane.showMessageDialog(this, "Apertura modulo per un nuovo evento...", "Nuovo Evento", JOptionPane.INFORMATION_MESSAGE);
-            });
-        }
     }
 
     // =========================================================
@@ -118,13 +111,22 @@ public class Schermata_Amministratore extends JFrame {
     }
 
     public void aggiornaAgenda(Object[][] dati) {
-        if (agendaTable != null) {
+        if (agendaTable != null && dati != null) {
             DefaultTableModel model = (DefaultTableModel) agendaTable.getModel();
             model.setRowCount(0); // Svuota la tabella dai vecchi dati
             for (Object[] riga : dati) {
                 model.addRow(riga);
             }
+            // Notifica esplicitamente alla tabella che i dati sono cambiati per forzare il refresh visivo
+            model.fireTableDataChanged();
         }
+    }
+
+    /**
+     * Restituisce il testo inserito nel campo di ricerca per passarlo al Controller
+     */
+    public String getTestoRicercaAgenda() {
+        return (dataField != null) ? dataField.getText().trim() : "";
     }
 
     /**

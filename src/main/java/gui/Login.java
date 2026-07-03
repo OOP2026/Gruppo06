@@ -11,12 +11,12 @@ public class Login {
     private JButton accediButton;
     public JPanel mainPanel;
     private JTextField usernameField;
-    private JLabel RegistratiLabel;
+    private JLabel registratiLabel;
     private JPasswordField pinField;
 
     public Login() {
         applicaStilePulsantiCentrali(accediButton);
-        applicaStileLabelLink(RegistratiLabel);
+        applicaStileLabelLink(registratiLabel);
     }
 
     public String getUsername() {
@@ -32,7 +32,7 @@ public class Login {
     }
 
     public void addRegisterListener(java.awt.event.MouseListener listener) {
-        RegistratiLabel.addMouseListener(listener);
+        registratiLabel.addMouseListener(listener);
     }
 
     public void showMessage(String title, String message, int messageType) {

@@ -5,8 +5,10 @@ import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
 public class Pazienti extends JFrame {
 
@@ -163,7 +165,7 @@ public class Pazienti extends JFrame {
     }
 
     // Metodo per aggiornare la tabella con i dati reali dal database
-    public void aggiornaTabella(java.util.ArrayList<java.util.ArrayList<String>> datiPazienti) {
+    public void aggiornaTabella(@org.checkerframework.checker.nullness.qual.MonotonicNonNull List<ArrayList<String>> datiPazienti) {
         DefaultTableModel model = (DefaultTableModel) PazientiTable.getModel();
         model.setRowCount(0); // Svuota i vecchi dati finti/obsoleti
 

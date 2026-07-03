@@ -5,8 +5,10 @@ import implementazioneDao.*;
 import model.*;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.logging.Logger;
 import javax.swing.*;
 import java.awt.*;
 
@@ -25,6 +27,22 @@ public class Controller {
 
 	private Utente utenteLoggato;
 	private JFrame finestraAttiva = null;
+	private JFrame homeFrame = null;
+
+	private static final String ERRORE_TITLE = "Errore";
+	private static final String SUCCESSO_TITLE = "Successo";
+	private static final String ERRORE_AGGIUNTA_DATI = "Errore durante l'aggiunta. Controlla i dati.";
+	private static final String MSG_CONFERMA_USCITA = "Sei sicuro di voler uscire?";
+	private static final String TITLE_CONFERMA_USCITA = "Conferma uscita";
+	private static final String LABEL_NOME = "Nome:";
+	private static final String LABEL_COGNOME = "Cognome:";
+	private static final String LABEL_MATRICOLA_MEDICO = "Matricola Medico:";
+	private static final String LABEL_DATA = "Data (AAAA-MM-GG):";
+	private static final String LABEL_ORA_INIZIO = "Ora Inizio (HH:MM:SS):";
+	private static final String LABEL_ORA_FINE = "Ora Fine (HH:MM:SS):";
+	private static final String DEFAULT_DATE = "2026-05-21";
+
+	private static final Logger LOGGER = Logger.getLogger(Controller.class.getName());
 
 	/**
 	 * Instantiates a new Controller.
@@ -61,12 +79,12 @@ public class Controller {
 	public boolean registrazione(String login, String password, String nome, String cognome, String pin, boolean isAdmin) {
 		// Logica di validazione: controlliamo che i campi base non siano vuoti
 		if (isNullOrEmpty(login) || isNullOrEmpty(password) || isNullOrEmpty(nome) || isNullOrEmpty(cognome)) {
-			System.err.println("Errore di registrazione: tutti i campi obbligatori devono essere compilati.");
+			LOGGER.warning("Errore di registrazione: tutti i campi obbligatori devono essere compilati.");
 			return false;
 		}
 
 		if (utenteDAO.checkLoginEsistente(login)) {
-			System.err.println("Errore di registrazione: l'username '" + login + "' è già in uso.");
+			LOGGER.warning("Errore di registrazione: l'username '" + login + "' è già in uso.");
 			return false;
 		}
 
@@ -91,7 +109,7 @@ public class Controller {
 	//Metodo di riconoscimento e futura impostazione schermata
 	public boolean whoIsAsking(String login, String password) {
 
-		ArrayList<String> datiUtente = utenteDAO.getUtenteByLoginAndPassword(login, password);
+		List<String> datiUtente = utenteDAO.getUtenteByLoginAndPassword(login, password);
 
 		if (datiUtente != null && !datiUtente.isEmpty()) {
 			String dbNome = datiUtente.get(0);
@@ -104,16 +122,16 @@ public class Controller {
 
 			if ("ADMIN".equals(dbRuolo) || "AMMINISTRATORE".equals(dbRuolo)) {
 				this.utenteLoggato = new Amministratore(dbLogin, dbPassword, dbMatricola, dbNome, dbCognome, dbPin);
-				System.out.println("Accesso Admin confermato.");
+				LOGGER.info("Accesso Admin confermato.");
 				return true;
 			} else if ("MEDICO".equals(dbRuolo)) {
 				this.utenteLoggato = new Medico(dbNome, dbCognome, dbLogin, dbPassword, dbMatricola);
-				System.out.println("Accesso Medico confermato.");
+				LOGGER.info("Accesso Medico confermato.");
 				return true;
 			}
 		}
 
-		System.out.println("Accesso negato, utente non trovato");
+		LOGGER.warning("Accesso negato, utente non trovato");
 		return false;
 	}
 
@@ -130,7 +148,7 @@ public class Controller {
 	 */
 	public void logout() {
 		this.utenteLoggato = null;
-		System.out.println("Logout effettuato con successo.");
+		LOGGER.info("Logout effettuato con successo.");
 	}
 
 	// =========================================================
@@ -140,23 +158,23 @@ public class Controller {
 	public boolean aggiungiMedico(String nome, String cognome, String login, String password, String matricola, String iscrizioneAlbo, String specializzazione, String reparto) {
 		// Validazione campi obbligatori
 		if (isNullOrEmpty(matricola) || isNullOrEmpty(nome) || isNullOrEmpty(cognome)) {
-			System.err.println("Errore: Nome, Cognome e Matricola sono campi obbligatori per il medico.");
+			LOGGER.warning("Errore: Nome, Cognome e Matricola sono campi obbligatori per il medico.");
 			return false;
 		}
 		// Business Logic: controlliamo se esiste già un medico con questa matricola
-		ArrayList<String> medicoEsistente = getMedicoByMatricola(matricola);
+		List<String> medicoEsistente = getMedicoByMatricola(matricola);
 		if (medicoEsistente != null && !medicoEsistente.isEmpty()) {
-			System.err.println("Errore: Impossibile aggiungere. Esiste già un medico con matricola " + matricola);
+			LOGGER.warning("Errore: Impossibile aggiungere. Esiste già un medico con matricola " + matricola);
 			return false;
 		}
 		return medicoDAO.aggiungiMedico(nome, cognome, login, password, matricola, iscrizioneAlbo, specializzazione, reparto);
 	}
 
-	public ArrayList<String> getMedicoByMatricola(String matricola) {
+	public List<String> getMedicoByMatricola(String matricola) {
 		return medicoDAO.getMedicoByMatricola(matricola);
 	}
 
-	public ArrayList<ArrayList<String>> getAllMedici() {
+	public List<ArrayList<String>> getAllMedici() {
 		return medicoDAO.getAllMedici();
 	}
 
@@ -172,27 +190,27 @@ public class Controller {
 	// METODI PER LA GESTIONE DEI TURNI DI LAVORO
 	// =========================================================
 
-	public boolean aggiungiTurno(String matricola, String data, String inizioTurno, String fineTurno, String id_agenda) {
+	public boolean aggiungiTurno(String matricola, String data, String inizioTurno, String fineTurno, String idAgenda) {
 		// Validazione input
-		if (isNullOrEmpty(matricola) || isNullOrEmpty(data) || isNullOrEmpty(inizioTurno) || isNullOrEmpty(fineTurno) || isNullOrEmpty(id_agenda)) {
-			System.err.println("Errore: Dati del turno incompleti.");
+		if (isNullOrEmpty(matricola) || isNullOrEmpty(data) || isNullOrEmpty(inizioTurno) || isNullOrEmpty(fineTurno) || isNullOrEmpty(idAgenda)) {
+			LOGGER.warning("Errore: Dati del turno incompleti.");
 			return false;
 		}
 
 		// Business Logic: evitiamo di inserire un turno duplicato nello stesso giorno alla stessa ora di inizio
-		ArrayList<String> turnoEsistente = getTurno(matricola, data, inizioTurno);
+		List<String> turnoEsistente = getTurno(matricola, data, inizioTurno);
 		if (turnoEsistente != null && !turnoEsistente.isEmpty()) {
-			System.err.println("Errore: Il medico " + matricola + " ha già un turno assegnato il " + data + " con inizio alle " + inizioTurno);
+			LOGGER.warning("Errore: Il medico " + matricola + " ha già un turno assegnato il " + data + " con inizio alle " + inizioTurno);
 			return false;
 		}
-		return turnoDAO.aggiungiTurno(matricola, data, inizioTurno, fineTurno, id_agenda);
+		return turnoDAO.aggiungiTurno(matricola, data, inizioTurno, fineTurno, idAgenda);
 	}
 
-	public ArrayList<String> getTurno(String matricola, String data, String inizioTurno) {
+	public List<String> getTurno(String matricola, String data, String inizioTurno) {
 		return turnoDAO.getTurno(matricola, data, inizioTurno);
 	}
 
-	public ArrayList<ArrayList<String>> getTurniByMedico(String matricola) {
+	public List<ArrayList<String>> getTurniByMedico(String matricola) {
 		return turnoDAO.getTurniByMedico(matricola);
 	}
 
@@ -211,24 +229,24 @@ public class Controller {
 	public boolean aggiungiAssenza(String matricola, String dataInizio, String dataFine, String motivazione, boolean approvazione) {
 		// Validazione input
 		if (isNullOrEmpty(matricola) || isNullOrEmpty(dataInizio) || isNullOrEmpty(dataFine)) {
-			System.err.println("Errore: Dati dell'assenza incompleti (matricola e date sono obbligatorie).");
+			LOGGER.warning("Errore: Dati dell'assenza incompleti (matricola e date sono obbligatorie).");
 			return false;
 		}
 
 		// Business Logic: verificare se l'assenza esiste già (per evitare richieste duplicate)
-		ArrayList<String> assenzaEsistente = getAssenza(matricola, dataInizio);
+		List<String> assenzaEsistente = getAssenza(matricola, dataInizio);
 		if (assenzaEsistente != null && !assenzaEsistente.isEmpty()) {
-			System.err.println("Errore: Esiste già una richiesta di assenza registrata a partire dal " + dataInizio + " per il medico " + matricola);
+			LOGGER.warning("Errore: Esiste già una richiesta di assenza registrata a partire dal " + dataInizio + " per il medico " + matricola);
 			return false;
 		}
 		return assenzaDAO.aggiungiAssenza(matricola, dataInizio, dataFine, motivazione, approvazione);
 	}
 
-	public ArrayList<String> getAssenza(String matricola, String dataInizio) {
+	public List<String> getAssenza(String matricola, String dataInizio) {
 		return assenzaDAO.getAssenza(matricola, dataInizio);
 	}
 
-	public ArrayList<ArrayList<String>> getAssenzeByMedico(String matricola) {
+	public List<ArrayList<String>> getAssenzeByMedico(String matricola) {
 		return assenzaDAO.getAssenzeByMedico(matricola);
 	}
 
@@ -244,7 +262,7 @@ public class Controller {
 	// METODI AMMINISTRATORE (PAZIENTI, LETTI, RICOVERI E DIMISSIONI)
 	// =========================================================
 
-	public ArrayList<ArrayList<String>> getAllPazienti() {
+	public List<ArrayList<String>> getAllPazienti() {
 		return pazienteDAO.getAllPazienti();
 	}
 
@@ -259,8 +277,8 @@ public class Controller {
 
 		JPanel panel = new JPanel(new GridLayout(7, 2, 10, 10));
 		panel.add(new JLabel("Codice Fiscale:")); panel.add(cfInput);
-		panel.add(new JLabel("Nome:")); panel.add(nomeInput);
-		panel.add(new JLabel("Cognome:")); panel.add(cognomeInput);
+		panel.add(new JLabel(LABEL_NOME)); panel.add(nomeInput);
+		panel.add(new JLabel(LABEL_COGNOME)); panel.add(cognomeInput);
 		panel.add(new JLabel("Data Nascita (AAAA-MM-GG):")); panel.add(dataNascitaInput);
 		panel.add(new JLabel("Sesso (M/F):")); panel.add(sessoInput);
 		panel.add(new JLabel("Residenza:")); panel.add(residenzaInput);
@@ -279,10 +297,10 @@ public class Controller {
 
 			boolean successo = anagraficaPaziente(cf, nome, cognome, dataNascita, sesso, residenza, diagnosi);
 			if (successo) {
-				JOptionPane.showMessageDialog(null, "Paziente aggiunto con successo al database!", "Successo", JOptionPane.INFORMATION_MESSAGE);
+				JOptionPane.showMessageDialog(null, "Paziente aggiunto con successo al database!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
 				return true;
 			} else {
-				JOptionPane.showMessageDialog(null, "Errore durante l'aggiunta. Controlla i dati o possibili CF duplicati.", "Errore", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(null, "Errore durante l'aggiunta. Controlla i dati o possibili CF duplicati.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
 			}
 		}
 		return false;
@@ -290,12 +308,12 @@ public class Controller {
 
 	public boolean anagraficaPaziente(String cf, String nome, String cognome, String dataNascita, String sesso, String residenza, String diagnosi) {
 		if (isNullOrEmpty(cf) || isNullOrEmpty(nome) || isNullOrEmpty(cognome)) {
-			System.err.println("Errore: CF, Nome e Cognome obbligatori.");
+			LOGGER.warning("Errore: CF, Nome e Cognome obbligatori.");
 			return false;
 		}
-		ArrayList<String> esiste = pazienteDAO.getPazienteByCf(cf);
+		List<String> esiste = pazienteDAO.getPazienteByCf(cf);
 		if (esiste != null && !esiste.isEmpty()) {
-			System.err.println("Errore: Paziente già registrato con questo CF.");
+			LOGGER.warning("Errore: Paziente già registrato con questo CF.");
 			return false;
 		}
 		return pazienteDAO.aggiungiPaziente(cf, nome, cognome, dataNascita, sesso, residenza, diagnosi);
@@ -313,12 +331,12 @@ public class Controller {
 
 	public boolean registraRicovero(String cfPaziente, String idLetto, String motivo) {
 		if (isNullOrEmpty(cfPaziente) || isNullOrEmpty(idLetto)) {
-			System.err.println("Errore: CF Paziente o ID Letto mancanti.");
+			LOGGER.warning("Errore: CF Paziente o ID Letto mancanti.");
 			return false;
 		}
 		
 		if (!checkDisponibilitaLetto(idLetto)) {
-			System.err.println("Errore: Letto non disponibile o inesistente.");
+			LOGGER.warning("Errore: Letto non disponibile o inesistente.");
 			return false;
 		}
 
@@ -327,7 +345,7 @@ public class Controller {
 		
 		if (successo) {
 			lettoDAO.aggiornaStatoLetto(idLetto, true); // Cambia lo stato del letto ad occupato.
-			System.out.println("Ricovero registrato e letto assegnato con successo.");
+			LOGGER.info("Ricovero registrato e letto assegnato con successo.");
 		}
 		return successo;
 	}
@@ -347,11 +365,11 @@ public class Controller {
 		}
 
 		// 2. Ottieni la lista di pazienti non ricoverati
-		ArrayList<ArrayList<String>> tuttiPazienti = pazienteDAO.getAllPazienti();
-		ArrayList<String> pazientiDisponibili = new ArrayList<>();
-		ArrayList<String> cfPazientiDisponibili = new ArrayList<>();
+		List<ArrayList<String>> tuttiPazienti = pazienteDAO.getAllPazienti();
+		List<String> pazientiDisponibili = new ArrayList<>();
+		List<String> cfPazientiDisponibili = new ArrayList<>();
 
-		for (ArrayList<String> datiPaziente : tuttiPazienti) {
+		for (List<String> datiPaziente : tuttiPazienti) {
 			String cf = datiPaziente.get(0);
 			String nome = datiPaziente.get(1);
 			String cognome = datiPaziente.get(2);
@@ -401,9 +419,9 @@ public class Controller {
 	}
 
 	public boolean dimissioni(String cfPaziente, String esito, int giorniPrognosi) {
-		ArrayList<String> ricoveroAttivo = ricoveroDAO.getRicoveroAttivo(cfPaziente);
+		List<String> ricoveroAttivo = ricoveroDAO.getRicoveroAttivo(cfPaziente);
 		if (ricoveroAttivo == null || ricoveroAttivo.isEmpty()) {
-			System.err.println("Errore: Il paziente non ha un ricovero attivo.");
+			LOGGER.warning("Errore: Il paziente non ha un ricovero attivo.");
 			return false;
 		}
 		
@@ -415,17 +433,17 @@ public class Controller {
 		boolean successo = ricoveroDAO.aggiornaRicoveroDimissione(idRicovero, dataFine, prognosi, esito);
 		if (successo) {
 			lettoDAO.aggiornaStatoLetto(idLetto, false); // Libera il letto
-			System.out.println("Paziente dimesso e letto liberato.");
+			LOGGER.info("Paziente dimesso e letto liberato.");
 		}
 		return successo;
 	}
 
-	public ArrayList<ArrayList<String>> ricercaDimissioni() {
+	public List<ArrayList<String>> ricercaDimissioni() {
 		return ricoveroDAO.getAllDimissioni();
 	}
 
 	public boolean checkDisponibilitaLetto(String idLetto) {
-		ArrayList<String> letto = lettoDAO.getLettoById(idLetto);
+		List<String> letto = lettoDAO.getLettoById(idLetto);
 		if (letto != null && !letto.isEmpty()) {
 			return "false".equals(letto.get(2)); // true se il letto (parametro occupato=false) è libero.
 		}
@@ -436,9 +454,9 @@ public class Controller {
 	// METODI PER LA GESTIONE DELL'AGENDA
 	// =========================================================
 
-	public ArrayList<Agenda> getEventiPerMedico(String matricola) {
+	public List<Agenda> getEventiPerMedico(String matricola) {
 		if (isNullOrEmpty(matricola)) {
-			System.err.println("Matricola non valida per la ricerca eventi.");
+			LOGGER.warning("Matricola non valida per la ricerca eventi.");
 			return new ArrayList<>(); // Ritorna una lista vuota per evitare NullPointerException
 		}
 		return agendaDAO.getEventiByMedico(matricola);
@@ -446,7 +464,7 @@ public class Controller {
 
 	public boolean addEvento(Agenda evento) {
 		if (evento == null) {
-			System.err.println("Errore: L'oggetto evento non può essere nullo.");
+			LOGGER.warning("Errore: L'oggetto evento non può essere nullo.");
 			return false;
 		}
 		// Business Logic: Controlla sovrapposizioni prima di aggiungere
@@ -459,7 +477,7 @@ public class Controller {
 
 	public boolean updateEvento(Agenda evento) {
 		if (evento == null) {
-			System.err.println("Errore: L'oggetto evento non può essere nullo.");
+			LOGGER.warning("Errore: L'oggetto evento non può essere nullo.");
 			return false;
 		}
 		// Business Logic: Controlla sovrapposizioni prima di aggiornare
@@ -475,7 +493,7 @@ public class Controller {
 	}
 
 	private boolean checkSovrapposizioneEvento(Agenda nuovoEvento) {
-		ArrayList<Agenda> eventiEsistenti = getEventiPerMedico(nuovoEvento.getMatricolaMedico());
+		List<Agenda> eventiEsistenti = getEventiPerMedico(nuovoEvento.getMatricolaMedico());
 		for (Agenda eventoEsistente : eventiEsistenti) {
 			// Salta il controllo se stiamo modificando lo stesso evento
 			if (eventoEsistente.getIdEvento() == nuovoEvento.getIdEvento()) {
@@ -502,8 +520,8 @@ public class Controller {
 		JTextField repartoInput = new JTextField();
 
 		JPanel panel = new JPanel(new GridLayout(8, 2, 10, 10));
-		panel.add(new JLabel("Nome:")); panel.add(nomeInput);
-		panel.add(new JLabel("Cognome:")); panel.add(cognomeInput);
+		panel.add(new JLabel(LABEL_NOME)); panel.add(nomeInput);
+		panel.add(new JLabel(LABEL_COGNOME)); panel.add(cognomeInput);
 		panel.add(new JLabel("Username (Login):")); panel.add(loginInput);
 		panel.add(new JLabel("Password:")); panel.add(passwordInput);
 		panel.add(new JLabel("Matricola:")); panel.add(matricolaInput);
@@ -525,10 +543,10 @@ public class Controller {
 
 			boolean successo = aggiungiMedico(nome, cognome, login, password, matricola, iscrizioneAlbo, specializzazione, reparto);
 			if (successo) {
-				JOptionPane.showMessageDialog(null, "Medico aggiunto con successo al database!", "Successo", JOptionPane.INFORMATION_MESSAGE);
+				JOptionPane.showMessageDialog(null, "Medico aggiunto con successo al database!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
 				return true;
 			} else {
-				JOptionPane.showMessageDialog(null, "Errore durante l'aggiunta. Controlla i dati.", "Errore", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(null, ERRORE_AGGIUNTA_DATI, ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
 			}
 		}
         return false;
@@ -536,27 +554,33 @@ public class Controller {
 
 	public boolean gestisciCreazioneNuovoTurno() {
 		JTextField matricolaInput = new JTextField();
-		JTextField dataInput = new JTextField("2026-05-21"); // YYYY-MM-DD
+		JTextField dataInput = new JTextField(DEFAULT_DATE); // YYYY-MM-DD
 		JTextField inizioInput = new JTextField("08:00:00");
 		JTextField fineInput = new JTextField("14:00:00");
 		JTextField idAgendaInput = new JTextField();
 
 		JPanel panel = new JPanel(new GridLayout(5, 2, 10, 10));
-		panel.add(new JLabel("Matricola Medico:")); panel.add(matricolaInput);
-		panel.add(new JLabel("Data (AAAA-MM-GG):")); panel.add(dataInput);
-		panel.add(new JLabel("Ora Inizio (HH:MM:SS):")); panel.add(inizioInput);
-		panel.add(new JLabel("Ora Fine (HH:MM:SS):")); panel.add(fineInput);
+		panel.add(new JLabel(LABEL_MATRICOLA_MEDICO)); panel.add(matricolaInput);
+		panel.add(new JLabel(LABEL_DATA)); panel.add(dataInput);
+		panel.add(new JLabel(LABEL_ORA_INIZIO)); panel.add(inizioInput);
+		panel.add(new JLabel(LABEL_ORA_FINE)); panel.add(fineInput);
 		panel.add(new JLabel("ID Agenda:")); panel.add(idAgendaInput);
 
 		int result = JOptionPane.showConfirmDialog(null, panel, "Registra Nuovo Turno", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 
 		if (result == JOptionPane.OK_OPTION) {
-			boolean successo = aggiungiTurno(matricolaInput.getText().trim(), dataInput.getText().trim(), inizioInput.getText().trim(), fineInput.getText().trim(), idAgendaInput.getText().trim());
-			if (successo) {
-				JOptionPane.showMessageDialog(null, "Turno aggiunto con successo!", "Successo", JOptionPane.INFORMATION_MESSAGE);
-				return true;
-			} else {
-				JOptionPane.showMessageDialog(null, "Errore durante l'aggiunta. Controlla i dati.", "Errore", JOptionPane.ERROR_MESSAGE);
+			try {
+				boolean successo = aggiungiTurno(matricolaInput.getText().trim(), dataInput.getText().trim(), inizioInput.getText().trim(), fineInput.getText().trim(), idAgendaInput.getText().trim());
+				if (successo) {
+					JOptionPane.showMessageDialog(null, "Turno aggiunto con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
+					return true;
+				} else {
+					JOptionPane.showMessageDialog(null, ERRORE_AGGIUNTA_DATI, ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+				}
+			} catch (NumberFormatException e) {
+				JOptionPane.showMessageDialog(null, "L'ID Agenda deve essere un numero intero valido.", "Errore di Parsing", JOptionPane.ERROR_MESSAGE);
+			} catch (IllegalArgumentException ex) {
+				JOptionPane.showMessageDialog(null, "Formato data o ora non valido. Assicurati di usare AAAA-MM-GG e HH:MM:SS", "Errore di Parsing", JOptionPane.ERROR_MESSAGE);
 			}
 		}
         return false;
@@ -577,10 +601,10 @@ public class Controller {
 		if (result == JOptionPane.OK_OPTION) {
 			boolean successo = registraRicovero(cfInput.getText().trim(), lettoInput.getText().trim(), motivoInput.getText().trim());
 			if (successo) {
-				JOptionPane.showMessageDialog(null, "Ricovero aggiunto con successo!", "Successo", JOptionPane.INFORMATION_MESSAGE);
+				JOptionPane.showMessageDialog(null, "Ricovero aggiunto con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
 				return true;
 			} else {
-				JOptionPane.showMessageDialog(null, "Errore durante l'aggiunta. Controlla disponibilità letto e CF.", "Errore", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(null, "Errore durante l'aggiunta. Controlla disponibilità letto e CF.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
 			}
 		}
         return false;
@@ -602,13 +626,13 @@ public class Controller {
             try {
 			    boolean successo = dimissioni(cfInput.getText().trim(), esitoInput.getText().trim(), Integer.parseInt(prognosiInput.getText().trim()));
 			    if (successo) {
-				    JOptionPane.showMessageDialog(null, "Dimissione registrata con successo!", "Successo", JOptionPane.INFORMATION_MESSAGE);
+				    JOptionPane.showMessageDialog(null, "Dimissione registrata con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
 				    return true;
 			    } else {
-				    JOptionPane.showMessageDialog(null, "Errore durante l'archiviazione. Il paziente è ricoverato?", "Errore", JOptionPane.ERROR_MESSAGE);
+				    JOptionPane.showMessageDialog(null, "Errore durante l'archiviazione. Il paziente è ricoverato?", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
 			    }
             } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(null, "Inserisci un numero valido per la prognosi.", "Errore", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(null, "Inserisci un numero valido per la prognosi.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
             }
 		}
         return false;
@@ -623,6 +647,22 @@ public class Controller {
 		if (finestraAttiva != null && finestraAttiva.isVisible()) {
 			finestraAttiva.dispose();
 		}
+
+		// Nasconde la schermata principale (Home) per mostrare solo la nuova
+		if (homeFrame != null && homeFrame.isVisible()) {
+			homeFrame.setVisible(false);
+		}
+
+		// Quando la finestra secondaria viene chiusa, riapriamo la schermata principale
+		nuovaFinestra.addWindowListener(new java.awt.event.WindowAdapter() {
+			@Override
+			public void windowClosed(java.awt.event.WindowEvent e) {
+				if (homeFrame != null) {
+					homeFrame.setVisible(true);
+				}
+			}
+		});
+
 		finestraAttiva = nuovaFinestra;
 		finestraAttiva.setVisible(true);
 	}
@@ -630,6 +670,8 @@ public class Controller {
 	public void avviaSchermataAmministratore(String nomeUtente) {
 		gui.Schermata_Amministratore adminFrame = new gui.Schermata_Amministratore(nomeUtente);
 		
+		homeFrame = adminFrame; // Imposta come schermata principale
+
 		// Il Controller si iscrive agli eventi della GUI "stupida"
 		adminFrame.addPazientiListener(e -> apriSchermataPazienti());
 		adminFrame.addLettiListener(e -> apriSchermataLetti());
@@ -648,8 +690,9 @@ public class Controller {
 		
 		// Gestione del tasto esci
 		adminFrame.addEsciListener(e -> {
-			int conferma = JOptionPane.showConfirmDialog(null, "Sei sicuro di voler uscire?", "Conferma uscita", JOptionPane.YES_NO_OPTION);
+			int conferma = JOptionPane.showConfirmDialog(null, MSG_CONFERMA_USCITA, TITLE_CONFERMA_USCITA, JOptionPane.YES_NO_OPTION);
 			if (conferma == JOptionPane.YES_OPTION) {
+				homeFrame = null; // Rimuove il riferimento prima di chiudere tutto
 				if (finestraAttiva != null) finestraAttiva.dispose(); // Chiude eventuali finestre figlie aperte
 				adminFrame.dispose();
 				logout();
@@ -669,7 +712,7 @@ public class Controller {
 		pazientiFrame.setTitle("Gestione Pazienti");
 		pazientiFrame.setSize(1100, 750);
 		pazientiFrame.setLocationRelativeTo(null);
-		pazientiFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		pazientiFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
         pazientiFrame.addNuovoPazienteListener(e -> {
             if (gestisciCreazioneNuovoPaziente()) {
@@ -686,7 +729,7 @@ public class Controller {
 	 * @param lettiFrame Il frame della GUI che contiene la tabella.
 	 */
 	private void ricaricaEAggiornaTabellaLetti(gui.Letti lettiFrame) {
-		ArrayList<ArrayList<String>> datiLetti = lettoDAO.getAllLetti();
+		List<ArrayList<String>> datiLetti = lettoDAO.getAllLetti();
 		Object[][] datiPerTabella = preparaDatiLettiPerTabella(datiLetti);
 		lettiFrame.aggiornaTabella(datiPerTabella);
 	}
@@ -694,6 +737,12 @@ public class Controller {
 	public void apriSchermataLetti() {
 		// 1. Crea l'istanza della schermata
 		gui.Letti lettiFrame = new gui.Letti();
+
+		// Imposta le proprietà della finestra per farla aprire al centro
+		lettiFrame.setTitle("Gestione Letti");
+		lettiFrame.setSize(1000, 680);
+		lettiFrame.setLocationRelativeTo(null);
+		lettiFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
 		// 2. Collega il pulsante "Assegna Paziente" alla sua logica
 		lettiFrame.addAssegnaPazienteListener(e -> {
@@ -731,7 +780,7 @@ public class Controller {
 		prestazioniFrame.setTitle("Ricerca Prestazioni Mediche");
 		prestazioniFrame.setSize(1000, 680);
 		prestazioniFrame.setLocationRelativeTo(null);
-		prestazioniFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		prestazioniFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 		prestazioniFrame.aggiornaTabella(new Object[0][0]); // TODO: Integrare con relativo DAO per DB
 		mostraFinestraSecondaria(prestazioniFrame);
 	}
@@ -739,6 +788,8 @@ public class Controller {
 	public void avviaSchermataMedico(String nomeUtente) {
 		gui.Schermata_Medico medicoHome = new gui.Schermata_Medico(nomeUtente);
 		
+		homeFrame = medicoHome; // Imposta come schermata principale
+
 		// Esposizione e deleghe per il Medico
 		medicoHome.addPazientiListener(e -> apriSchermataPazienti());
 		medicoHome.addLettiListener(e -> apriSchermataLetti());
@@ -755,8 +806,9 @@ public class Controller {
         aggiornaAgendaGUI(medicoHome);
 		
 		medicoHome.addEsciListener(e -> {
-			int conferma = JOptionPane.showConfirmDialog(null, "Sei sicuro di voler uscire?", "Conferma uscita", JOptionPane.YES_NO_OPTION);
+			int conferma = JOptionPane.showConfirmDialog(null, MSG_CONFERMA_USCITA, TITLE_CONFERMA_USCITA, JOptionPane.YES_NO_OPTION);
 			if (conferma == JOptionPane.YES_OPTION) {
+				homeFrame = null; // Rimuove il riferimento prima di chiudere tutto
 				if (finestraAttiva != null) finestraAttiva.dispose(); // Chiude eventuali finestre figlie aperte
 				medicoHome.dispose();
 				logout();
@@ -775,7 +827,7 @@ public class Controller {
 		mediciFrame.setTitle("Gestione Medici");
 		mediciFrame.setSize(1000, 680);
 		mediciFrame.setLocationRelativeTo(null);
-		mediciFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		mediciFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
         mediciFrame.addNuovoMedicoListener(e -> {
             if (gestisciCreazioneNuovoMedico()) {
@@ -795,7 +847,7 @@ public class Controller {
 		dimissioniFrame.setTitle("Ricerca Dimissioni");
 		dimissioniFrame.setSize(1164, 680);
 		dimissioniFrame.setLocationRelativeTo(null);
-		dimissioniFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		dimissioniFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
         dimissioniFrame.addArchiviaDimissioneListener(e -> {
             if (gestisciArchiviaDimissione()) {
@@ -815,7 +867,7 @@ public class Controller {
 		ricoveroFrame.setTitle("Ricerca Ricovero");
 		ricoveroFrame.setSize(1024, 680);
 		ricoveroFrame.setLocationRelativeTo(null);
-		ricoveroFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		ricoveroFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
         ricoveroFrame.addNuovoRicoveroListener(e -> {
             if (gestisciCreazioneNuovoRicovero()) {
@@ -835,7 +887,7 @@ public class Controller {
 		turniFrame.setTitle("Gestione Turni Lavorativi");
 		turniFrame.setSize(1044, 680);
 		turniFrame.setLocationRelativeTo(null);
-		turniFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+		turniFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
         turniFrame.addNuovoTurnoListener(e -> {
             if (gestisciCreazioneNuovoTurno()) {
@@ -851,7 +903,7 @@ public class Controller {
 		JTextField idEventoInput = new JTextField();
 		String defaultMatricola = utenteLoggato != null ? utenteLoggato.getMatricola() : "";
 		JTextField matricolaInput = new JTextField(defaultMatricola);
-		JTextField dataInput = new JTextField("2026-05-21");
+		JTextField dataInput = new JTextField(DEFAULT_DATE);
 		JTextField oraInizioInput = new JTextField("08:30:00");
 		JTextField oraFineInput = new JTextField("10:00:00");
 		JTextField titoloInput = new JTextField("Nuova Visita");
@@ -859,10 +911,10 @@ public class Controller {
 
 		JPanel panel = new JPanel(new GridLayout(7, 2, 10, 10));
 		panel.add(new JLabel("ID Evento:")); panel.add(idEventoInput);
-		panel.add(new JLabel("Matricola Medico:")); panel.add(matricolaInput);
-		panel.add(new JLabel("Data (AAAA-MM-GG):")); panel.add(dataInput);
-		panel.add(new JLabel("Ora Inizio (HH:MM:SS):")); panel.add(oraInizioInput);
-		panel.add(new JLabel("Ora Fine (HH:MM:SS):")); panel.add(oraFineInput);
+		panel.add(new JLabel(LABEL_MATRICOLA_MEDICO)); panel.add(matricolaInput);
+		panel.add(new JLabel(LABEL_DATA)); panel.add(dataInput);
+		panel.add(new JLabel(LABEL_ORA_INIZIO)); panel.add(oraInizioInput);
+		panel.add(new JLabel(LABEL_ORA_FINE)); panel.add(oraFineInput);
 		panel.add(new JLabel("Titolo:")); panel.add(titoloInput);
 		panel.add(new JLabel("Descrizione:")); panel.add(descrizioneInput);
 
@@ -886,24 +938,24 @@ public class Controller {
                     JOptionPane.showMessageDialog(null, "Evento inserito con successo nel DB!");
                     return true;
                 } else {
-                    JOptionPane.showMessageDialog(null, "Errore. Verifica eventuali sovrapposizioni.", "Errore", JOptionPane.ERROR_MESSAGE);
+                    JOptionPane.showMessageDialog(null, "Errore. Verifica eventuali sovrapposizioni.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
                 }
             } catch (NumberFormatException e) {
                 JOptionPane.showMessageDialog(null, "L'ID Evento deve essere un numero intero valido.", "Errore Input", JOptionPane.ERROR_MESSAGE);
             } catch (IllegalArgumentException ex) {
-                JOptionPane.showMessageDialog(null, "Formato data o ora non valido.", "Errore", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(null, "Formato data o ora non valido.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
             } catch (Exception e) {
-                JOptionPane.showMessageDialog(null, "Errore nella creazione dell'evento.", "Errore", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(null, "Errore nella creazione dell'evento.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
             }
 		}
         return false;
 	}
 
-	private Object[][] formattaDatiMedici(ArrayList<ArrayList<String>> mediciDb) {
+	private Object[][] formattaDatiMedici(List<ArrayList<String>> mediciDb) {
 		if (mediciDb == null) return new Object[0][0];
 		Object[][] dati = new Object[mediciDb.size()][6];
 		for (int i = 0; i < mediciDb.size(); i++) {
-			ArrayList<String> m = mediciDb.get(i);
+			List<String> m = mediciDb.get(i);
 			try {
 				dati[i][0] = m.size() > 4 ? m.get(4) : "-"; // Matricola
 				dati[i][1] = (m.size() > 1 ? m.get(1) : "") + " " + (m.size() > 0 ? m.get(0) : ""); // Cognome Nome
@@ -911,16 +963,18 @@ public class Controller {
 				dati[i][3] = m.size() > 7 ? m.get(7) : "-"; // Reparto Assegnato
 				dati[i][4] = "Attivo"; // Stato
 				dati[i][5] = "-"; // Note
-			} catch (Exception e) { }
+			} catch (Exception e) {
+				LOGGER.warning("Errore nella formattazione dei dati medici alla riga " + i + ": " + e.getMessage());
+			}
 		}
 		return dati;
 	}
 
-	private Object[][] formattaDatiDimissioni(ArrayList<ArrayList<String>> dimDb) {
+	private Object[][] formattaDatiDimissioni(List<ArrayList<String>> dimDb) {
 		if (dimDb == null) return new Object[0][0];
 		Object[][] dati = new Object[dimDb.size()][6];
 		for (int i = 0; i < dimDb.size(); i++) {
-			ArrayList<String> d = dimDb.get(i);
+			List<String> d = dimDb.get(i);
 			try {
 				dati[i][0] = d.size() > 0 ? d.get(0) : "-"; // ID Paziente / CF
 				dati[i][1] = d.size() > 1 ? d.get(1) : "-"; // Paziente
@@ -928,12 +982,14 @@ public class Controller {
 				dati[i][3] = d.size() > 3 ? d.get(3) : "-"; // Reparto
 				dati[i][4] = d.size() > 4 ? d.get(4) : "-"; // Tipo (Esito)
 				dati[i][5] = d.size() > 5 ? d.get(5) : "-"; // Data
-			} catch (Exception e) { }
+			} catch (Exception e) {
+				LOGGER.warning("Errore nella formattazione dei dati dimissioni alla riga " + i + ": " + e.getMessage());
+			}
 		}
 		return dati;
 	}
 
-	private Object[][] formattaDatiAgenda(ArrayList<Agenda> eventi) {
+	private Object[][] formattaDatiAgenda(List<Agenda> eventi) {
         if (eventi == null) return new Object[0][0];
 		Object[][] dati = new Object[eventi.size()][2];
 		for (int i = 0; i < eventi.size(); i++) {
@@ -953,14 +1009,14 @@ public class Controller {
 	 * @param datiLetti La lista di letti proveniente dal DAO.
 	 * @return Una matrice di Object pronta per essere mostrata in una JTable.
 	 */
-	private Object[][] preparaDatiLettiPerTabella(ArrayList<ArrayList<String>> datiLetti) {
+	private Object[][] preparaDatiLettiPerTabella(List<ArrayList<String>> datiLetti) {
 		if (datiLetti == null || datiLetti.isEmpty()) {
 			return new Object[0][3];
 		}
 
 		Object[][] dati = new Object[datiLetti.size()][3];
 		for (int i = 0; i < datiLetti.size(); i++) {
-			ArrayList<String> letto = datiLetti.get(i);
+			List<String> letto = datiLetti.get(i);
 			dati[i][0] = letto.get(0); // ID Letto
 			dati[i][1] = letto.get(1); // Reparto
 			dati[i][2] = Boolean.parseBoolean(letto.get(2)) ? "Occupato" : "Disponibile";
@@ -987,7 +1043,7 @@ public class Controller {
 		gui.Login loginView = new gui.Login();
 		JFrame frame = new JFrame("Login - Ospedale San Raffaele");
 		frame.setContentPane(loginView.mainPanel);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		frame.setSize(1000, 680);
 		frame.setResizable(false);
 		frame.setLocationRelativeTo(null);
@@ -1004,14 +1060,7 @@ public class Controller {
 
 			if (whoIsAsking(username, password)) {
 				frame.dispose(); // Chiude la schermata di login
-				Utente utente = getUtenteLoggato();
-				if (utente instanceof Amministratore) {
-					Amministratore admin = (Amministratore) utente;
-					avviaSchermataAmministratore("Dott. " + admin.getNome() + " " + admin.getCognome());
-				} else if (utente instanceof Medico) {
-					Medico medico = (Medico) utente;
-					avviaSchermataMedico("Dott. " + medico.getNome() + " " + medico.getCognome());
-				}
+				indirizzaUtenteLoggato();
 			} else {
 				loginView.showMessage("Errore di accesso", "Credenziali errate. Utente non trovato o password sbagliata.", JOptionPane.ERROR_MESSAGE);
 			}
@@ -1029,11 +1078,22 @@ public class Controller {
 		frame.setVisible(true);
 	}
 
+	private void indirizzaUtenteLoggato() {
+		Utente utente = getUtenteLoggato();
+		if (utente instanceof Amministratore) {
+			Amministratore admin = (Amministratore) utente;
+			avviaSchermataAmministratore("Dott. " + admin.getNome() + " " + admin.getCognome());
+		} else if (utente instanceof Medico) {
+			Medico medico = (Medico) utente;
+			avviaSchermataMedico("Dott. " + medico.getNome() + " " + medico.getCognome());
+		}
+	}
+
 	private void avviaSchermataRegistrazione() {
 		gui.Registrazione regView = new gui.Registrazione();
 		JFrame frame = new JFrame("Registrazione - Ospedale San Raffaele");
 		frame.setContentPane(regView.registerPanel);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		frame.setSize(1000, 680);
 		frame.setResizable(false);
 		frame.setLocationRelativeTo(null);
@@ -1047,7 +1107,7 @@ public class Controller {
 			String pin = regView.getPin();
 
 			if (nome.isEmpty() || cognome.isEmpty() || username.isEmpty() || password.isEmpty()) {
-				regView.showMessage("Errore", "Compila tutti i campi obbligatori (Nome, Cognome, Username, Password).", JOptionPane.ERROR_MESSAGE);
+				regView.showMessage(ERRORE_TITLE, "Compila tutti i campi obbligatori (Nome, Cognome, Username, Password).", JOptionPane.ERROR_MESSAGE);
 				return;
 			}
 
@@ -1059,7 +1119,7 @@ public class Controller {
 			boolean successo = registrazione(username, password, nome, cognome, pin, isAdmin);
 
 			if (successo) {
-				regView.showMessage("Successo", "Registrazione completata con successo!\nBenvenuto " + nome + " " + cognome, JOptionPane.INFORMATION_MESSAGE);
+				regView.showMessage(SUCCESSO_TITLE, "Registrazione completata con successo!\nBenvenuto " + nome + " " + cognome, JOptionPane.INFORMATION_MESSAGE);
 				frame.dispose();
 				avviaSchermataLogin(); // Torna al login
 			} else {

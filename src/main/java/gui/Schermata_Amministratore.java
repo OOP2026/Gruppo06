@@ -24,18 +24,18 @@ public class Schermata_Amministratore extends JFrame {
     private JButton esciButton;
 
     // Attributi per l'Agenda
-    private JTextField DataField;
+    private JTextField dataField;
     private JButton ricercaButton;
-    private JPanel AgendaPanel;
-    private JTable AgendaTable;
-    private JButton NewEventButton;
+    private JPanel agendaPanel;
+    private JTable agendaTable;
+    private JButton newEventButton;
 
     // COSTRUTTORE
     public Schermata_Amministratore(String nomeUtente) {
 
         this.setTitle("Ospedale - Home");
         this.setContentPane(panelHome);
-        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // Chiude tutto se chiudi la Home
+        this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE); // Chiude tutto se chiudi la Home
         this.setSize(1000, 680);
         this.setResizable(false);
         this.setLocationRelativeTo(null);
@@ -54,7 +54,7 @@ public class Schermata_Amministratore extends JFrame {
 
         //pulsanti dell'agenda nel menu laterale
         applicaStilePulsantiCentrali(ricercaButton);
-        applicaStilePulsantiCentrali(NewEventButton);
+        applicaStilePulsantiCentrali(newEventButton);
 
         // --- STILE PULSANTI CENTRALI ---
         applicaStilePulsantiCentrali(pazientiButton);
@@ -66,8 +66,8 @@ public class Schermata_Amministratore extends JFrame {
         popolaTabellaAgenda();
 
         // Esempio logica "Nuovo Evento"
-        if (NewEventButton != null) {
-            NewEventButton.addActionListener(e -> {
+        if (newEventButton != null) {
+            newEventButton.addActionListener(e -> {
                 JOptionPane.showMessageDialog(this, "Apertura modulo per un nuovo evento...", "Nuovo Evento", JOptionPane.INFORMATION_MESSAGE);
             });
         }
@@ -114,12 +114,12 @@ public class Schermata_Amministratore extends JFrame {
     }
 
     public void addNewEventListener(ActionListener listener) {
-        if (NewEventButton != null) NewEventButton.addActionListener(listener);
+        if (newEventButton != null) newEventButton.addActionListener(listener);
     }
 
     public void aggiornaAgenda(Object[][] dati) {
-        if (AgendaTable != null) {
-            DefaultTableModel model = (DefaultTableModel) AgendaTable.getModel();
+        if (agendaTable != null) {
+            DefaultTableModel model = (DefaultTableModel) agendaTable.getModel();
             model.setRowCount(0); // Svuota la tabella dai vecchi dati
             for (Object[] riga : dati) {
                 model.addRow(riga);
@@ -131,7 +131,7 @@ public class Schermata_Amministratore extends JFrame {
      * Metodo dedicato per configurare e popolare la JTable creata dal GUI Builder
      */
     private void popolaTabellaAgenda() {
-        if (AgendaTable != null) {
+        if (agendaTable != null) {
             // Definisce le colonne
             String[] colonne = {"Ora", "Evento"};
 
@@ -144,20 +144,20 @@ public class Schermata_Amministratore extends JFrame {
             };
 
             // Applica il modello
-            AgendaTable.setModel(model);
-            AgendaTable.setRowHeight(30);
+            agendaTable.setModel(model);
+            agendaTable.setRowHeight(30);
 
             // Colori per le righe normali
-            AgendaTable.setForeground(Color.BLACK); // Forza il testo a nero
-            AgendaTable.setBackground(Color.WHITE); // Forza lo sfondo a bianco
+            agendaTable.setForeground(Color.BLACK); // Forza il testo a nero
+            agendaTable.setBackground(Color.WHITE); // Forza lo sfondo a bianco
 
             // Colori per la riga selezionata
-            AgendaTable.setSelectionBackground(new Color(180, 210, 240));
-            AgendaTable.setSelectionForeground(Color.BLACK); // Mantiene il testo nero anche se selezionato
+            agendaTable.setSelectionBackground(new Color(180, 210, 240));
+            agendaTable.setSelectionForeground(Color.BLACK); // Mantiene il testo nero anche se selezionato
 
             // Colori e font per l'intestazione (Header)
-            AgendaTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 12));
-            AgendaTable.getTableHeader().setForeground(Color.BLACK); // Forza il testo dell'intestazione a nero
+            agendaTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 12));
+            agendaTable.getTableHeader().setForeground(Color.BLACK); // Forza il testo dell'intestazione a nero
         }
     }
 

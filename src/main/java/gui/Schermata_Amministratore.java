@@ -9,7 +9,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import controller.Controller;
 
 public class Schermata_Amministratore extends JFrame {
 
@@ -24,7 +23,7 @@ public class Schermata_Amministratore extends JFrame {
     private JLabel utenteLoggatoLabel;
     private JButton esciButton;
 
-    // Attributi per l'Agenda (integrati dal tuo GUI Builder)
+    // Attributi per l'Agenda
     private JTextField DataField;
     private JButton ricercaButton;
     private JPanel AgendaPanel;
@@ -53,7 +52,7 @@ public class Schermata_Amministratore extends JFrame {
         applicaStileMenuLaterale(turniButton);
         applicaStileMenuLaterale(esciButton);
 
-        // Applica lo stile bianco (come da mockup) ai pulsanti dell'agenda nel menu laterale
+        //pulsanti dell'agenda nel menu laterale
         applicaStilePulsantiCentrali(ricercaButton);
         applicaStilePulsantiCentrali(NewEventButton);
 
@@ -67,7 +66,6 @@ public class Schermata_Amministratore extends JFrame {
         popolaTabellaAgenda();
 
         // --- AZIONI DEI PULSANTI ---
-
         esciButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -80,7 +78,7 @@ public class Schermata_Amministratore extends JFrame {
             }
         });
 
-        // Apre la schermata Pazienti e collega il Controller
+        // Apre la schermata Pazienti
         pazientiButton.addActionListener(e -> {
             Pazienti pazientiFrame = new Pazienti();
 
@@ -88,17 +86,6 @@ public class Schermata_Amministratore extends JFrame {
                 pazientiFrame.setContentPane(pazientiFrame.panelPrincipale);
             }
 
-            Controller controller = new Controller();
-            
-            // 1. Carica e mostra subito i pazienti già presenti nel database!
-            pazientiFrame.aggiornaTabella(controller.getAllPazienti());
-            
-            // 2. Se l'aggiunta di un nuovo paziente ha successo, rinfresca la tabella in tempo reale!
-            pazientiFrame.addNuovoPazienteListener(ev -> {
-                if (controller.gestisciCreazioneNuovoPaziente()) {
-                    pazientiFrame.aggiornaTabella(controller.getAllPazienti());
-                }
-            });
 
             pazientiFrame.setTitle("Gestione Pazienti");
             pazientiFrame.setSize(1100, 750);

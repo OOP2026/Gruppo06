@@ -21,6 +21,7 @@ public class Controller {
 	private PazienteDAO pazienteDAO;
 	private LettoDAO lettoDAO;
 	private RicoveroDAO ricoveroDAO;
+	private AgendaDAO agendaDAO;
 
 	private Utente utenteLoggato;
 
@@ -37,6 +38,7 @@ public class Controller {
 		pazienteDAO = new PazientePostgresDao();
 		lettoDAO = new LettoPostgresDao();
 		ricoveroDAO = new RicoveroPostgresDao();
+		agendaDAO = new AgendaPostgresDAO();
 	}
 
 	/**
@@ -363,5 +365,64 @@ public class Controller {
 			return "false".equals(letto.get(2)); // true se il letto (parametro occupato=false) è libero.
 		}
 		return false;
+	}
+
+	// =========================================================
+	// METODI PER LA GESTIONE DELL'AGENDA
+	// =========================================================
+
+	public ArrayList<Agenda> getEventiPerMedico(String matricola) {
+		if (isNullOrEmpty(matricola)) {
+			System.err.println("Matricola non valida per la ricerca eventi.");
+			return new ArrayList<>(); // Ritorna una lista vuota per evitare NullPointerException
+		}
+		return agendaDAO.getEventiByMedico(matricola);
+	}
+
+	public boolean addEvento(Agenda evento) {
+		if (evento == null) {
+			System.err.println("Errore: L'oggetto evento non può essere nullo.");
+			return false;
+		}
+		// Business Logic: Controlla sovrapposizioni prima di aggiungere
+		if (checkSovrapposizioneEvento(evento)) {
+			JOptionPane.showMessageDialog(null, "L'orario selezionato si sovrappone con un altro evento esistente.", "Errore di Sovrapposizione", JOptionPane.ERROR_MESSAGE);
+			return false;
+		}
+		return agendaDAO.addEvento(evento);
+	}
+
+	public boolean updateEvento(Agenda evento) {
+		if (evento == null) {
+			System.err.println("Errore: L'oggetto evento non può essere nullo.");
+			return false;
+		}
+		// Business Logic: Controlla sovrapposizioni prima di aggiornare
+		if (checkSovrapposizioneEvento(evento)) {
+			JOptionPane.showMessageDialog(null, "L'orario modificato si sovrappone con un altro evento esistente.", "Errore di Sovrapposizione", JOptionPane.ERROR_MESSAGE);
+			return false;
+		}
+		return agendaDAO.updateEvento(evento);
+	}
+
+	public boolean deleteEvento(int idEvento) {
+		return agendaDAO.deleteEvento(idEvento);
+	}
+
+	private boolean checkSovrapposizioneEvento(Agenda nuovoEvento) {
+		ArrayList<Agenda> eventiEsistenti = getEventiPerMedico(nuovoEvento.getMatricolaMedico());
+		for (Agenda eventoEsistente : eventiEsistenti) {
+			// Salta il controllo se stiamo modificando lo stesso evento
+			if (eventoEsistente.getIdEvento() == nuovoEvento.getIdEvento()) {
+				continue;
+			}
+
+			// Logica di sovrapposizione: (StartA < EndB) and (EndA > StartB)
+			boolean siSovrappone = nuovoEvento.getDataOraInizio().before(eventoEsistente.getDataOraFine()) &&
+					nuovoEvento.getDataOraFine().after(eventoEsistente.getDataOraInizio());
+
+			if (siSovrappone) return true; // Trovata una sovrapposizione
+		}
+		return false; // Nessuna sovrapposizione
 	}
 }

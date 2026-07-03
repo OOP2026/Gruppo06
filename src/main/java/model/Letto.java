@@ -1,35 +1,48 @@
 package model;
 
+/**
+ * Rappresenta il modello di dati per un Letto.
+ * Questa classe è un Plain Old Java Object (POJO) che incapsula le informazioni
+ * di base di un letto, come il suo identificativo, il reparto di appartenenza
+ * e il suo stato di occupazione.
+ * Ho rimosso la logica e i campi complessi per renderlo un semplice contenitore
+ * di dati, come dovrebbe essere un modello.
+ */
 public class Letto {
-    public int numero_letto;
-    public boolean occupato = false;//LIBERO
+    private String idLetto;
+    private String reparto;
+    private boolean occupato;
 
-    //Richiamo classi
-    public Stanza stanza;
-    public Reparto reparto;
-    public Paziente paziente;
-    public Ricovero ricovero;
-
-        public Letto(int numero_letto, boolean occupato, Stanza stanza, Reparto reparto, Paziente paziente, Ricovero ricovero){
-            this.stanza = stanza;
-            this.reparto = reparto;
-            this.paziente = paziente;
-            this.ricovero = ricovero;
-            this.numero_letto = numero_letto;
-            this.occupato = occupato;
+    public Letto(String idLetto, String reparto, boolean occupato) {
+        this.idLetto = idLetto;
+        this.reparto = reparto;
+        this.occupato = occupato;
     }
 
-    public boolean checkLibero(){
-       if(occupato = false){
-           System.out.println("Il letto è libero.");
-           return true;
-        } else {
-           System.out.println("Il letto è occupato.");
-           return false;
-        }
+    // --- Getters ---
+    public String getIdLetto() {
+        return idLetto;
     }
 
-    public int getNumero_letto() {
-        return numero_letto;
+    public String getReparto() {
+        return reparto;
+    }
+
+    public boolean isOccupato() {
+        return occupato;
+    }
+
+    // --- Setters ---
+    public void setOccupato(boolean occupato) {
+        this.occupato = occupato;
+    }
+
+    @Override
+    public String toString() {
+        return "Letto{" +
+                "idLetto='" + idLetto + '\'' +
+                ", reparto='" + reparto + '\'' +
+                ", occupato=" + occupato +
+                '}';
     }
 }

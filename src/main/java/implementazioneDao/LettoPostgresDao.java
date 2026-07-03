@@ -12,12 +12,14 @@ import java.util.ArrayList;
 public class LettoPostgresDao implements LettoDAO {
     @Override
     public boolean aggiungiLetto(String idLetto, String reparto) {
-        String query = "INSERT INTO letti (id_letto, reparto, occupato) VALUES (?, ?, false)";
+        // Questa funzione non è più del tutto compatibile con la nuova struttura del DB (manca num_stanza)
+        // e andrebbe aggiornata o rimossa. Per ora, la lasciamo parzialmente funzionante.
+        String query = "INSERT INTO letto (numero_letto, reparto_di_appartenenza, is_libero, num_stanza) VALUES (?, ?, true, 'NON SPECIFICATA')";
         try (Connection conn = ConnessioneDatabase.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setString(1, idLetto);
             stmt.setString(2, reparto);
-            return stmt.executeUpdate() > 0;
+            return stmt.executeUpdate() > 0; // Restituisce true se l'inserimento va a buon fine
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -26,16 +28,18 @@ public class LettoPostgresDao implements LettoDAO {
 
     @Override
     public ArrayList<String> getLettoById(String idLetto) {
-        String query = "SELECT * FROM letti WHERE id_letto = ?";
+        String query = "SELECT numero_letto, reparto_di_appartenenza, is_libero, num_stanza FROM letto WHERE numero_letto = ?";
         try (Connection conn = ConnessioneDatabase.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setString(1, idLetto);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 ArrayList<String> letto = new ArrayList<>();
-                letto.add(rs.getString("id_letto"));
-                letto.add(rs.getString("reparto"));
-                letto.add(String.valueOf(rs.getBoolean("occupato")));
+                boolean isLibero = rs.getBoolean("is_libero");
+                letto.add(rs.getString("numero_letto"));
+                letto.add(rs.getString("reparto_di_appartenenza"));
+                letto.add(String.valueOf(!isLibero)); // Convertiamo is_libero in 'occupato' per il resto dell'app
+                letto.add(rs.getString("num_stanza"));
                 return letto;
             }
         } catch (SQLException e) {
@@ -46,15 +50,34 @@ public class LettoPostgresDao implements LettoDAO {
 
     @Override
     public ArrayList<ArrayList<String>> getAllLetti() {
-        return new ArrayList<>(); // Da implementare secondo necessità
+        ArrayList<ArrayList<String>> letti = new ArrayList<>();
+        String query = "SELECT numero_letto, reparto_di_appartenenza, is_libero, num_stanza FROM letto ORDER BY reparto_di_appartenenza, num_stanza, numero_letto";
+        try (Connection conn = ConnessioneDatabase.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                ArrayList<String> letto = new ArrayList<>();
+                boolean isLibero = rs.getBoolean("is_libero");
+                letto.add(rs.getString("numero_letto"));
+                letto.add(rs.getString("reparto_di_appartenenza"));
+                letto.add(String.valueOf(!isLibero)); // Convertiamo is_libero in 'occupato'
+                letto.add(rs.getString("num_stanza"));
+                letti.add(letto);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return letti;
     }
 
     @Override
     public boolean aggiornaStatoLetto(String idLetto, boolean occupato) {
-        String query = "UPDATE letti SET occupato = ? WHERE id_letto = ?";
+        String query = "UPDATE letto SET is_libero = ? WHERE numero_letto = ?";
+        boolean isLibero = !occupato; // La logica è invertita: se è occupato, non è libero.
         try (Connection conn = ConnessioneDatabase.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
-            stmt.setBoolean(1, occupato);
+            stmt.setBoolean(1, isLibero);
             stmt.setString(2, idLetto);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {

@@ -20,7 +20,7 @@ public class Pazienti extends JFrame {
     private JTable PazientiTable;
     private JButton nuovoPazienteButton;
     private JButton storicoPazienteButton;
-    private JTextField idField;
+    private JButton assegnaLettoButton;
     private JTextField residenzaField;
     private JSpinner dataSpinner;
     private JTextField ricercaprognosiField;
@@ -36,7 +36,7 @@ public class Pazienti extends JFrame {
 
     private static final String[] COLONNE = {
             "ID Paziente", "Nome e Cognome", "Codice Fiscale",
-            "Sesso", "Residenza", "Stato"
+            "Sesso", "Residenza", "Stato Ricovero"
     };
 
     public Pazienti() {
@@ -105,6 +105,7 @@ public class Pazienti extends JFrame {
         if(resetButton != null) applicaStilePulsantiCentrali(resetButton);
         if(nuovoPazienteButton != null) applicaStilePulsantiCentrali(nuovoPazienteButton);
         if(storicoPazienteButton != null) applicaStilePulsantiCentrali(storicoPazienteButton);
+        if(assegnaLettoButton != null) applicaStilePulsantiCentrali(assegnaLettoButton);
     }
 
     private void applicaStilePulsantiCentrali(JButton bottone) {
@@ -145,19 +146,37 @@ public class Pazienti extends JFrame {
         }
     }
 
+    public void addAssegnaLettoListener(java.awt.event.ActionListener listener) {
+        if (assegnaLettoButton != null) {
+            assegnaLettoButton.addActionListener(listener);
+        }
+    }
+
+    public String getCfPazienteSelezionato() {
+        int rigaSelezionata = PazientiTable.getSelectedRow();
+        if (rigaSelezionata == -1) {
+            JOptionPane.showMessageDialog(this, "Per favore, seleziona un paziente dalla tabella.", "Nessun Paziente Selezionato", JOptionPane.WARNING_MESSAGE);
+            return null;
+        }
+        // La colonna 0 contiene il CF (usato come ID Paziente)
+        return (String) PazientiTable.getValueAt(rigaSelezionata, 0);
+    }
+
     // Metodo per aggiornare la tabella con i dati reali dal database
     public void aggiornaTabella(java.util.ArrayList<java.util.ArrayList<String>> datiPazienti) {
         DefaultTableModel model = (DefaultTableModel) PazientiTable.getModel();
         model.setRowCount(0); // Svuota i vecchi dati finti/obsoleti
-        
+
         for (java.util.ArrayList<String> p : datiPazienti) {
             String cf = p.get(0);
             String nomeCognome = p.get(1) + " " + p.get(2);
             String sesso = p.get(4);
             String residenza = p.get(5);
-            String diagnosiOStato = p.get(6); // Posizioniamo la diagnosi nell'ultima colonna
-            
-            model.addRow(new Object[]{cf, nomeCognome, cf, sesso, residenza, diagnosiOStato});
+
+            // Indice 7: Stato ricovero (es. ID del letto). Se non presente o vuoto, il paziente non è ricoverato.
+            String statoRicovero = (p.size() > 7 && p.get(7) != null && !p.get(7).isEmpty()) ? "Ricoverato - Letto " + p.get(7) : "Non ricoverato";
+
+            model.addRow(new Object[]{cf, nomeCognome, cf, sesso, residenza, statoRicovero});
         }
     }
 

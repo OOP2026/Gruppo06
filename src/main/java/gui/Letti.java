@@ -1,85 +1,61 @@
 package gui;
 
 import javax.swing.*;
-import javax.swing.table.*;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.JTableHeader;
 import java.awt.*;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 
 public class Letti extends JFrame {
-
     public JPanel LettiPanel;
-    private JList<String> repartoList;
-    private JLabel tipoLabel;
-    private JList<String> tipologiaList;
-    private JButton resetButton;
-    private JButton cercaButton;
-    private JTable prestazioniTable;
-    private JButton assegnaPazienteButton;
-    private JButton storicoLettiButton;
     private JRadioButton tuttiRadioButton;
     private JRadioButton disponibileRadioButton;
     private JRadioButton occupatoRadioButton;
+    private JList repartoList;
+    private JList tipologiaList;
+    private JLabel tipoLabel;
+    private JButton cercaButton;
+    private JButton resetButton;
+    private JTable prestazioniTable; // Questa è la tabella che mostra i letti
+    private JButton assegnaPazienteButton;
+    private JButton storicoLettiButton;
 
-    private JTextField stanzaPianoField;
-    private JTextField pazienteField;
-
-    private ButtonGroup statoButtonGroup;
-
+    //Selezione colori GUI
     private static final Color AZZURRO_HOME = new Color(70, 132, 197);
     private static final Color SELECTION_BG = new Color(187, 222, 247);
     private static final Color ALT_ROW_BG = new Color(0xf5, 0xf8, 0xfc);
-
+    //Selezione font GUI
     private static final Font BASE_FONT = new Font("SansSerif", Font.PLAIN, 12);
     private static final Font HEADER_FONT = new Font("SansSerif", Font.BOLD, 12);
 
-    private static final String[] COLONNE = {
-            "ID Letto", "Stanza", "Piano", "Reparto", "Tipo Letto", "Stato", "Paziente", "ID Paziente", "Data Amm."
-    };
-
-    private Object[][] datiLetti = new Object[0][0];
-
     public Letti() {
+        this.setTitle("Gestione Letti");
+        this.setContentPane(LettiPanel);
+        this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); // Chiude solo questa finestra
+        this.setLocationRelativeTo(null);
+        this.setSize(1000, 680);
+        this.setResizable(false);
 
         initComponents();
         setupStyles();
-        setupListeners();
-        loadTableData(null, null, "Tutti", "", "");
-    }
-
-    public void aggiornaTabella(Object[][] dati) {
-        this.datiLetti = dati != null ? dati : new Object[0][0];
-        loadTableData(null, null, "Tutti", "", "");
     }
 
     private void initComponents() {
-        repartoList.setListData(new String[]{
-                "Chirurgia Generale", "Bariatria", "Medicina Interna",
-                "Pediatria", "Terapia Intensiva", "Oncologia", "Pronto Soccorso"
-        });
-
-        tipologiaList.setListData(new String[]{
-                "Standard", "Monitorato", "ICU", "Pediatrico"
-        });
-
-        statoButtonGroup = new ButtonGroup();
-        statoButtonGroup.add(tuttiRadioButton);
-        statoButtonGroup.add(disponibileRadioButton);
-        statoButtonGroup.add(occupatoRadioButton);
-        tuttiRadioButton.setSelected(true);
-
-        DefaultTableModel model = new DefaultTableModel(COLONNE, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-        prestazioniTable.setModel(model);
+        // Raggruppa i radio button per permettere una sola selezione
+        ButtonGroup statoLettoGroup = new ButtonGroup();
+        statoLettoGroup.add(tuttiRadioButton);
+        statoLettoGroup.add(disponibileRadioButton);
+        statoLettoGroup.add(occupatoRadioButton);
+        tuttiRadioButton.setSelected(true); // Imposta "Tutti" come predefinito
     }
 
     private void setupStyles() {
-        styleList(tipologiaList);
         styleList(repartoList);
+        styleList(tipologiaList);
 
         prestazioniTable.setRowHeight(26);
         prestazioniTable.setShowGrid(false);
@@ -108,41 +84,13 @@ public class Letti extends JFrame {
             }
         });
 
-        prestazioniTable.getColumnModel().getColumn(5).setCellRenderer(new DefaultTableCellRenderer() {
-            Icon greenDot = new CircleIcon(new Color(40, 167, 69));
-            Icon redDot = new CircleIcon(new Color(220, 53, 69));
-
-            @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-                super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-
-                if (!isSelected) {
-                    setBackground(row % 2 == 0 ? Color.WHITE : ALT_ROW_BG);
-                    setForeground(Color.BLACK);
-                }
-                setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 6));
-
-                if (value != null) {
-                    String stato = value.toString();
-                    if ("Disponibile".equals(stato)) {
-                        setIcon(greenDot);
-                    } else if ("Occupato".equals(stato)) {
-                        setIcon(redDot);
-                    } else {
-                        setIcon(null);
-                    }
-                }
-                return this;
-            }
-        });
-
         if(cercaButton != null) applicaStilePulsantiCentrali(cercaButton);
         if(resetButton != null) applicaStilePulsantiCentrali(resetButton);
         if(assegnaPazienteButton != null) applicaStilePulsantiCentrali(assegnaPazienteButton);
         if(storicoLettiButton != null) applicaStilePulsantiCentrali(storicoLettiButton);
     }
 
-    private void styleList(JList<String> list) {
+    private void styleList(JList list) {
         list.setSelectionBackground(AZZURRO_HOME);
         list.setSelectionForeground(Color.WHITE);
         list.setFont(BASE_FONT);
@@ -151,126 +99,78 @@ public class Letti extends JFrame {
     private void applicaStilePulsantiCentrali(JButton bottone) {
         Color coloreSfondoDefault = Color.WHITE;
         Color coloreTestoDefault = Color.BLACK;
+
         Color coloreSfondoHover = AZZURRO_HOME;
         Color coloreTestoHover = Color.WHITE;
 
-        bottone.setBackground(coloreSfondoDefault);
-        bottone.setForeground(coloreTestoDefault);
+        impostaColoriEdEffetti(bottone, coloreSfondoDefault, coloreTestoDefault, coloreSfondoHover, coloreTestoHover);
+        bottone.setBorder(BorderFactory.createLineBorder(AZZURRO_HOME, 1));
+        bottone.setBorderPainted(true);
+    }
+
+    private void impostaColoriEdEffetti(JButton bottone, Color sfondoDefault, Color testoDefault, Color sfondoHover, Color testoHover) {
+        bottone.setBackground(sfondoDefault);
+        bottone.setForeground(testoDefault);
         bottone.setFocusPainted(false);
         bottone.setContentAreaFilled(true);
         bottone.setOpaque(true);
         bottone.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        bottone.setBorder(BorderFactory.createLineBorder(AZZURRO_HOME, 1));
 
         bottone.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
-                bottone.setBackground(coloreSfondoHover);
-                bottone.setForeground(coloreTestoHover);
+                bottone.setBackground(sfondoHover);
+                bottone.setForeground(testoHover);
             }
+
             @Override
             public void mouseExited(MouseEvent e) {
-                bottone.setBackground(coloreSfondoDefault);
-                bottone.setForeground(coloreTestoDefault);
+                bottone.setBackground(sfondoDefault);
+                bottone.setForeground(testoDefault);
             }
         });
     }
 
-    private void setupListeners() {
-        cercaButton.addActionListener(e -> {
-            String reparto = repartoList.getSelectedValue();
-            String tipologia = tipologiaList.getSelectedValue();
-
-            String stato = "Tutti";
-            if (disponibileRadioButton != null && disponibileRadioButton.isSelected()) stato = "Disponibile";
-            else if (occupatoRadioButton != null && occupatoRadioButton.isSelected()) stato = "Occupato";
-
-            String stanzaPiano = stanzaPianoField != null ? stanzaPianoField.getText().trim().toLowerCase() : "";
-            String paziente = pazienteField != null ? pazienteField.getText().trim().toLowerCase() : "";
-
-            loadTableData(reparto, tipologia, stato, stanzaPiano, paziente);
-        });
-
-        resetButton.addActionListener(e -> {
-            repartoList.clearSelection();
-            tipologiaList.clearSelection();
-            if (tuttiRadioButton != null) tuttiRadioButton.setSelected(true);
-            if (stanzaPianoField != null) stanzaPianoField.setText("");
-            if (pazienteField != null) pazienteField.setText("");
-
-            loadTableData(null, null, "Tutti", "", "");
-        });
+    /**
+     * Rende il pulsante "Assegna Paziente" accessibile a un controller esterno.
+     * @param listener L'ActionListener che verrà eseguito al click del pulsante.
+     */
+    public void addAssegnaPazienteListener(ActionListener listener) {
+        assegnaPazienteButton.addActionListener(listener);
     }
 
-    private void loadTableData(String fReparto, String fTipo, String fStato, String fStanza, String fPaziente) {
-        DefaultTableModel m = (DefaultTableModel) prestazioniTable.getModel();
-        m.setRowCount(0);
+    /**
+     * Recupera l'ID del letto attualmente selezionato nella tabella.
+     * @return L'ID del letto come String, o null se non c'è nessuna selezione.
+     */
+    public String getIdLettoSelezionato() {
+        int rigaSelezionata = prestazioniTable.getSelectedRow();
+        if (rigaSelezionata == -1) {
+            JOptionPane.showMessageDialog(this, "Per favore, seleziona un letto dalla tabella.", "Nessun Letto Selezionato", JOptionPane.WARNING_MESSAGE);
+            return null;
+        }
+        // Si assume che l'ID del letto sia nella prima colonna (indice 0)
+        return (String) prestazioniTable.getValueAt(rigaSelezionata, 0);
+    }
 
-        for (Object[] row : datiLetti) {
-            String rStanza = ((String) row[1]).toLowerCase();
-            String rPiano = ((String) row[2]).toLowerCase();
-            String rReparto = (String) row[3];
-            String rTipo = (String) row[4];
-            String rStato = (String) row[5];
-            String rPazNome = ((String) row[6]).toLowerCase();
-            String rPazID = ((String) row[7]).toLowerCase();
-
-            boolean matchStato = fStato.equals("Tutti") || rStato.equals(fStato);
-            boolean matchReparto = (fReparto == null || rReparto.equals(fReparto));
-            boolean matchTipo = (fTipo == null || rTipo.equals(fTipo));
-
-            boolean matchStanza = fStanza.isEmpty() || rStanza.contains(fStanza) || rPiano.contains(fStanza);
-            boolean matchPaziente = fPaziente.isEmpty() || rPazNome.contains(fPaziente) || rPazID.contains(fPaziente);
-
-            if (matchStato && matchReparto && matchTipo && matchStanza && matchPaziente) {
-                m.addRow(row);
+    /**
+     * Popola la tabella dei letti con i dati forniti dal controller.
+     * @param dati Una matrice di oggetti da visualizzare nella tabella.
+     */
+    public void aggiornaTabella(Object[][] dati) {
+        String[] colonne = {"ID Letto", "Reparto", "Stato"};
+        DefaultTableModel model = new DefaultTableModel(dati, colonne) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; // Rende la tabella non modificabile
             }
-        }
-    }
-
-    private static class CircleIcon implements Icon {
-        private final Color color;
-        private final int size = 12;
-
-        public CircleIcon(Color color) {
-            this.color = color;
-        }
-
-        @Override
-        public void paintIcon(Component c, Graphics g, int x, int y) {
-            Graphics2D g2 = (Graphics2D) g.create();
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(color);
-            g2.fillOval(x, y + 1, size, size);
-            g2.dispose();
-        }
-
-        @Override
-        public int getIconWidth() {
-            return size + 4;
-        }
-
-        @Override
-        public int getIconHeight() {
-            return size;
-        }
+        };
+        prestazioniTable.setModel(model);
     }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             Letti frame = new Letti();
-            Dimension strictSize = new Dimension(1100, 680);
-
-            if (frame.LettiPanel != null) {
-                frame.LettiPanel.setPreferredSize(strictSize);
-                frame.setContentPane(frame.LettiPanel);
-            }
-
-            frame.setTitle("Gestione Letti e Ricoveri");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.pack();
-            frame.setResizable(false);
-            frame.setLocationRelativeTo(null);
             frame.setVisible(true);
         });
     }

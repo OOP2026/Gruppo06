@@ -332,6 +332,70 @@ public class Controller {
 		return successo;
 	}
 
+	/**
+	 * Gestisce l'intero flusso di assegnazione di un paziente esistente a un letto specifico.
+	 *
+	 * @param idLetto L'ID del letto a cui si vuole assegnare il paziente.
+	 * @return true se l'operazione ha successo, false altrimenti.
+	 */
+	public boolean gestisciAssegnazionePazienteLetto(String idLetto) {
+		// 1. Controlla la disponibilità del letto. Il chiamante (GUI) dovrebbe averlo già fatto,
+		// ma lo ricontrolliamo per sicurezza. Il messaggio di errore viene gestito dal chiamante.
+		if (isNullOrEmpty(idLetto) || !checkDisponibilitaLetto(idLetto)) {
+			// Non mostriamo un dialogo qui per evitare di duplicare i messaggi.
+			return false;
+		}
+
+		// 2. Ottieni la lista di pazienti non ricoverati
+		ArrayList<ArrayList<String>> tuttiPazienti = pazienteDAO.getAllPazienti();
+		ArrayList<String> pazientiDisponibili = new ArrayList<>();
+		ArrayList<String> cfPazientiDisponibili = new ArrayList<>();
+
+		for (ArrayList<String> datiPaziente : tuttiPazienti) {
+			String cf = datiPaziente.get(0);
+			String nome = datiPaziente.get(1);
+			String cognome = datiPaziente.get(2);
+			// Controlla se il paziente ha un ricovero attivo
+			if (ricoveroDAO.getRicoveroAttivo(cf) == null) {
+				pazientiDisponibili.add(cognome + " " + nome + " (" + cf + ")");
+				cfPazientiDisponibili.add(cf);
+			}
+		}
+
+		if (pazientiDisponibili.isEmpty()) {
+			JOptionPane.showMessageDialog(null, "Non ci sono pazienti disponibili per un nuovo ricovero.", "Nessun Paziente", JOptionPane.INFORMATION_MESSAGE);
+			return false;
+		}
+
+		// 3. Mostra la finestra di dialogo per selezionare un paziente
+		String pazienteScelto = (String) JOptionPane.showInputDialog(
+				null,
+				"Seleziona un paziente da ricoverare in questo letto:",
+				"Assegna Paziente al Letto " + idLetto,
+				JOptionPane.PLAIN_MESSAGE,
+				null,
+				pazientiDisponibili.toArray(),
+				pazientiDisponibili.get(0)
+		);
+
+		if (pazienteScelto == null) return false; // L'utente ha annullato
+
+		// 4. Ottieni il CF del paziente scelto e chiedi il motivo
+		int indiceScelto = pazientiDisponibili.indexOf(pazienteScelto);
+		String cfScelto = cfPazientiDisponibili.get(indiceScelto);
+		String motivo = JOptionPane.showInputDialog(null, "Inserisci il motivo del ricovero per " + pazienteScelto + ":", "Motivo Ricovero", JOptionPane.PLAIN_MESSAGE);
+
+		if (motivo == null) return false; // L'utente ha annullato
+
+		// 5. Registra il ricovero usando il metodo esistente
+		boolean successo = registraRicovero(cfScelto, idLetto, motivo);
+		if (!successo) {
+			// Se la registrazione fallisce, mostra un messaggio di errore specifico.
+			JOptionPane.showMessageDialog(null, "Impossibile completare l'assegnazione. Errore durante la registrazione del ricovero nel database.", "Errore di Registrazione", JOptionPane.ERROR_MESSAGE);
+		}
+		return successo;
+	}
+
 	public String calcolaPrognosi(int giorniPrognosi) {
 		return "Il paziente ha una prognosi di " + giorniPrognosi + " giorni";
 	}
@@ -615,17 +679,45 @@ public class Controller {
 		mostraFinestraSecondaria(pazientiFrame);
 	}
 
+	/**
+	 * Metodo helper per ricaricare e aggiornare la tabella dei letti.
+	 * @param lettiFrame Il frame della GUI che contiene la tabella.
+	 */
+	private void ricaricaEAggiornaTabellaLetti(gui.Letti lettiFrame) {
+		ArrayList<ArrayList<String>> datiLetti = lettoDAO.getAllLetti();
+		Object[][] datiPerTabella = preparaDatiLettiPerTabella(datiLetti);
+		lettiFrame.aggiornaTabella(datiPerTabella);
+	}
+
 	public void apriSchermataLetti() {
+		// 1. Crea l'istanza della schermata
 		gui.Letti lettiFrame = new gui.Letti();
-		if (lettiFrame.LettiPanel != null) {
-			lettiFrame.setContentPane(lettiFrame.LettiPanel);
-		}
-		
-		lettiFrame.setTitle("Ricerca Letti Ospedalieri");
-		lettiFrame.setSize(1100, 750);
-		lettiFrame.setLocationRelativeTo(null);
-		lettiFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-		lettiFrame.aggiornaTabella(new Object[0][0]); // TODO: Integrare con LettoDAO per DB
+
+		// 2. Collega il pulsante "Assegna Paziente" alla sua logica
+		lettiFrame.addAssegnaPazienteListener(e -> {
+			String idLettoSelezionato = lettiFrame.getIdLettoSelezionato();
+
+			if (idLettoSelezionato != null) {
+				// Prima di procedere, verifichiamo che il letto sia ancora disponibile
+				if (!checkDisponibilitaLetto(idLettoSelezionato)) {
+					JOptionPane.showMessageDialog(lettiFrame, "Il letto selezionato risulta già occupato o non è valido.", "Letto non Disponibile", JOptionPane.WARNING_MESSAGE);
+					ricaricaEAggiornaTabellaLetti(lettiFrame); // Aggiorna la vista con lo stato reale
+					return;
+				}
+
+				boolean successo = gestisciAssegnazionePazienteLetto(idLettoSelezionato);
+
+				if (successo) {
+					JOptionPane.showMessageDialog(lettiFrame, "Paziente assegnato con successo!", "Operazione Riuscita", JOptionPane.INFORMATION_MESSAGE);
+					ricaricaEAggiornaTabellaLetti(lettiFrame); // Ricarica per mostrare il letto come "Occupato"
+				}
+			}
+		});
+
+		// 3. Carica i dati iniziali nella tabella quando la schermata si apre
+		ricaricaEAggiornaTabellaLetti(lettiFrame);
+
+		// 4. Mostra la finestra
 		mostraFinestraSecondaria(lettiFrame);
 	}
 
@@ -848,6 +940,28 @@ public class Controller {
 			String descrizione = ev.getTitolo() != null ? ev.getTitolo() : "Evento #" + ev.getIdEvento();
 			dati[i][0] = ora;
 			dati[i][1] = descrizione;
+		}
+		return dati;
+	}
+
+	/**
+	 * Metodo di supporto per convertire i dati dei letti dal formato del DAO
+	 * al formato Object[][] richiesto dalla tabella della GUI.
+	 *
+	 * @param datiLetti La lista di letti proveniente dal DAO.
+	 * @return Una matrice di Object pronta per essere mostrata in una JTable.
+	 */
+	private Object[][] preparaDatiLettiPerTabella(ArrayList<ArrayList<String>> datiLetti) {
+		if (datiLetti == null || datiLetti.isEmpty()) {
+			return new Object[0][3];
+		}
+
+		Object[][] dati = new Object[datiLetti.size()][3];
+		for (int i = 0; i < datiLetti.size(); i++) {
+			ArrayList<String> letto = datiLetti.get(i);
+			dati[i][0] = letto.get(0); // ID Letto
+			dati[i][1] = letto.get(1); // Reparto
+			dati[i][2] = Boolean.parseBoolean(letto.get(2)) ? "Occupato" : "Disponibile";
 		}
 		return dati;
 	}

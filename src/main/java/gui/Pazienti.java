@@ -19,7 +19,7 @@ public class Pazienti extends JFrame {
     private JList<String> tipologiaList;
     private JButton resetButton;
     private JButton cercaButton;
-    private JTable PazientiTable;
+    private JTable pazientiTable;
     private JButton nuovoPazienteButton;
     private JButton storicoPazienteButton;
     private JButton assegnaLettoButton;
@@ -55,10 +55,10 @@ public class Pazienti extends JFrame {
                 return false;
             }
         };
-        PazientiTable.setModel(model);
+        pazientiTable.setModel(model);
 
         sorter = new TableRowSorter<>(model);
-        PazientiTable.setRowSorter(sorter);
+        pazientiTable.setRowSorter(sorter);
 
         if (cercaButton != null) {
             cercaButton.addActionListener(e -> eseguiRicerca());
@@ -82,21 +82,21 @@ public class Pazienti extends JFrame {
     }
 
     private void setupStyles() {
-        PazientiTable.setRowHeight(26);
-        PazientiTable.setShowGrid(false);
-        PazientiTable.setIntercellSpacing(new Dimension(0, 0));
-        PazientiTable.setSelectionBackground(SELECTION_BG);
-        PazientiTable.setSelectionForeground(Color.BLACK);
-        PazientiTable.setFont(BASE_FONT);
+        pazientiTable.setRowHeight(26);
+        pazientiTable.setShowGrid(false);
+        pazientiTable.setIntercellSpacing(new Dimension(0, 0));
+        pazientiTable.setSelectionBackground(SELECTION_BG);
+        pazientiTable.setSelectionForeground(Color.BLACK);
+        pazientiTable.setFont(BASE_FONT);
 
-        JTableHeader th = PazientiTable.getTableHeader();
+        JTableHeader th = pazientiTable.getTableHeader();
         th.setBackground(AZZURRO_HOME);
         th.setForeground(Color.WHITE);
         th.setFont(HEADER_FONT);
         th.setPreferredSize(new Dimension(th.getWidth(), 30));
         th.setReorderingAllowed(false);
 
-        PazientiTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+        pazientiTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int row, int col) {
                 super.getTableCellRendererComponent(t, v, sel, foc, row, col);
@@ -167,18 +167,18 @@ public class Pazienti extends JFrame {
     }
 
     public String getCfPazienteSelezionato() {
-        int rigaSelezionata = PazientiTable.getSelectedRow();
+        int rigaSelezionata = pazientiTable.getSelectedRow();
         if (rigaSelezionata == -1) {
             JOptionPane.showMessageDialog(this, "Per favore, seleziona un paziente dalla tabella.", "Nessun Paziente Selezionato", JOptionPane.WARNING_MESSAGE);
             return null;
         }
         // La colonna 0 contiene il CF (usato come ID Paziente)
-        return (String) PazientiTable.getValueAt(rigaSelezionata, 0);
+        return (String) pazientiTable.getValueAt(rigaSelezionata, 0);
     }
 
     // Metodo per aggiornare la tabella con i dati reali dal database
     public void aggiornaTabella(List<ArrayList<String>> datiPazienti) {
-        DefaultTableModel model = (DefaultTableModel) PazientiTable.getModel();
+        DefaultTableModel model = (DefaultTableModel) pazientiTable.getModel();
         model.setRowCount(0); // Svuota i vecchi dati finti/obsoleti
 
         for (java.util.ArrayList<String> p : datiPazienti) {

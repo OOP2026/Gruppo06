@@ -8,7 +8,6 @@ import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
 
 public class Letti extends JFrame {
     public JPanel LettiPanel;
@@ -20,7 +19,7 @@ public class Letti extends JFrame {
     private JLabel tipoLabel;
     private JButton cercaButton;
     private JButton resetButton;
-    private JTable prestazioniTable; // Questa è la tabella che mostra i letti
+    private JTable lettiTable; // Questa è la tabella che mostra i letti
     private JButton assegnaPazienteButton;
     private JButton storicoLettiButton;
 
@@ -31,6 +30,11 @@ public class Letti extends JFrame {
     //Selezione font GUI
     private static final Font BASE_FONT = new Font("SansSerif", Font.PLAIN, 12);
     private static final Font HEADER_FONT = new Font("SansSerif", Font.BOLD, 12);
+
+    private static final String[] COLONNE = {
+            "ID Letto", "Tipologia Letto", "Reparto",
+            "Stanza", "Numero Letto", "Stato"
+    };
 
     public Letti() {
         this.setTitle("Gestione Letti");
@@ -45,6 +49,18 @@ public class Letti extends JFrame {
     }
 
     private void initComponents() {
+        // Inizializza subito il modello della tabella con le colonne per mostrare le intestazioni
+        DefaultTableModel model = new DefaultTableModel(new Object[0][0], COLONNE) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; // Rende la tabella non modificabile
+            }
+        };
+
+        if (lettiTable != null) {
+            lettiTable.setModel(model);
+        }
+
         // Raggruppa i radio button per permettere una sola selezione
         ButtonGroup statoLettoGroup = new ButtonGroup();
         statoLettoGroup.add(tuttiRadioButton);
@@ -57,21 +73,21 @@ public class Letti extends JFrame {
         styleList(repartoList);
         styleList(tipologiaList);
 
-        prestazioniTable.setRowHeight(26);
-        prestazioniTable.setShowGrid(false);
-        prestazioniTable.setIntercellSpacing(new Dimension(0, 0));
-        prestazioniTable.setSelectionBackground(SELECTION_BG);
-        prestazioniTable.setSelectionForeground(Color.BLACK);
-        prestazioniTable.setFont(BASE_FONT);
+        lettiTable.setRowHeight(26);
+        lettiTable.setShowGrid(false);
+        lettiTable.setIntercellSpacing(new Dimension(0, 0));
+        lettiTable.setSelectionBackground(SELECTION_BG);
+        lettiTable.setSelectionForeground(Color.BLACK);
+        lettiTable.setFont(BASE_FONT);
 
-        JTableHeader th = prestazioniTable.getTableHeader();
+        JTableHeader th = lettiTable.getTableHeader();
         th.setBackground(AZZURRO_HOME);
         th.setForeground(Color.WHITE);
         th.setFont(HEADER_FONT);
         th.setPreferredSize(new Dimension(th.getWidth(), 30));
         th.setReorderingAllowed(false);
 
-        prestazioniTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+        lettiTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int row, int col) {
                 super.getTableCellRendererComponent(t, v, sel, foc, row, col);
@@ -144,13 +160,13 @@ public class Letti extends JFrame {
      * @return L'ID del letto come String, o null se non c'è nessuna selezione.
      */
     public String getIdLettoSelezionato() {
-        int rigaSelezionata = prestazioniTable.getSelectedRow();
+        int rigaSelezionata = lettiTable.getSelectedRow();
         if (rigaSelezionata == -1) {
             JOptionPane.showMessageDialog(this, "Per favore, seleziona un letto dalla tabella.", "Nessun Letto Selezionato", JOptionPane.WARNING_MESSAGE);
             return null;
         }
         // Si assume che l'ID del letto sia nella prima colonna (indice 0)
-        return (String) prestazioniTable.getValueAt(rigaSelezionata, 0);
+        return (String) lettiTable.getValueAt(rigaSelezionata, 0);
     }
 
     /**
@@ -158,14 +174,13 @@ public class Letti extends JFrame {
      * @param dati Una matrice di oggetti da visualizzare nella tabella.
      */
     public void aggiornaTabella(Object[][] dati) {
-        String[] colonne = {"ID Letto", "Reparto", "Stato"};
-        DefaultTableModel model = new DefaultTableModel(dati, colonne) {
+        DefaultTableModel model = new DefaultTableModel(dati, COLONNE) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false; // Rende la tabella non modificabile
             }
         };
-        prestazioniTable.setModel(model);
+        lettiTable.setModel(model);
     }
 
     public static void main(String[] args) {

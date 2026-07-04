@@ -1,12 +1,13 @@
 package model;
 
-import java.util.Date;
+import java.time.LocalDate;
+import java.time.ZoneId;
 
 public class Medico extends Utente {
     protected String nome;
     protected String cognome;
     //Gli attributi sottostanti verranno utilizati in un secondo momento
-    protected Date iscrizioneAlbo;
+    protected LocalDate iscrizioneAlbo;
     protected String specializzazione;
     protected String repartoDiAppartenenza;
 
@@ -25,12 +26,12 @@ public class Medico extends Utente {
         return this.cognome;
     }
 
-    public Date setIscrizionAlbo() {
-        this.iscrizioneAlbo = new Date(); // Imposta la data di iscrizione all'albo al momento della creazione del medico
+    public LocalDate setIscrizionAlbo() {
+        this.iscrizioneAlbo = LocalDate.now(ZoneId.systemDefault()); // Imposta la data di iscrizione all'albo al momento della creazione del medico
         return this.iscrizioneAlbo;
     }
 
-    public Date getIscrizioneAlbo(){
+    public LocalDate getIscrizioneAlbo(){
         return iscrizioneAlbo;
     }
 

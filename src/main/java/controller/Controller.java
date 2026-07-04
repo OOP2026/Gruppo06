@@ -4,6 +4,8 @@ import dao.*;
 import implementazioneDao.*;
 import model.*;
 
+import java.time.Clock;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.time.LocalDateTime;
@@ -328,7 +330,7 @@ public class Controller {
 	}
 
 	public String setDataOraInizio() {
-		LocalDateTime now = LocalDateTime.now();
+		LocalDateTime now = LocalDateTime.now(Clock.system(ZoneId.of("Europe/Rome")));
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 		return now.format(formatter);
 	}
@@ -672,7 +674,7 @@ public class Controller {
 	}
 
 	public void avviaSchermataAmministratore(String nomeUtente) {
-		gui.Schermata_Amministratore adminFrame = new gui.Schermata_Amministratore(nomeUtente);
+		gui.SchermataAmministratore adminFrame = new gui.SchermataAmministratore(nomeUtente);
 		
 		homeFrame = adminFrame; // Imposta come schermata principale
 
@@ -962,7 +964,7 @@ public class Controller {
 			List<String> m = mediciDb.get(i);
 			try {
 				dati[i][0] = m.size() > 4 ? m.get(4) : "-"; // Matricola
-				dati[i][1] = (m.size() > 1 ? m.get(1) : "") + " " + (m.size() > 0 ? m.get(0) : ""); // Cognome Nome
+				dati[i][1] = (m.size() > 1 ? m.get(1) : "") + " " + (!m.isEmpty() ? m.get(0) : ""); // Cognome Nome
 				dati[i][2] = m.size() > 6 ? m.get(6) : "-"; // Specializzazione
 				dati[i][3] = m.size() > 7 ? m.get(7) : "-"; // Reparto Assegnato
 				dati[i][4] = "Attivo"; // Stato
@@ -981,7 +983,7 @@ public class Controller {
 		for (int i = 0; i < dimDb.size(); i++) {
 			List<String> d = dimDb.get(i);
 			try {
-				dati[i][0] = d.size() > 0 ? d.get(0) : "-"; // ID Paziente / CF
+				dati[i][0] = !d.isEmpty() ? d.get(0) : "-"; // ID Paziente / CF
 				dati[i][1] = d.size() > 1 ? d.get(1) : "-"; // Paziente
 				dati[i][2] = d.size() > 2 ? d.get(2) : "-"; // CF
 				dati[i][3] = d.size() > 3 ? d.get(3) : "-"; // Reparto
@@ -1033,7 +1035,7 @@ public class Controller {
     private void aggiornaAgendaGUI(JFrame frame) {
         if (utenteLoggato == null) return;
         Object[][] dati = formattaDatiAgenda(getEventiPerMedico(utenteLoggato.getMatricola()));
-        if (frame instanceof gui.Schermata_Amministratore) ((gui.Schermata_Amministratore) frame).aggiornaAgenda(dati);
+        if (frame instanceof gui.SchermataAmministratore) ((gui.SchermataAmministratore) frame).aggiornaAgenda(dati);
         if (frame instanceof gui.Schermata_Medico) ((gui.Schermata_Medico) frame).aggiornaAgenda(dati);
     }
 

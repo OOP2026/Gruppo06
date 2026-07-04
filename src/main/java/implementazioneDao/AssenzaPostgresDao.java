@@ -42,16 +42,16 @@ public class AssenzaPostgresDao implements AssenzaDAO {
             if (rs.next()) {
                 ArrayList<String> assenza = new ArrayList<>();
                 assenza.add(rs.getString("matricola"));
-                
+
                 java.sql.Date dataInizioDb = rs.getDate("data_inizio");
                 assenza.add(dataInizioDb != null ? dataInizioDb.toString() : "");
-                
+
                 java.sql.Date dataFineDb = rs.getDate("data_fine");
                 assenza.add(dataFineDb != null ? dataFineDb.toString() : "");
-                
+
                 assenza.add(rs.getString("motivazione"));
                 assenza.add(String.valueOf(rs.getBoolean("approvazione")));
-                
+
                 return assenza;
             }
         } catch (SQLException e) {
@@ -72,16 +72,16 @@ public class AssenzaPostgresDao implements AssenzaDAO {
             while (rs.next()) {
                 ArrayList<String> assenza = new ArrayList<>();
                 assenza.add(rs.getString("matricola"));
-                
+
                 java.sql.Date dataInizioDb = rs.getDate("data_inizio");
                 assenza.add(dataInizioDb != null ? dataInizioDb.toString() : "");
-                
+
                 java.sql.Date dataFineDb = rs.getDate("data_fine");
                 assenza.add(dataFineDb != null ? dataFineDb.toString() : "");
-                
+
                 assenza.add(rs.getString("motivazione"));
                 assenza.add(String.valueOf(rs.getBoolean("approvazione")));
-                
+
                 assenze.add(assenza);
             }
         } catch (SQLException e) {

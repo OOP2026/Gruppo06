@@ -9,7 +9,7 @@ public class ConnessioneDatabase {
 
     private static final String URL = "jdbc:postgresql://localhost:5432/OspedaleOOP";
     private static final String USER = "postgres"; 
-    private static final String PASSWORD = "191123";
+    private static final String PASSWORD = "7313";
 
     public static Connection getConnection() throws SQLException {
         try {

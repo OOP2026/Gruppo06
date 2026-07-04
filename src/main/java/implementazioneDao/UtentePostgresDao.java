@@ -13,7 +13,7 @@ public class UtentePostgresDao implements UtenteDAO{
 
         @Override
         public boolean checkLoginEsistente(String login) {
-            String query = "SELECT 1 FROM utenti WHERE login = ?";
+            String query = "SELECT 1 FROM utente WHERE login = ?";
             try (Connection conn = ConnessioneDatabase.getConnection();
                  PreparedStatement stmt = conn.prepareStatement(query)) {
 
@@ -29,7 +29,7 @@ public class UtentePostgresDao implements UtenteDAO{
 
         @Override
         public boolean aggiungiUtente(String nome, String cognome, String login, String password, String matricola, String pin) {
-            String query = "INSERT INTO utenti (login, password, matricola, nome, cognome, ruolo, pin) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            String query = "INSERT INTO utente (login, password, matricola, nome, cognome, ruolo, pin) VALUES (?, ?, ?, ?, ?, ?, ?)";
             try (Connection conn = ConnessioneDatabase.getConnection();
                  PreparedStatement stmt = conn.prepareStatement(query)) {
 
@@ -56,7 +56,7 @@ public class UtentePostgresDao implements UtenteDAO{
 
         @Override
         public ArrayList<String> getUtenteByLoginAndPassword(String login, String password) {
-            String query = "SELECT * FROM utenti WHERE login = ? AND password = ?";
+            String query = "SELECT * FROM utente WHERE login = ? AND password = ?";
             try (Connection conn = ConnessioneDatabase.getConnection();
                  PreparedStatement stmt = conn.prepareStatement(query)) {
 

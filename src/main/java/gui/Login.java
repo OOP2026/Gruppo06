@@ -7,12 +7,21 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public class Login {
+    // --- Costanti per lo stile ---
+    private static final Color COLORE_PRIMARIO = new Color(70, 132, 197);
+    private static final Color COLORE_TESTO_PULSANTE_DEFAULT = Color.BLACK;
+    private static final Color COLORE_SFONDO_PULSANTE_DEFAULT = Color.WHITE;
+    private static final Color COLORE_TESTO_PULSANTE_HOVER = Color.WHITE;
+    // ---
+
     private JPasswordField passwordField;
     private JButton accediButton;
     public JPanel mainPanel;
     private JTextField usernameField;
     private JLabel registratiLabel;
     private JPasswordField pinField;
+
+
 
     public Login() {
         applicaStilePulsantiCentrali(accediButton);
@@ -40,13 +49,7 @@ public class Login {
     }
 
     private void applicaStilePulsantiCentrali(JButton bottone) {
-        Color coloreSfondoDefault = Color.WHITE;
-        Color coloreTestoDefault = Color.BLACK;
-
-        Color coloreSfondoHover = new Color(70, 132, 197);
-        Color coloreTestoHover = Color.WHITE;
-
-        impostaColoriEdEffetti(bottone, coloreSfondoDefault, coloreTestoDefault, coloreSfondoHover, coloreTestoHover);
+        impostaColoriEdEffetti(bottone, COLORE_SFONDO_PULSANTE_DEFAULT, COLORE_TESTO_PULSANTE_DEFAULT, COLORE_PRIMARIO, COLORE_TESTO_PULSANTE_HOVER);
     }
 
     private void impostaColoriEdEffetti(JButton bottone, Color sfondoDefault, Color testoDefault, Color sfondoHover, Color testoHover) {
@@ -76,20 +79,21 @@ public class Login {
     private void applicaStileLabelLink(JLabel label) {
         if (label == null) return;
 
-        label.setForeground(new Color(70, 132, 197));
+        final String testoOriginale = label.getText();
+        label.setForeground(COLORE_PRIMARIO);
         label.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         label.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseEntered(MouseEvent e) {
-                String testo = label.getText().replace("<html><u>", "").replace("</u></html>", "");
-                label.setText("<html><u>" + testo + "</u></html>");
+                // Applica la sottolineatura usando HTML
+                label.setText("<html><u>" + testoOriginale + "</u></html>");
             }
 
             @Override
             public void mouseExited(MouseEvent e) {
-                String testo = label.getText().replace("<html><u>", "").replace("</u></html>", "");
-                label.setText(testo);
+                // Ripristina il testo originale senza sottolineatura
+                label.setText(testoOriginale);
             }
         });
     }

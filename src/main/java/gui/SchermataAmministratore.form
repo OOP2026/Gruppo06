@@ -23,9 +23,9 @@
           <component id="ac26c" class="javax.swing.JButton" binding="pazientiButton" default-binding="true">
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false">
-                <minimum-size width="380" height="310"/>
-                <preferred-size width="380" height="310"/>
-                <maximum-size width="380" height="310"/>
+                <minimum-size width="380" height="320"/>
+                <preferred-size width="380" height="320"/>
+                <maximum-size width="380" height="320"/>
               </grid>
             </constraints>
             <properties>
@@ -56,9 +56,9 @@
           <component id="e16f" class="javax.swing.JButton" binding="dimissioniButton" default-binding="true">
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false">
-                <minimum-size width="380" height="310"/>
-                <preferred-size width="380" height="310"/>
-                <maximum-size width="380" height="310"/>
+                <minimum-size width="380" height="320"/>
+                <preferred-size width="380" height="320"/>
+                <maximum-size width="380" height="320"/>
               </grid>
             </constraints>
             <properties>
@@ -81,9 +81,9 @@
           <component id="2345a" class="javax.swing.JButton" binding="lettiButton" default-binding="true">
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false">
-                <minimum-size width="380" height="310"/>
-                <preferred-size width="380" height="310"/>
-                <maximum-size width="380" height="310"/>
+                <minimum-size width="380" height="320"/>
+                <preferred-size width="380" height="320"/>
+                <maximum-size width="380" height="320"/>
               </grid>
             </constraints>
             <properties>
@@ -106,9 +106,9 @@
           <component id="f7180" class="javax.swing.JButton" binding="mediciButton" default-binding="true">
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false">
-                <minimum-size width="380" height="310"/>
-                <preferred-size width="380" height="310"/>
-                <maximum-size width="380" height="310"/>
+                <minimum-size width="380" height="320"/>
+                <preferred-size width="380" height="320"/>
+                <maximum-size width="380" height="320"/>
               </grid>
             </constraints>
             <properties>

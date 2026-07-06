@@ -13,11 +13,11 @@ public class PazientePostgresDao implements PazienteDAO {
 
     // Centralizzazione delle query SQL come costanti
     private static final String COLUMNS = "cf, nome, cognome, data_nascita, sesso, residenza, diagnosi";
-    private static final String AGGIUNGI_PAZIENTE_QUERY = "INSERT INTO pazienti (nome, cognome, cf, data_nascita, sesso, residenza, diagnosi) VALUES (?, ?, ?, ?, ?, ?, ?)";
-    private static final String GET_PAZIENTE_BY_CF_QUERY = "SELECT " + COLUMNS + " FROM pazienti WHERE cf = ?";
-    private static final String GET_ALL_PAZIENTI_QUERY = "SELECT " + COLUMNS + " FROM pazienti ORDER BY cognome, nome";
-    private static final String AGGIORNA_PAZIENTE_QUERY = "UPDATE pazienti SET nome = ?, cognome = ?, data_nascita = ?, sesso = ?, residenza = ?, diagnosi = ? WHERE cf = ?";
-    private static final String ELIMINA_PAZIENTE_QUERY = "DELETE FROM pazienti WHERE cf = ?";
+    private static final String AGGIUNGI_PAZIENTE_QUERY = "INSERT INTO paziente (nome, cognome, cf, data_nascita, sesso, residenza, diagnosi) VALUES (?, ?, ?, ?, ?, ?, ?)";
+    private static final String GET_PAZIENTE_BY_CF_QUERY = "SELECT " + COLUMNS + " FROM paziente WHERE cf = ?";
+    private static final String GET_ALL_PAZIENTI_QUERY = "SELECT " + COLUMNS + " FROM paziente ORDER BY cognome, nome";
+    private static final String AGGIORNA_PAZIENTE_QUERY = "UPDATE paziente SET nome = ?, cognome = ?, data_nascita = ?, sesso = ?, residenza = ?, diagnosi = ? WHERE cf = ?";
+    private static final String ELIMINA_PAZIENTE_QUERY = "DELETE FROM paziente WHERE cf = ?";
 
     @Override
     public boolean aggiungiPaziente(String cf, String nome, String cognome, String dataNascita, String sesso, String residenza, String diagnosi) {
@@ -66,7 +66,7 @@ public class PazientePostgresDao implements PazienteDAO {
 
     @Override
     public ArrayList<ArrayList<String>> getAllPazienti() {
-        ArrayList<ArrayList<String>> pazienti = new ArrayList<>();
+        ArrayList<ArrayList<String>> paziente = new ArrayList<>();
         try (Connection conn = ConnessioneDatabase.getConnection();
              PreparedStatement stmt = conn.prepareStatement(GET_ALL_PAZIENTI_QUERY);
              ResultSet rs = stmt.executeQuery()) {
@@ -81,12 +81,12 @@ public class PazientePostgresDao implements PazienteDAO {
                 datiPaziente.add(rs.getString("sesso"));
                 datiPaziente.add(rs.getString("residenza"));
                 datiPaziente.add(rs.getString("diagnosi"));
-                pazienti.add(datiPaziente);
+                paziente.add(datiPaziente);
             }
         } catch (SQLException e) {
             throw new RuntimeException("Errore nel recupero di tutti i pazienti dal database", e);
         }
-        return pazienti;
+        return paziente;
     }
 
     @Override

@@ -31,34 +31,26 @@ public class UtentePostgresDao implements UtenteDAO{
             return false;
         }
 
-        @Override
-        public boolean aggiungiUtente(String nome, String cognome, String login, String password, String matricola, String pin) {
-            String query = "INSERT INTO utente (login, password, matricola, nome, cognome, ruolo, pin) VALUES (?, ?, ?, ?, ?, ?, ?)";
-            try (Connection conn = ConnessioneDatabase.getConnection();
-                 PreparedStatement stmt = conn.prepareStatement(query)) {
-
-                stmt.setString(1, login);
-                stmt.setString(2, password);
-                stmt.setString(3, matricola);
-                stmt.setString(4, nome);
-                stmt.setString(5, cognome);
-
-                if (pin != null && !pin.trim().isEmpty()) {
-                    stmt.setString(6, "ADMIN");
-                    stmt.setString(7, pin);
-                } else {
-                    stmt.setString(6, "MEDICO");
-                    stmt.setNull(7, java.sql.Types.VARCHAR);
-                }
-
-                return stmt.executeUpdate() > 0;
-            } catch (SQLException e) {
-                LOGGER.log(Level.SEVERE, "Errore durante l'aggiunta dell'utente", e);
-            }
+    @Override
+    public boolean aggiungiUtente(String matricola, String login, String password, String nome, String cognome, String ruolo) {
+        String query = "INSERT INTO utente (matricola, login, password, nome, cognome, ruolo) VALUES (?, ?, ?, ?, ?, ?)";
+        try (Connection conn = ConnessioneDatabase.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, matricola);
+            stmt.setString(2, login);
+            stmt.setString(3, password);
+            stmt.setString(4, nome);
+            stmt.setString(5, cognome);
+            stmt.setString(6, ruolo);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Errore durante l'inserimento dell'utente nel DB", e);
             return false;
         }
+    }
 
-        @Override
+
+    @Override
         public ArrayList<String> getUtenteByLoginAndPassword(String login, String password) {
             String query = "SELECT * FROM utente WHERE login = ? AND password = ?";
             try (Connection conn = ConnessioneDatabase.getConnection();
@@ -76,7 +68,7 @@ public class UtentePostgresDao implements UtenteDAO{
                     datiUtente.add(rs.getString("password"));
                     datiUtente.add(rs.getString("matricola"));
                     datiUtente.add(rs.getString("ruolo"));
-                    
+
                     String pinEstratto = rs.getString("pin");
                     datiUtente.add(pinEstratto != null ? pinEstratto : "");
                     

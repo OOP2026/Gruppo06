@@ -16,31 +16,25 @@ public class MedicoPostgresDao implements MedicoDAO {
     private static final Logger LOGGER = Logger.getLogger(MedicoPostgresDao.class.getName());
 
     @Override
-    public boolean aggiungiMedico(String nome, String cognome, String login, String password, String matricola, String iscrizioneAlbo, String specializzazione, String reparto) {
-        String query = "INSERT INTO utente (login, password, matricola, nome, cognome, iscrizione_albo, specializzazione, reparto) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+    public boolean aggiungiMedico(String nome, String cognome, String matricola, String iscrizioneAlbo, String specializzazione, String reparto) {
+        String query = "INSERT INTO medico (nome, cognome, matricola, iscrizione_albo, specializzazione, reparto) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = ConnessioneDatabase.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
 
-            stmt.setString(1, login);
-            stmt.setString(2, password);
+            stmt.setString(1, nome);
+            stmt.setString(2, cognome);
             stmt.setString(3, matricola);
-            stmt.setString(4, nome);
-            stmt.setString(5, cognome);
-
-            if (iscrizioneAlbo != null && !iscrizioneAlbo.trim().isEmpty()) {
-                stmt.setDate(6, java.sql.Date.valueOf(iscrizioneAlbo));
-            } else {
-                stmt.setNull(6, java.sql.Types.DATE);
-            }
-            stmt.setString(7, specializzazione);
-            stmt.setString(8, reparto);
+            stmt.setString(4, iscrizioneAlbo);
+            stmt.setString(5, specializzazione);
+            stmt.setString(6, reparto);
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Errore durante l'aggiunta del medico", e);
+            return false;
         }
-        return false;
     }
+
 
     @Override
     public ArrayList<String> getMedicoByMatricola(String matricola) {

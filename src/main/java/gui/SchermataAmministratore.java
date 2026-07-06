@@ -63,43 +63,43 @@ public class SchermataAmministratore extends JFrame {
     // =========================================================
 
     public void addPazientiListener(ActionListener listener) {
-        if (pazientiButton != null) pazientiButton.addActionListener(listener);
+        this.pazientiButton.addActionListener(listener);
     }
 
     public void addLettiListener(ActionListener listener) {
-        if (lettiButton != null) lettiButton.addActionListener(listener);
+        this.lettiButton.addActionListener(listener);
     }
 
     public void addPrestazioniListener(ActionListener listener) {
-        if (prestazioniButton != null) prestazioniButton.addActionListener(listener);
+        this.prestazioniButton.addActionListener(listener);
     }
 
     public void addEsciListener(ActionListener listener) {
-        if (esciButton != null) esciButton.addActionListener(listener);
+        this.esciButton.addActionListener(listener);
     }
 
     public void addMediciListener(ActionListener listener) {
-        if (mediciButton != null) mediciButton.addActionListener(listener);
+        this.mediciButton.addActionListener(listener);
     }
 
     public void addDimissioniListener(ActionListener listener) {
-        if (dimissioniButton != null) dimissioniButton.addActionListener(listener);
+        this.dimissioniButton.addActionListener(listener);
     }
 
     public void addRicoveroListener(ActionListener listener) {
-        if (ricoveroButton != null) ricoveroButton.addActionListener(listener);
+        this.ricoveroButton.addActionListener(listener);
     }
 
     public void addTurniListener(ActionListener listener) {
-        if (turniButton != null) turniButton.addActionListener(listener);
+        this.turniButton.addActionListener(listener);
     }
 
     public void addRicercaAgendaListener(ActionListener listener) {
-        if (ricercaButton != null) ricercaButton.addActionListener(listener);
+        this.ricercaButton.addActionListener(listener);
     }
 
     public void addNewEventListener(ActionListener listener) {
-        if (newEventButton != null) newEventButton.addActionListener(listener);
+        this.newEventButton.addActionListener(listener);
     }
 
     public void aggiornaAgenda(Object[][] dati) {

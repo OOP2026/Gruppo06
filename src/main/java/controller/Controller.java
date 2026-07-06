@@ -18,7 +18,6 @@ import java.awt.*;
  * The type Controller.
  */
 public class Controller {
-	private UtenteDAO utenteDAO;
 	private MedicoDAO medicoDAO;
 	private Turno_LavoroDAO turnoDAO;
 	private AssenzaDAO assenzaDAO;
@@ -26,6 +25,7 @@ public class Controller {
 	private LettoDAO lettoDAO;
 	private RicoveroDAO ricoveroDAO;
 	private AgendaDAO agendaDAO;
+	private UtenteDAO utenteDAO;
 
 	private Utente utenteLoggato;
 	private JFrame finestraAttiva = null;
@@ -53,7 +53,6 @@ public class Controller {
 	public Controller() { //Blocco Costruttore
 
 		//inizializzazione DAO per Postgre
-		utenteDAO = new UtentePostgresDao();
 		medicoDAO = new MedicoPostgresDao();
 		turnoDAO = new TurnoLavoroPostgresDao();
 		assenzaDAO = new AssenzaPostgresDao();
@@ -61,6 +60,7 @@ public class Controller {
 		lettoDAO = new LettoPostgresDao();
 		ricoveroDAO = new RicoveroPostgresDao();
 		agendaDAO = new AgendaPostgresDAO();
+		utenteDAO = new UtentePostgresDao();
 	}
 
 	/**
@@ -80,26 +80,20 @@ public class Controller {
 	 * @return the boolean
 	 */
 	public boolean registrazione(String login, String password, String nome, String cognome, String pin, boolean isAdmin) {
-		// Logica di validazione: controlliamo che i campi base non siano vuoti
-		if (isNullOrEmpty(login) || isNullOrEmpty(password) || isNullOrEmpty(nome) || isNullOrEmpty(cognome)) {
-			LOGGER.warning("Errore di registrazione: tutti i campi obbligatori devono essere compilati.");
-			return false;
-		}
-
 		if (utenteDAO.checkLoginEsistente(login)) {
-			LOGGER.warning(() -> "Errore di registrazione: l'username '" + login + "' è già in uso.");
+			LOGGER.warning("Tentativo di registrazione con login già esistente: " + login);
 			return false;
 		}
 
-		if (isAdmin) {
-			if (pin.equals("1234")) {
-				return utenteDAO.aggiungiUtente(nome, cognome, login, password, "", pin);
-			} else {
-				return false;
-			}
-		} else {
-			return utenteDAO.aggiungiUtente(nome, cognome, login, password, "", null);
-		}
+		// La logica di generazione della matricola dovrebbe essere più robusta
+		String matricola = (isAdmin ? "A" : "M") + (int)(Math.random() * 1000);
+		String ruolo = isAdmin ? "amministratore" : "medico";
+
+		// Per ora, la registrazione aggiunge un utente generico.
+		// La differenziazione in Medico/Amministratore avviene al login.
+		// In un'evoluzione, si potrebbe creare direttamente l'entità Medico/Admin qui.
+		LOGGER.info("Tentativo di registrazione nuovo utente con matricola: " + matricola);
+		return utenteDAO.aggiungiUtente(matricola, login, password, nome, cognome, ruolo);
 	}
 
 	/**
@@ -111,29 +105,24 @@ public class Controller {
 	 */
 	//Metodo di riconoscimento e futura impostazione schermata
 	public boolean whoIsAsking(String login, String password) {
-
-		List<String> datiUtente = utenteDAO.getUtenteByLoginAndPassword(login, password);
+		ArrayList<String> datiUtente = utenteDAO.getUtenteByLoginAndPassword(login, password);
 
 		if (datiUtente != null && !datiUtente.isEmpty()) {
-			String dbNome = datiUtente.get(0);
-			String dbCognome = datiUtente.get(1);
-			String dbLogin = datiUtente.get(2);
-			String dbPassword = datiUtente.get(3);
-			String dbMatricola = datiUtente.get(4);
-			String dbRuolo = datiUtente.get(5);
-			String dbPin = datiUtente.get(6);
+			String nome = datiUtente.get(0);
+			String cognome = datiUtente.get(1);
+			String matricola = datiUtente.get(4);
+			String ruolo = datiUtente.get(5);
 
-			if ("ADMIN".equals(dbRuolo) || "AMMINISTRATORE".equals(dbRuolo)) {
-				this.utenteLoggato = new Amministratore(dbLogin, dbPassword, dbMatricola, dbNome, dbCognome, dbPin);
-				LOGGER.info("Accesso Admin confermato.");
+			if ("amministratore".equalsIgnoreCase(ruolo)) {
+				this.utenteLoggato = new Amministratore(matricola, login, password, nome, cognome, ruolo);
+				LOGGER.info("Accesso Amministratore confermato per " + login);
 				return true;
-			} else if ("MEDICO".equals(dbRuolo)) {
-				this.utenteLoggato = new Medico(dbNome, dbCognome, dbLogin, dbPassword, dbMatricola);
-				LOGGER.info("Accesso Medico confermato.");
+			} else if ("medico".equalsIgnoreCase(ruolo)) {
+				this.utenteLoggato = new Medico(matricola, nome, cognome, login, password, ruolo);
+				LOGGER.info("Accesso Medico confermato per " + login);
 				return true;
 			}
 		}
-
 		LOGGER.warning("Accesso negato, utente non trovato");
 		return false;
 	}
@@ -158,7 +147,7 @@ public class Controller {
 	// METODI PER LA GESTIONE DEI MEDICI
 	// =========================================================
 
-	public boolean aggiungiMedico(String nome, String cognome, String login, String password, String matricola, String iscrizioneAlbo, String specializzazione, String reparto) {
+	public boolean aggiungiMedico(String nome, String cognome, String matricola, String iscrizioneAlbo, String specializzazione, String reparto) {
 		// Validazione campi obbligatori
 		if (isNullOrEmpty(matricola) || isNullOrEmpty(nome) || isNullOrEmpty(cognome)) {
 			LOGGER.warning("Errore: Nome, Cognome e Matricola sono campi obbligatori per il medico.");
@@ -170,7 +159,7 @@ public class Controller {
 			LOGGER.warning(() -> "Errore: Impossibile aggiungere. Esiste già un medico con matricola " + matricola);
 			return false;
 		}
-		return medicoDAO.aggiungiMedico(nome, cognome, login, password, matricola, iscrizioneAlbo, specializzazione, reparto);
+		return medicoDAO.aggiungiMedico(nome, cognome, matricola, iscrizioneAlbo, specializzazione, reparto);
 	}
 
 	public List<String> getMedicoByMatricola(String matricola) {
@@ -181,17 +170,13 @@ public class Controller {
 		return medicoDAO.getAllMedici();
 	}
 
-	public boolean aggiornaMedico(String nome, String cognome, String login, String password, String matricola, String iscrizioneAlbo, String specializzazione, String reparto) {
-		return medicoDAO.aggiornaMedico(nome, cognome, login, password, matricola, iscrizioneAlbo, specializzazione, reparto);
+	public boolean aggiornaMedico(String nome, String cognome, String matricola, String iscrizioneAlbo, String specializzazione) {
+		return medicoDAO.aggiornaMedico(nome, cognome, matricola, iscrizioneAlbo, specializzazione);
 	}
 
 	public boolean eliminaMedico(String matricola) {
 		return medicoDAO.eliminaMedico(matricola);
 	}
-
-	// =========================================================
-	// METODI PER LA GESTIONE DEI TURNI DI LAVORO
-	// =========================================================
 
 	public boolean aggiungiTurno(String matricola, String data, String inizioTurno, String fineTurno, String idAgenda) {
 		// Validazione input
@@ -208,6 +193,10 @@ public class Controller {
 		}
 		return turnoDAO.aggiungiTurno(matricola, data, inizioTurno, fineTurno, idAgenda);
 	}
+
+	// =========================================================
+	// METODI PER LA GESTIONE DEI TURNI DI LAVORO
+	// =========================================================
 
 	public List<String> getTurno(String matricola, String data, String inizioTurno) {
 		return turnoDAO.getTurno(matricola, data, inizioTurno);
@@ -591,7 +580,11 @@ public class Controller {
 			String specializzazione = specializzazioneInput.getText().trim();
 			String reparto = repartoInput.getText().trim();
 
-			boolean successo = aggiungiMedico(nome, cognome, login, password, matricola, iscrizioneAlbo, specializzazione, reparto);
+			// Logica di registrazione a due fasi: prima l'utente, poi il medico.
+			// Ora la creazione è in un unico passaggio nel DAO del medico
+			// La firma di aggiungiMedico andrà aggiornata per prendere anche login e password
+			boolean successo = aggiungiMedico(nome, cognome, matricola, iscrizioneAlbo, specializzazione, reparto);
+
 			if (successo) {
 				JOptionPane.showMessageDialog(null, "Medico aggiunto con successo al database!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
 				return true;
@@ -705,45 +698,44 @@ public class Controller {
 		frame.setLocationRelativeTo(null);
 	}
 
-	private void mostraFinestraSecondaria(JFrame nuovaFinestra) {
+	private void mostraFinestraSecondaria(JFrame nuovaFinestra, JFrame frameDaChiudere) {
 		// Chiude la finestra secondaria aperta in precedenza, se esiste
 		if (finestraAttiva != null && finestraAttiva.isVisible()) {
 			finestraAttiva.dispose();
 		}
 
-		// Nasconde la schermata principale (Home) per mostrare solo la nuova
-		if (homeFrame != null && homeFrame.isVisible()) {
-			homeFrame.setVisible(false);
-		}
-
-		// Quando la finestra secondaria viene chiusa, riapriamo la schermata principale
+		// Aggiungiamo il listener alla nuova finestra
 		nuovaFinestra.addWindowListener(new java.awt.event.WindowAdapter() {
 			@Override
 			public void windowClosed(java.awt.event.WindowEvent e) {
-				if (homeFrame != null) {
-					homeFrame.setVisible(true);
-				}
+				indirizzaUtenteLoggato(); // Ricrea e mostra la schermata home corretta
 			}
 		});
 
+		// 1. PRIMA rendi visibile la nuova finestra.
+		// Questo garantisce che ci sia sempre almeno una finestra attiva nell'Event Dispatch Thread.
 		finestraAttiva = nuovaFinestra;
 		finestraAttiva.setVisible(true);
-	}
 
+		// 2. DOPO chiudi la schermata principale.
+		if (frameDaChiudere != null) {
+			frameDaChiudere.dispose();
+		}
+	}
 	public void avviaSchermataAmministratore(String nomeUtente) {
 		gui.SchermataAmministratore adminFrame = new gui.SchermataAmministratore(nomeUtente);
-		impostaSchermata(adminFrame, adminFrame.mainPanel, "Ospedale - Home Amministratore", WindowConstants.EXIT_ON_CLOSE);
+		impostaSchermata(adminFrame, adminFrame.mainPanel, "Ospedale - Home Amministratore", WindowConstants.DISPOSE_ON_CLOSE);
 
 		homeFrame = adminFrame; // Imposta come schermata principale
 
 		// Il Controller si iscrive agli eventi della GUI "stupida"
-		adminFrame.addPazientiListener(e -> apriSchermataPazienti());
-		adminFrame.addLettiListener(e -> apriSchermataLetti());
-		adminFrame.addPrestazioniListener(e -> apriSchermataPrestazioni());
-		adminFrame.addMediciListener(e -> apriSchermataMedici());
-		adminFrame.addDimissioniListener(e -> apriSchermataDimissioni());
-		adminFrame.addRicoveroListener(e -> apriSchermataRicoveri());
-		adminFrame.addTurniListener(e -> apriSchermataTurni());
+		adminFrame.addPazientiListener(e -> apriSchermataPazienti(adminFrame));
+		adminFrame.addLettiListener(e -> apriSchermataLetti(adminFrame));
+		adminFrame.addPrestazioniListener(e -> apriSchermataPrestazioni(adminFrame));
+		adminFrame.addMediciListener(e -> apriSchermataMedici(adminFrame));
+		adminFrame.addDimissioniListener(e -> apriSchermataDimissioni(adminFrame));
+		adminFrame.addRicoveroListener(e -> apriSchermataRicoveri(adminFrame));
+		adminFrame.addTurniListener(e -> apriSchermataTurni(adminFrame));
 		
 		adminFrame.addRicercaAgendaListener(e -> aggiornaAgendaGUI(adminFrame));
 		adminFrame.addNewEventListener(e -> {
@@ -756,18 +748,17 @@ public class Controller {
 		adminFrame.addEsciListener(e -> {
 			int conferma = JOptionPane.showConfirmDialog(null, MSG_CONFERMA_USCITA, TITLE_CONFERMA_USCITA, JOptionPane.YES_NO_OPTION);
 			if (conferma == JOptionPane.YES_OPTION) {
-				homeFrame = null; // Rimuove il riferimento prima di chiudere tutto
-				if (finestraAttiva != null) finestraAttiva.dispose(); // Chiude eventuali finestre figlie aperte
+				// Torna alla schermata di login
 				adminFrame.dispose();
 				logout();
-				avviaSchermataLogin(); // Routing al login centralizzato
+				avviaSchermataLogin();
 			}
 		});
 
 		adminFrame.setVisible(true);
 	}
 
-	public void apriSchermataPazienti() {
+	public void apriSchermataPazienti(JFrame frameDaChiudere) {
 		gui.Pazienti pazientiFrame = new gui.Pazienti();
 		impostaSchermata(pazientiFrame, pazientiFrame.mainPanel, "Gestione Pazienti", WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -778,7 +769,7 @@ public class Controller {
         });
 
         pazientiFrame.aggiornaTabella(getAllPazienti());
-		mostraFinestraSecondaria(pazientiFrame);
+		mostraFinestraSecondaria(pazientiFrame, frameDaChiudere);
 	}
 
 	/**
@@ -791,7 +782,7 @@ public class Controller {
 		lettiFrame.aggiornaTabella(datiPerTabella);
 	}
 
-	public void apriSchermataLetti() {
+	public void apriSchermataLetti(JFrame frameDaChiudere) {
 		// 1. Crea l'istanza della schermata
 		gui.Letti lettiFrame = new gui.Letti();
 
@@ -826,29 +817,29 @@ public class Controller {
 		ricaricaEAggiornaTabellaLetti(lettiFrame);
 
 		// 4. Mostra la finestra
-		mostraFinestraSecondaria(lettiFrame);
+		mostraFinestraSecondaria(lettiFrame, frameDaChiudere);
 	}
 
-	public void apriSchermataPrestazioni() {
+	public void apriSchermataPrestazioni(JFrame frameDaChiudere) {
 		gui.Prestazioni prestazioniFrame = new gui.Prestazioni();
 		impostaSchermata(prestazioniFrame, prestazioniFrame.mainPanel, "Ricerca Prestazioni Mediche", WindowConstants.DISPOSE_ON_CLOSE);
 		prestazioniFrame.aggiornaTabella(new Object[0][0]);
-		mostraFinestraSecondaria(prestazioniFrame);
+		mostraFinestraSecondaria(prestazioniFrame, frameDaChiudere);
 	}
 
 	public void avviaSchermataMedico(String nomeUtente) {
 		gui.SchermataMedico medicoHome = new gui.SchermataMedico(nomeUtente);
-		impostaSchermata(medicoHome, medicoHome.mainPanel, "Ospedale - Home Medico", WindowConstants.EXIT_ON_CLOSE);
+		impostaSchermata(medicoHome, medicoHome.mainPanel, "Ospedale - Home Medico", WindowConstants.DISPOSE_ON_CLOSE);
 
 		homeFrame = medicoHome; // Imposta come schermata principale
 
 		// Esposizione e deleghe per il Medico
-		medicoHome.addPazientiListener(e -> apriSchermataPazienti());
-		medicoHome.addLettiListener(e -> apriSchermataLetti());
-		medicoHome.addPrestazioniListener(e -> apriSchermataPrestazioni());
-		medicoHome.addDimissioniListener(e -> apriSchermataDimissioni());
-		medicoHome.addRicoveroListener(e -> apriSchermataRicoveri());
-		medicoHome.addTurniListener(e -> apriSchermataTurni());
+		medicoHome.addPazientiListener(e -> apriSchermataPazienti(medicoHome));
+		medicoHome.addLettiListener(e -> apriSchermataLetti(medicoHome));
+		medicoHome.addPrestazioniListener(e -> apriSchermataPrestazioni(medicoHome));
+		medicoHome.addDimissioniListener(e -> apriSchermataDimissioni(medicoHome));
+		medicoHome.addRicoveroListener(e -> apriSchermataRicoveri(medicoHome));
+		medicoHome.addTurniListener(e -> apriSchermataTurni(medicoHome));
 		
 		medicoHome.addRicercaAgendaListener(e -> aggiornaAgendaGUI(medicoHome));
 		medicoHome.addNewEventListener(e -> {
@@ -860,18 +851,17 @@ public class Controller {
 		medicoHome.addEsciListener(e -> {
 			int conferma = JOptionPane.showConfirmDialog(null, MSG_CONFERMA_USCITA, TITLE_CONFERMA_USCITA, JOptionPane.YES_NO_OPTION);
 			if (conferma == JOptionPane.YES_OPTION) {
-				homeFrame = null; // Rimuove il riferimento prima di chiudere tutto
-				if (finestraAttiva != null) finestraAttiva.dispose(); // Chiude eventuali finestre figlie aperte
+				// Torna alla schermata di login
 				medicoHome.dispose();
 				logout();
-				avviaSchermataLogin(); // Routing al login centralizzato
+				avviaSchermataLogin();
 			}
 		});
 
 		medicoHome.setVisible(true);
 	}
 
-	public void apriSchermataMedici() {
+	public void apriSchermataMedici(JFrame frameDaChiudere) {
 		gui.Medici mediciFrame = new gui.Medici();
 		impostaSchermata(mediciFrame, mediciFrame.mainPanel, "Gestione Medici", WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -882,10 +872,10 @@ public class Controller {
         });
 
 		mediciFrame.aggiornaTabella(formattaDatiMedici(getAllMedici()));
-		mostraFinestraSecondaria(mediciFrame);
+		mostraFinestraSecondaria(mediciFrame, frameDaChiudere);
 	}
 
-	public void apriSchermataDimissioni() {
+	public void apriSchermataDimissioni(JFrame frameDaChiudere) {
 		gui.Dimissioni dimissioniFrame = new gui.Dimissioni();
 		impostaSchermata(dimissioniFrame, dimissioniFrame.mainPanel, "Ricerca Dimissioni", WindowConstants.DISPOSE_ON_CLOSE);
 	
@@ -916,10 +906,10 @@ public class Controller {
 		});
 
 		dimissioniFrame.aggiornaTabella(formattaDatiDimissioni(ricercaDimissioni()));
-		mostraFinestraSecondaria(dimissioniFrame);
+		mostraFinestraSecondaria(dimissioniFrame, frameDaChiudere);
 	}
 
-	public void apriSchermataRicoveri() {
+	public void apriSchermataRicoveri(JFrame frameDaChiudere) {
 		gui.Ricovero ricoveroFrame = new gui.Ricovero();
 		impostaSchermata(ricoveroFrame, ricoveroFrame.mainPanel, "Ricerca Ricovero", WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -930,10 +920,10 @@ public class Controller {
         });
 
 		caricaDatiRicoveri(ricoveroFrame);
-		mostraFinestraSecondaria(ricoveroFrame);
+		mostraFinestraSecondaria(ricoveroFrame, frameDaChiudere);
 	}
 
-	public void apriSchermataTurni() {
+	public void apriSchermataTurni(JFrame frameDaChiudere) {
 		gui.Turni turniFrame = new gui.Turni();
 		impostaSchermata(turniFrame, turniFrame.panelHome, "Gestione Turni Lavorativi", WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -944,7 +934,7 @@ public class Controller {
         });
 
 		caricaDatiTurni(turniFrame);
-		mostraFinestraSecondaria(turniFrame);
+		mostraFinestraSecondaria(turniFrame, frameDaChiudere);
 	}
 
 	public boolean gestisciNuovoEvento() {
@@ -1159,7 +1149,11 @@ public class Controller {
 	}
 
 	public void avvia() {
-		avviaSchermataLogin();
+		// Avvio diretto della schermata amministratore per saltare il login durante lo sviluppo
+		this.utenteLoggato = new model.Amministratore("A001", "admin", "pass", "Admin", "Test", "amministratore");
+		avviaSchermataAmministratore("Dott. Admin Test");
+		// Per ripristinare il normale flusso di avvio, decommenta la riga seguente e commenta le due sopra.
+		// avviaSchermataLogin();
 	}
 
 	private void avviaSchermataLogin() {

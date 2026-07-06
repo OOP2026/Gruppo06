@@ -1,18 +1,23 @@
 package gui;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.Cursor;
+import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public class Login {
-    // --- Costanti per lo stile ---
-    private static final Color COLORE_PRIMARIO = new Color(70, 132, 197);
-    private static final Color COLORE_TESTO_PULSANTE_DEFAULT = Color.BLACK;
-    private static final Color COLORE_SFONDO_PULSANTE_DEFAULT = Color.WHITE;
-    private static final Color COLORE_TESTO_PULSANTE_HOVER = Color.WHITE;
-    // ---
+    public static final Color AZZURRO_HOME = new Color(70, 132, 197);
+    public static final Color SELECTION_BG = new Color(187, 222, 247);
+    public static final Color ALT_ROW_BG = new Color(0xf5, 0xf8, 0xfc);
+    public static final Font BASE_FONT = new Font("SansSerif", Font.PLAIN, 12);
+    public static final Font HEADER_FONT = new Font("SansSerif", Font.BOLD, 12);
 
     private JPasswordField passwordField;
     private JButton accediButton;
@@ -24,8 +29,8 @@ public class Login {
 
 
     public Login() {
-        applicaStilePulsantiCentrali(accediButton);
-        applicaStileLabelLink(registratiLabel);
+        Login.applicaStilePulsantiCentrali(accediButton);
+        Login.applicaStileLabelLink(registratiLabel);
     }
 
     public String getUsername() {
@@ -48,11 +53,20 @@ public class Login {
         JOptionPane.showMessageDialog(mainPanel, message, title, messageType);
     }
 
-    private void applicaStilePulsantiCentrali(JButton bottone) {
-        impostaColoriEdEffetti(bottone, COLORE_SFONDO_PULSANTE_DEFAULT, COLORE_TESTO_PULSANTE_DEFAULT, COLORE_PRIMARIO, COLORE_TESTO_PULSANTE_HOVER);
+    public static void applicaStilePulsantiCentrali(JButton bottone) {
+        if (bottone == null) return;
+        impostaColoriEdEffetti(bottone, Color.WHITE, Color.BLACK, AZZURRO_HOME, Color.WHITE);
+        bottone.setBorder(BorderFactory.createLineBorder(AZZURRO_HOME, 1));
+        bottone.setBorderPainted(true);
     }
 
-    private void impostaColoriEdEffetti(JButton bottone, Color sfondoDefault, Color testoDefault, Color sfondoHover, Color testoHover) {
+    public static void applicaStileMenuLaterale(JButton bottone) {
+        if (bottone == null) return;
+        impostaColoriEdEffetti(bottone, AZZURRO_HOME, Color.WHITE, Color.WHITE, Color.BLACK);
+    }
+
+    public static void impostaColoriEdEffetti(JButton bottone, Color sfondoDefault, Color testoDefault, Color sfondoHover, Color testoHover) {
+        if (bottone == null) return;
         bottone.setBackground(sfondoDefault);
         bottone.setForeground(testoDefault);
         bottone.setFocusPainted(false);
@@ -76,11 +90,67 @@ public class Login {
         });
     }
 
-    private void applicaStileLabelLink(JLabel label) {
+    public static void styleList(JList<?> list) {
+        if (list == null) return;
+        list.setSelectionBackground(AZZURRO_HOME);
+        list.setSelectionForeground(Color.WHITE);
+        list.setFont(BASE_FONT);
+    }
+
+    public static void setupTableStyle(JTable table) {
+        if (table == null) return;
+        table.setRowHeight(26);
+        table.setShowGrid(false);
+        table.setIntercellSpacing(new Dimension(0, 0));
+        table.setSelectionBackground(SELECTION_BG);
+        table.setSelectionForeground(Color.BLACK);
+        table.setFont(BASE_FONT);
+
+        JTableHeader th = table.getTableHeader();
+        th.setBackground(AZZURRO_HOME);
+        th.setForeground(Color.WHITE);
+        th.setFont(HEADER_FONT);
+        th.setPreferredSize(new Dimension(th.getWidth(), 30));
+        th.setReorderingAllowed(false);
+
+        table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int row, int col) {
+                super.getTableCellRendererComponent(t, v, sel, foc, row, col);
+                if (!sel) {
+                    setBackground(row % 2 == 0 ? Color.WHITE : ALT_ROW_BG);
+                    setForeground(Color.BLACK);
+                }
+                setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 6));
+                return this;
+            }
+        });
+    }
+
+    public static void setupAgendaTableStyle(JTable agendaTable) {
+        if (agendaTable == null) return;
+        String[] colonne = {"Ora", "Evento"};
+        DefaultTableModel model = new DefaultTableModel(new Object[0][0], colonne) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        agendaTable.setModel(model);
+        agendaTable.setRowHeight(30);
+        agendaTable.setForeground(Color.BLACK);
+        agendaTable.setBackground(Color.WHITE);
+        agendaTable.setSelectionBackground(new Color(180, 210, 240));
+        agendaTable.setSelectionForeground(Color.BLACK);
+        agendaTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 12));
+        agendaTable.getTableHeader().setForeground(Color.BLACK);
+    }
+
+    public static void applicaStileLabelLink(JLabel label) {
         if (label == null) return;
 
-        final String testoOriginale = label.getText();
-        label.setForeground(COLORE_PRIMARIO);
+        final String testoOriginale = label.getText().replace("<html><u>", "").replace("</u></html>", "");
+        label.setForeground(AZZURRO_HOME);
         label.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         label.addMouseListener(new MouseAdapter() {
@@ -100,9 +170,9 @@ public class Login {
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            // Il Controller ora gestisce l'avvio dell'applicazione e le logiche!
-            controller.Controller controller = new controller.Controller();
-            controller.avvia();
+            JFrame frame = new JFrame("Login");
+            controller.Controller.impostaSchermata(frame, new Login().mainPanel, "Login", JFrame.EXIT_ON_CLOSE);
+            frame.setVisible(true);
         });
     }
 }

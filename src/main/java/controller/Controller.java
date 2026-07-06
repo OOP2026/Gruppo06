@@ -692,6 +692,19 @@ public class Controller {
 	// METODI DI NAVIGAZIONE E GESTIONE SCHERMATE (ORCHESTRAZIONE GUI)
 	// =========================================================
 
+	public static void impostaSchermata(JFrame frame, JPanel panel, String titolo, int defaultCloseOperation) {
+		Dimension strictSize = new Dimension(1000, 680);
+		if (panel != null) {
+			panel.setPreferredSize(strictSize);
+			frame.setContentPane(panel);
+		}
+		frame.setTitle(titolo);
+		frame.setDefaultCloseOperation(defaultCloseOperation);
+		frame.pack();
+		frame.setResizable(false);
+		frame.setLocationRelativeTo(null);
+	}
+
 	private void mostraFinestraSecondaria(JFrame nuovaFinestra) {
 		// Chiude la finestra secondaria aperta in precedenza, se esiste
 		if (finestraAttiva != null && finestraAttiva.isVisible()) {
@@ -719,7 +732,8 @@ public class Controller {
 
 	public void avviaSchermataAmministratore(String nomeUtente) {
 		gui.SchermataAmministratore adminFrame = new gui.SchermataAmministratore(nomeUtente);
-		
+		impostaSchermata(adminFrame, adminFrame.mainPanel, "Ospedale - Home Amministratore", WindowConstants.EXIT_ON_CLOSE);
+
 		homeFrame = adminFrame; // Imposta come schermata principale
 
 		// Il Controller si iscrive agli eventi della GUI "stupida"
@@ -755,14 +769,7 @@ public class Controller {
 
 	public void apriSchermataPazienti() {
 		gui.Pazienti pazientiFrame = new gui.Pazienti();
-		if (pazientiFrame.mainPanel != null) {
-			pazientiFrame.setContentPane(pazientiFrame.mainPanel);
-		}
-		
-		pazientiFrame.setTitle("Gestione Pazienti");
-		pazientiFrame.setSize(1100, 750);
-		pazientiFrame.setLocationRelativeTo(null);
-		pazientiFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+		impostaSchermata(pazientiFrame, pazientiFrame.mainPanel, "Gestione Pazienti", WindowConstants.DISPOSE_ON_CLOSE);
 
         pazientiFrame.addNuovoPazienteListener(e -> {
             if (gestisciCreazioneNuovoPaziente()) {
@@ -788,11 +795,7 @@ public class Controller {
 		// 1. Crea l'istanza della schermata
 		gui.Letti lettiFrame = new gui.Letti();
 
-		// Imposta le proprietà della finestra per farla aprire al centro
-		lettiFrame.setTitle("Gestione Letti");
-		lettiFrame.setSize(1000, 680);
-		lettiFrame.setLocationRelativeTo(null);
-		lettiFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+		impostaSchermata(lettiFrame, lettiFrame.mainPanel, "Gestione Letti", WindowConstants.DISPOSE_ON_CLOSE);
 
 		// 2. Collega il pulsante "Assegna Paziente" alla sua logica
 		lettiFrame.addAssegnaPazienteListener(e -> {
@@ -828,20 +831,15 @@ public class Controller {
 
 	public void apriSchermataPrestazioni() {
 		gui.Prestazioni prestazioniFrame = new gui.Prestazioni();
-		if (prestazioniFrame.mainPanel != null) {
-			prestazioniFrame.setContentPane(prestazioniFrame.mainPanel);
-		}
-		prestazioniFrame.setTitle("Ricerca Prestazioni Mediche");
-		prestazioniFrame.setSize(1000, 680);
-		prestazioniFrame.setLocationRelativeTo(null);
-		prestazioniFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+		impostaSchermata(prestazioniFrame, prestazioniFrame.mainPanel, "Ricerca Prestazioni Mediche", WindowConstants.DISPOSE_ON_CLOSE);
 		prestazioniFrame.aggiornaTabella(new Object[0][0]);
 		mostraFinestraSecondaria(prestazioniFrame);
 	}
 
 	public void avviaSchermataMedico(String nomeUtente) {
 		gui.SchermataMedico medicoHome = new gui.SchermataMedico(nomeUtente);
-		
+		impostaSchermata(medicoHome, medicoHome.mainPanel, "Ospedale - Home Medico", WindowConstants.EXIT_ON_CLOSE);
+
 		homeFrame = medicoHome; // Imposta come schermata principale
 
 		// Esposizione e deleghe per il Medico
@@ -875,13 +873,7 @@ public class Controller {
 
 	public void apriSchermataMedici() {
 		gui.Medici mediciFrame = new gui.Medici();
-		if (mediciFrame.mainPanel != null) {
-			mediciFrame.setContentPane(mediciFrame.mainPanel);
-		}
-		mediciFrame.setTitle("Gestione Medici");
-		mediciFrame.setSize(1000, 680);
-		mediciFrame.setLocationRelativeTo(null);
-		mediciFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+		impostaSchermata(mediciFrame, mediciFrame.mainPanel, "Gestione Medici", WindowConstants.DISPOSE_ON_CLOSE);
 
         mediciFrame.addNuovoMedicoListener(e -> {
             if (gestisciCreazioneNuovoMedico()) {
@@ -895,13 +887,7 @@ public class Controller {
 
 	public void apriSchermataDimissioni() {
 		gui.Dimissioni dimissioniFrame = new gui.Dimissioni();
-		if (dimissioniFrame.mainPanel != null) {
-			dimissioniFrame.setContentPane(dimissioniFrame.mainPanel);
-		}
-		dimissioniFrame.setTitle("Ricerca Dimissioni");
-		dimissioniFrame.setSize(1164, 680);
-		dimissioniFrame.setLocationRelativeTo(null);
-		dimissioniFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+		impostaSchermata(dimissioniFrame, dimissioniFrame.mainPanel, "Ricerca Dimissioni", WindowConstants.DISPOSE_ON_CLOSE);
 	
 		// Logica per il pulsante "Archivia Dimissione"
         dimissioniFrame.addArchiviaDimissioneListener(e -> {
@@ -935,41 +921,29 @@ public class Controller {
 
 	public void apriSchermataRicoveri() {
 		gui.Ricovero ricoveroFrame = new gui.Ricovero();
-		if (ricoveroFrame.mainPanel != null) {
-			ricoveroFrame.setContentPane(ricoveroFrame.mainPanel);
-		}
-		ricoveroFrame.setTitle("Ricerca Ricovero");
-		ricoveroFrame.setSize(1024, 680);
-		ricoveroFrame.setLocationRelativeTo(null);
-		ricoveroFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+		impostaSchermata(ricoveroFrame, ricoveroFrame.mainPanel, "Ricerca Ricovero", WindowConstants.DISPOSE_ON_CLOSE);
 
         ricoveroFrame.addNuovoRicoveroListener(e -> {
             if (gestisciCreazioneNuovoRicovero()) {
-                // ricoveroFrame.aggiornaTabella(getRicoveriDaDB()); // TODO
+                caricaDatiRicoveri(ricoveroFrame);
             }
         });
 
-		ricoveroFrame.aggiornaTabella(new Object[0][0]); // TODO: Integrare con RicoveroDAO per DB
+		caricaDatiRicoveri(ricoveroFrame);
 		mostraFinestraSecondaria(ricoveroFrame);
 	}
 
 	public void apriSchermataTurni() {
 		gui.Turni turniFrame = new gui.Turni();
-		if (turniFrame.panelHome != null) {
-			turniFrame.setContentPane(turniFrame.panelHome);
-		}
-		turniFrame.setTitle("Gestione Turni Lavorativi");
-		turniFrame.setSize(1044, 680);
-		turniFrame.setLocationRelativeTo(null);
-		turniFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+		impostaSchermata(turniFrame, turniFrame.panelHome, "Gestione Turni Lavorativi", WindowConstants.DISPOSE_ON_CLOSE);
 
         turniFrame.addNuovoTurnoListener(e -> {
             if (gestisciCreazioneNuovoTurno()) {
-                // turniFrame.aggiornaTabella(getTurniDaDB()); // TODO
+                caricaDatiTurni(turniFrame);
             }
         });
 
-		turniFrame.aggiornaTabella(new Object[0][0]); // TODO: Integrare con TurnoDAO per DB
+		caricaDatiTurni(turniFrame);
 		mostraFinestraSecondaria(turniFrame);
 	}
 
@@ -1065,6 +1039,45 @@ public class Controller {
 		return dati;
 	}
 
+	private Object[][] formattaDatiTurni(List<ArrayList<String>> turniDb) {
+		if (turniDb == null) return new Object[0][0];
+		Object[][] dati = new Object[turniDb.size()][5];
+		for (int i = 0; i < turniDb.size(); i++) {
+			List<String> t = turniDb.get(i);
+			try {
+				dati[i][0] = t.get(0); // Matricola
+				dati[i][1] = t.get(1); // Data
+				dati[i][2] = t.get(2); // Ora Inizio
+				dati[i][3] = t.get(3); // Ora Fine
+				dati[i][4] = "Standard"; // Tipo Turno
+			} catch (Exception e) {
+				final int riga = i;
+				LOGGER.warning(() -> "Errore nella formattazione dei dati turni alla riga " + riga + ": " + e.getMessage());
+			}
+		}
+		return dati;
+	}
+
+	private Object[][] formattaDatiRicoveri(List<ArrayList<String>> ricoveriDb) {
+		if (ricoveriDb == null) return new Object[0][0];
+		// Colonne: CF, Letto, Data Inizio, Motivo
+		Object[][] dati = new Object[ricoveriDb.size()][4];
+		for (int i = 0; i < ricoveriDb.size(); i++) {
+			List<String> r = ricoveriDb.get(i);
+			try {
+				// getRicoveroAttivo restituisce: id_ricovero, cf_paziente, id_letto, data_inizio, motivo
+				dati[i][0] = r.get(1); // CF Paziente
+				dati[i][1] = r.get(2); // ID Letto
+				dati[i][2] = r.get(3); // Data Inizio
+				dati[i][3] = r.get(4); // Motivo
+			} catch (Exception e) {
+				final int riga = i;
+				LOGGER.warning(() -> "Errore nella formattazione dei dati ricoveri alla riga " + riga + ": " + e.getMessage());
+			}
+		}
+		return dati;
+	}
+
 	private Object[][] formattaDatiAgenda(List<Agenda> eventi) {
         if (eventi == null) return new Object[0][0];
 		Object[][] dati = new Object[eventi.size()][2];
@@ -1100,6 +1113,33 @@ public class Controller {
 		return dati;
 	}
 
+    private void caricaDatiTurni(gui.Turni turniFrame) {
+        List<ArrayList<String>> turni = new ArrayList<>();
+        if (utenteLoggato instanceof Amministratore) {
+            List<ArrayList<String>> medici = medicoDAO.getAllMedici();
+            for (ArrayList<String> medico : medici) {
+                String matricola = medico.get(4);
+                turni.addAll(turnoDAO.getTurniByMedico(matricola));
+            }
+        } else if (utenteLoggato instanceof Medico) {
+            turni = turnoDAO.getTurniByMedico(utenteLoggato.getMatricola());
+        }
+        turniFrame.aggiornaTabella(formattaDatiTurni(turni));
+    }
+
+    private void caricaDatiRicoveri(gui.Ricovero ricoveroFrame) {
+        List<ArrayList<String>> ricoveriAttivi = new ArrayList<>();
+        List<ArrayList<String>> pazienti = pazienteDAO.getAllPazienti();
+        for (ArrayList<String> paziente : pazienti) {
+            String cf = paziente.get(0);
+            List<String> ricovero = ricoveroDAO.getRicoveroAttivo(cf);
+            if (ricovero != null && !ricovero.isEmpty()) {
+                ricoveriAttivi.add(new ArrayList<>(ricovero));
+            }
+        }
+        ricoveroFrame.aggiornaTabella(formattaDatiRicoveri(ricoveriAttivi));
+    }
+
     private void aggiornaAgendaGUI(JFrame frame) {
         if (utenteLoggato == null) return;
         Object[][] dati = formattaDatiAgenda(getEventiPerMedico(utenteLoggato.getMatricola()));
@@ -1125,11 +1165,7 @@ public class Controller {
 	private void avviaSchermataLogin() {
 		gui.Login loginView = new gui.Login();
 		JFrame frame = new JFrame("Login - Ospedale San Raffaele");
-		frame.setContentPane(loginView.mainPanel);
-		frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-		frame.setSize(1000, 680);
-		frame.setResizable(false);
-		frame.setLocationRelativeTo(null);
+		impostaSchermata(frame, loginView.mainPanel, "Login - Ospedale San Raffaele", WindowConstants.EXIT_ON_CLOSE);
 
 		// Listener delegato dal bottone Accedi nella GUI
 		loginView.addLoginListener(e -> {
@@ -1175,11 +1211,7 @@ public class Controller {
 	private void avviaSchermataRegistrazione() {
 		gui.Registrazione regView = new gui.Registrazione();
 		JFrame frame = new JFrame("Registrazione - Ospedale San Raffaele");
-		frame.setContentPane(regView.mainPanel);
-		frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-		frame.setSize(1000, 680);
-		frame.setResizable(false);
-		frame.setLocationRelativeTo(null);
+		impostaSchermata(frame, regView.mainPanel, "Registrazione - Ospedale San Raffaele", WindowConstants.EXIT_ON_CLOSE);
 
 		regView.addRegisterListener(e -> {
 			String nome = regView.getNome();

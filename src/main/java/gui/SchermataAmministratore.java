@@ -11,7 +11,7 @@ import java.awt.event.MouseEvent;
 
 public class SchermataAmministratore extends JFrame {
 
-    private JPanel mainPanel;
+    public JPanel mainPanel;
     private JButton pazientiButton;
     private JButton lettiButton;
     private JButton dimissioniButton;
@@ -32,13 +32,6 @@ public class SchermataAmministratore extends JFrame {
     // COSTRUTTORE
     public SchermataAmministratore(String nomeUtente) {
 
-        this.setTitle("Ospedale - Home");
-        this.setContentPane(mainPanel);
-        this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE); // Chiude tutto se chiudi la Home
-        this.setSize(1000, 680);
-        this.setResizable(false);
-        this.setLocationRelativeTo(null);
-
         if (utenteLoggatoLabel != null) {
             utenteLoggatoLabel.setText(" " + nomeUtente);
             utenteLoggatoLabel.setForeground(Color.WHITE);
@@ -46,23 +39,23 @@ public class SchermataAmministratore extends JFrame {
         }
 
         // --- STILE MENU LATERALE ---
-        applicaStileMenuLaterale(prestazioniButton);
-        applicaStileMenuLaterale(ricoveroButton);
-        applicaStileMenuLaterale(turniButton);
-        applicaStileMenuLaterale(esciButton);
+        Login.applicaStileMenuLaterale(prestazioniButton);
+        Login.applicaStileMenuLaterale(ricoveroButton);
+        Login.applicaStileMenuLaterale(turniButton);
+        Login.applicaStileMenuLaterale(esciButton);
 
         //pulsanti dell'agenda nel menu laterale
-        applicaStilePulsantiCentrali(ricercaButton);
-        applicaStilePulsantiCentrali(newEventButton);
+        Login.applicaStilePulsantiCentrali(ricercaButton);
+        Login.applicaStilePulsantiCentrali(newEventButton);
 
         // --- STILE PULSANTI CENTRALI ---
-        applicaStilePulsantiCentrali(pazientiButton);
-        applicaStilePulsantiCentrali(lettiButton);
-        applicaStilePulsantiCentrali(dimissioniButton);
-        applicaStilePulsantiCentrali(mediciButton);
+        Login.applicaStilePulsantiCentrali(pazientiButton);
+        Login.applicaStilePulsantiCentrali(lettiButton);
+        Login.applicaStilePulsantiCentrali(dimissioniButton);
+        Login.applicaStilePulsantiCentrali(mediciButton);
 
         // --- POPOLA LA TABELLA DELL'AGENDA ---
-        popolaTabellaAgenda();
+        Login.setupAgendaTableStyle(agendaTable);
     }
 
     // =========================================================
@@ -128,89 +121,12 @@ public class SchermataAmministratore extends JFrame {
         return (dataField != null) ? dataField.getText().trim() : "";
     }
 
-    /**
-     * Metodo dedicato per configurare e popolare la JTable creata dal GUI Builder
-     */
-    private void popolaTabellaAgenda() {
-        if (agendaTable != null) {
-            // Definisce le colonne
-            String[] colonne = {"Ora", "Evento"};
-
-            // Crea un modello personalizzato per impedire la modifica diretta del testo nelle celle
-            DefaultTableModel model = new DefaultTableModel(new Object[0][0], colonne) {
-                @Override
-                public boolean isCellEditable(int row, int column) {
-                    return false;
-                }
-            };
-
-            // Applica il modello
-            agendaTable.setModel(model);
-            agendaTable.setRowHeight(30);
-
-            // Colori per le righe normali
-            agendaTable.setForeground(Color.BLACK); // Forza il testo a nero
-            agendaTable.setBackground(Color.WHITE); // Forza lo sfondo a bianco
-
-            // Colori per la riga selezionata
-            agendaTable.setSelectionBackground(new Color(180, 210, 240));
-            agendaTable.setSelectionForeground(Color.BLACK); // Mantiene il testo nero anche se selezionato
-
-            // Colori e font per l'intestazione (Header)
-            agendaTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 12));
-            agendaTable.getTableHeader().setForeground(Color.BLACK); // Forza il testo dell'intestazione a nero
-        }
-    }
-
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            // Avviamo tramite il Controller per agganciare i bottoni!
-            controller.Controller ctrl = new controller.Controller();
-            ctrl.avviaSchermataAmministratore("Dott. Mario Rossi (TEST)");
+            SchermataAmministratore frame = new SchermataAmministratore("Dott. Mario Rossi (TEST)");
+            controller.Controller.impostaSchermata(frame, frame.mainPanel, "Ospedale - Home Amministratore", JFrame.EXIT_ON_CLOSE);
+            frame.setVisible(true);
         });
     }
 
-    private void applicaStileMenuLaterale(JButton bottone) {
-        if (bottone == null) return;
-        Color coloreSfondoDefault = new Color(70, 132, 197); // Azzurro
-        Color coloreTestoDefault = Color.WHITE;
-        Color coloreSfondoHover = Color.WHITE;
-        Color coloreTestoHover = Color.BLACK;
-
-        impostaColoriEdEffetti(bottone, coloreSfondoDefault, coloreTestoDefault, coloreSfondoHover, coloreTestoHover);
-    }
-
-    private void applicaStilePulsantiCentrali(JButton bottone) {
-        if (bottone == null) return;
-        Color coloreSfondoDefault = Color.WHITE; // Bianco di base
-        Color coloreTestoDefault = Color.BLACK;  // Testo nero per essere leggibile sul bianco
-        Color coloreSfondoHover = new Color(70, 132, 197); // Azzurro al passaggio del mouse
-        Color coloreTestoHover = Color.WHITE;              // Testo bianco sull'azzurro
-
-        impostaColoriEdEffetti(bottone, coloreSfondoDefault, coloreTestoDefault, coloreSfondoHover, coloreTestoHover);
-    }
-
-    private void impostaColoriEdEffetti(JButton bottone, Color sfondoDefault, Color testoDefault, Color sfondoHover, Color testoHover) {
-        bottone.setBackground(sfondoDefault);
-        bottone.setForeground(testoDefault);
-        bottone.setFocusPainted(false);
-        bottone.setBorderPainted(false);
-        bottone.setContentAreaFilled(true);
-        bottone.setOpaque(true);
-        bottone.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
-        bottone.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                bottone.setBackground(sfondoHover);
-                bottone.setForeground(testoHover);
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-                bottone.setBackground(sfondoDefault);
-                bottone.setForeground(testoDefault);
-            }
-        });
-    }
 }

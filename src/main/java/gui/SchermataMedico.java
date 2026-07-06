@@ -1,18 +1,15 @@
 package gui;
 
-import controller.Controller;
-
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.Color;
-import java.awt.Cursor;
+import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.GridLayout;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 
 public class SchermataMedico extends JFrame {
-    private JPanel mainPanel;
+    public JPanel mainPanel;
     private JButton ricoveroButton;
     private JButton turniButton;
     private JLabel utenteLoggatoLabel;
@@ -28,13 +25,6 @@ public class SchermataMedico extends JFrame {
     private JButton newEventButton;
 
     public SchermataMedico(String nomeUtente) {
-        this.setTitle("Ospedale - Home Medico");
-        this.setContentPane(mainPanel);
-        this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        this.setSize(1000, 680);
-        this.setResizable(false);
-        this.setLocationRelativeTo(null);
-
         if (utenteLoggatoLabel != null) {
             utenteLoggatoLabel.setText(" " + nomeUtente);
             utenteLoggatoLabel.setForeground(Color.WHITE);
@@ -47,22 +37,23 @@ public class SchermataMedico extends JFrame {
         }
 
         // --- STILE MENU LATERALE ---
-        applicaStileMenuLaterale(ricoveroButton);
-        applicaStileMenuLaterale(turniButton);
-        applicaStileMenuLaterale(esciButton);
+        Login.applicaStileMenuLaterale(ricoveroButton);
+        Login.applicaStileMenuLaterale(turniButton);
+        Login.applicaStileMenuLaterale(esciButton);
 
         // Pulsanti dell'agenda nel menu laterale
-        applicaStilePulsantiCentrali(ricercaButton);
-        applicaStilePulsantiCentrali(newEventButton);
+        Login.applicaStilePulsantiCentrali(ricercaButton);
+        Login.applicaStilePulsantiCentrali(newEventButton);
 
         // --- STILE PULSANTI CENTRALI ---
-        applicaStilePulsantiCentrali(pazientiButton);
-        applicaStilePulsantiCentrali(lettiButton);
-        applicaStilePulsantiCentrali(dimissioniButton);
-        applicaStilePulsantiCentrali(prestazioniButton);
+        Login.applicaStilePulsantiCentrali(pazientiButton);
+        Login.applicaStilePulsantiCentrali(lettiButton);
+        Login.applicaStilePulsantiCentrali(dimissioniButton);
+        Login.applicaStilePulsantiCentrali(prestazioniButton);
+
 
         // --- POPOLA LA TABELLA DELL'AGENDA ---
-        popolaTabellaAgenda();
+        Login.setupAgendaTableStyle(agendaTable);
     }
 
     // =========================================================
@@ -93,16 +84,16 @@ public class SchermataMedico extends JFrame {
         if (turniButton != null) turniButton.addActionListener(listener);
     }
 
+    public void addEsciListener(ActionListener listener) {
+        if (esciButton != null) esciButton.addActionListener(listener);
+    }
+
     public void addRicercaAgendaListener(ActionListener listener) {
         if (ricercaButton != null) ricercaButton.addActionListener(listener);
     }
 
     public void addNewEventListener(ActionListener listener) {
         if (newEventButton != null) newEventButton.addActionListener(listener);
-    }
-
-    public void addEsciListener(ActionListener listener) {
-        if (esciButton != null) esciButton.addActionListener(listener);
     }
 
     public void aggiornaAgenda(Object[][] dati) {
@@ -115,76 +106,11 @@ public class SchermataMedico extends JFrame {
         }
     }
 
-    private void popolaTabellaAgenda() {
-        if (agendaTable != null) {
-            String[] colonne = {"Ora", "Evento"};
-
-            DefaultTableModel model = new DefaultTableModel(new Object[0][0], colonne) {
-                @Override
-                public boolean isCellEditable(int row, int column) {
-                    return false;
-                }
-            };
-
-            agendaTable.setModel(model);
-            agendaTable.setRowHeight(30);
-            agendaTable.setForeground(Color.BLACK);
-            agendaTable.setBackground(Color.WHITE);
-            agendaTable.setSelectionBackground(new Color(180, 210, 240));
-            agendaTable.setSelectionForeground(Color.BLACK);
-            agendaTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 12));
-            agendaTable.getTableHeader().setForeground(Color.BLACK);
-        }
-    }
-
-    private void applicaStileMenuLaterale(JButton bottone) {
-        if (bottone == null) return;
-        Color coloreSfondoDefault = new Color(70, 132, 197); // Azzurro
-        Color coloreTestoDefault = Color.WHITE;
-        Color coloreSfondoHover = Color.WHITE;
-        Color coloreTestoHover = Color.BLACK;
-        impostaColoriEdEffetti(bottone, coloreSfondoDefault, coloreTestoDefault, coloreSfondoHover, coloreTestoHover);
-    }
-
-    private void applicaStilePulsantiCentrali(JButton bottone) {
-        if (bottone == null) return;
-        Color coloreSfondoDefault = Color.WHITE; // Bianco di base
-        Color coloreTestoDefault = Color.BLACK;  // Testo nero per essere leggibile
-        Color coloreSfondoHover = new Color(70, 132, 197); // Azzurro hover
-        Color coloreTestoHover = Color.WHITE;
-        impostaColoriEdEffetti(bottone, coloreSfondoDefault, coloreTestoDefault, coloreSfondoHover, coloreTestoHover);
-    }
-
-    private void impostaColoriEdEffetti(JButton bottone, Color sfondoDefault, Color testoDefault, Color sfondoHover, Color testoHover) {
-        if (bottone == null) return;
-        bottone.setBackground(sfondoDefault);
-        bottone.setForeground(testoDefault);
-        bottone.setFocusPainted(false);
-        bottone.setBorderPainted(false);
-        bottone.setContentAreaFilled(true);
-        bottone.setOpaque(true);
-        bottone.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
-        bottone.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                bottone.setBackground(sfondoHover);
-                bottone.setForeground(testoHover);
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-                bottone.setBackground(sfondoDefault);
-                bottone.setForeground(testoDefault);
-            }
-        });
-    }
-
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            // Avviamo tramite il Controller per agganciare i bottoni!
-            Controller ctrl = new Controller();
-            ctrl.avviaSchermataMedico("Dott. Luigi Verdi (TEST)");
+            SchermataMedico frame = new SchermataMedico("Dott. Luigi Verdi (TEST)");
+            controller.Controller.impostaSchermata(frame, frame.mainPanel, "Ospedale - Home Medico", JFrame.EXIT_ON_CLOSE);
+            frame.setVisible(true);
         });
     }
 }

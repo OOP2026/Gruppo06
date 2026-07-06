@@ -23,13 +23,6 @@ public class Prestazioni extends JFrame {
     private JTextField nomeField;
     private JTextField codiceField;
 
-    private static final Color AZZURRO_HOME = new Color(70, 132, 197); // Azzurro del menu
-    private static final Color SELECTION_BG = new Color(187, 222, 247);
-    private static final Color ALT_ROW_BG = new Color(0xf5, 0xf8, 0xfc);
-
-    private static final Font BASE_FONT = new Font("SansSerif", Font.PLAIN, 12);
-    private static final Font HEADER_FONT = new Font("SansSerif", Font.BOLD, 12);
-
     private static final String[] COLONNE = {
             "ID Prestaz.", "Codice", "Nome Prestazione",
             "Tipo", "Reparto Erog.", "Note/Dettagli"
@@ -78,81 +71,13 @@ public class Prestazioni extends JFrame {
     }
 
     private void setupStyles() {
-        styleList(tipologiaList);
-        styleList(repartoList);
-
-        prestazioniTable.setRowHeight(26);
-        prestazioniTable.setShowGrid(false);
-        prestazioniTable.setIntercellSpacing(new Dimension(0, 0));
-        prestazioniTable.setSelectionBackground(SELECTION_BG);
-        prestazioniTable.setSelectionForeground(Color.BLACK);
-        prestazioniTable.setFont(BASE_FONT);
-
-        JTableHeader th = prestazioniTable.getTableHeader();
-        th.setBackground(AZZURRO_HOME);
-        th.setForeground(Color.WHITE);
-        th.setFont(HEADER_FONT);
-        th.setPreferredSize(new Dimension(th.getWidth(), 30));
-        th.setReorderingAllowed(false);
-
-        prestazioniTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int row, int col) {
-                super.getTableCellRendererComponent(t, v, sel, foc, row, col);
-                if (!sel) {
-                    setBackground(row % 2 == 0 ? Color.WHITE : ALT_ROW_BG);
-                    setForeground(Color.BLACK);
-                }
-                setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 6));
-                return this;
-            }
-        });
-
-        if(cercaButton != null) applicaStilePulsantiCentrali(cercaButton);
-        if(resetButton != null) applicaStilePulsantiCentrali(resetButton);
-        if(storprestazioneButton != null) applicaStilePulsantiCentrali(storprestazioneButton);
-        if(newprestazioneButton != null) applicaStilePulsantiCentrali(newprestazioneButton);
-    }
-
-    private void styleList(JList<String> list) {
-        list.setSelectionBackground(AZZURRO_HOME);
-        list.setSelectionForeground(Color.WHITE);
-        list.setFont(BASE_FONT);
-    }
-
-    private void applicaStilePulsantiCentrali(JButton bottone) {
-        Color coloreSfondoDefault = Color.WHITE;
-        Color coloreTestoDefault = Color.BLACK;
-
-        Color coloreSfondoHover = AZZURRO_HOME;
-        Color coloreTestoHover = Color.WHITE;
-
-        impostaColoriEdEffetti(bottone, coloreSfondoDefault, coloreTestoDefault, coloreSfondoHover, coloreTestoHover);
-        bottone.setBorder(BorderFactory.createLineBorder(AZZURRO_HOME, 1));
-        bottone.setBorderPainted(true);
-    }
-
-    private void impostaColoriEdEffetti(JButton bottone, Color sfondoDefault, Color testoDefault, Color sfondoHover, Color testoHover) {
-        bottone.setBackground(sfondoDefault);
-        bottone.setForeground(testoDefault);
-        bottone.setFocusPainted(false);
-        bottone.setContentAreaFilled(true);
-        bottone.setOpaque(true);
-        bottone.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
-        bottone.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                bottone.setBackground(sfondoHover);
-                bottone.setForeground(testoHover);
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-                bottone.setBackground(sfondoDefault);
-                bottone.setForeground(testoDefault);
-            }
-        });
+        Login.styleList(tipologiaList);
+        Login.styleList(repartoList);
+        Login.setupTableStyle(prestazioniTable);
+        if(cercaButton != null) Login.applicaStilePulsantiCentrali(cercaButton);
+        if(resetButton != null) Login.applicaStilePulsantiCentrali(resetButton);
+        if(storprestazioneButton != null) Login.applicaStilePulsantiCentrali(storprestazioneButton);
+        if(newprestazioneButton != null) Login.applicaStilePulsantiCentrali(newprestazioneButton);
     }
 
     private void setupListeners() {
@@ -201,15 +126,7 @@ public class Prestazioni extends JFrame {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             Prestazioni frame = new Prestazioni();
-            Dimension strictSize = new Dimension(1000, 680);
-
-            frame.mainPanel.setPreferredSize(strictSize);
-            frame.setContentPane(frame.mainPanel);
-            frame.setTitle("Ricerca Prestazioni Mediche");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.pack();
-            frame.setResizable(false);
-            frame.setLocationRelativeTo(null);
+            controller.Controller.impostaSchermata(frame, frame.mainPanel, "Ricerca Prestazioni Mediche", JFrame.EXIT_ON_CLOSE);
             frame.setVisible(true);
         });
     }

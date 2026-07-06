@@ -22,27 +22,12 @@ public class Letti extends JFrame {
     private JButton assegnaPazienteButton;
     private JButton storicoLettiButton;
 
-    //Selezione colori GUI
-    private static final Color AZZURRO_HOME = new Color(70, 132, 197);
-    private static final Color SELECTION_BG = new Color(187, 222, 247);
-    private static final Color ALT_ROW_BG = new Color(0xf5, 0xf8, 0xfc);
-    //Selezione font GUI
-    private static final Font BASE_FONT = new Font("SansSerif", Font.PLAIN, 12);
-    private static final Font HEADER_FONT = new Font("SansSerif", Font.BOLD, 12);
-
     private static final String[] COLONNE = {
             "ID Letto", "Tipologia Letto", "Reparto",
             "Stanza", "Numero Letto", "Stato"
     };
 
     public Letti() {
-        this.setTitle("Gestione Letti");
-        this.setContentPane(mainPanel);
-        this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        this.setSize(1000, 680);
-        this.setResizable(false);
-        this.setLocationRelativeTo(null);
-
         initComponents();
         setupStyles();
     }
@@ -67,81 +52,13 @@ public class Letti extends JFrame {
     }
 
     private void setupStyles() {
-        styleList(repartoList);
-        styleList(tipologiaList);
-
-        lettiTable.setRowHeight(26);
-        lettiTable.setShowGrid(false);
-        lettiTable.setIntercellSpacing(new Dimension(0, 0));
-        lettiTable.setSelectionBackground(SELECTION_BG);
-        lettiTable.setSelectionForeground(Color.BLACK);
-        lettiTable.setFont(BASE_FONT);
-
-        JTableHeader th = lettiTable.getTableHeader();
-        th.setBackground(AZZURRO_HOME);
-        th.setForeground(Color.WHITE);
-        th.setFont(HEADER_FONT);
-        th.setPreferredSize(new Dimension(th.getWidth(), 30));
-        th.setReorderingAllowed(false);
-
-        lettiTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int row, int col) {
-                super.getTableCellRendererComponent(t, v, sel, foc, row, col);
-                if (!sel) {
-                    setBackground(row % 2 == 0 ? Color.WHITE : ALT_ROW_BG);
-                    setForeground(Color.BLACK);
-                }
-                setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 6));
-                return this;
-            }
-        });
-
-        applicaStilePulsantiCentrali(cercaButton);
-        applicaStilePulsantiCentrali(resetButton);
-        applicaStilePulsantiCentrali(assegnaPazienteButton);
-        applicaStilePulsantiCentrali(storicoLettiButton);
-    }
-
-    private void styleList(JList list) {
-        list.setSelectionBackground(AZZURRO_HOME);
-        list.setSelectionForeground(Color.WHITE);
-        list.setFont(BASE_FONT);
-    }
-
-    private void applicaStilePulsantiCentrali(JButton bottone) {
-        Color coloreSfondoDefault = Color.WHITE;
-        Color coloreTestoDefault = Color.BLACK;
-
-        Color coloreSfondoHover = AZZURRO_HOME;
-        Color coloreTestoHover = Color.WHITE;
-
-        impostaColoriEdEffetti(bottone, coloreSfondoDefault, coloreTestoDefault, coloreSfondoHover, coloreTestoHover);
-        bottone.setBorder(BorderFactory.createLineBorder(AZZURRO_HOME, 1));
-        bottone.setBorderPainted(true);
-    }
-
-    private void impostaColoriEdEffetti(JButton bottone, Color sfondoDefault, Color testoDefault, Color sfondoHover, Color testoHover) {
-        bottone.setBackground(sfondoDefault);
-        bottone.setForeground(testoDefault);
-        bottone.setFocusPainted(false);
-        bottone.setContentAreaFilled(true);
-        bottone.setOpaque(true);
-        bottone.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
-        bottone.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                bottone.setBackground(sfondoHover);
-                bottone.setForeground(testoHover);
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-                bottone.setBackground(sfondoDefault);
-                bottone.setForeground(testoDefault);
-            }
-        });
+        Login.styleList(repartoList);
+        Login.styleList(tipologiaList);
+        Login.setupTableStyle(lettiTable);
+        Login.applicaStilePulsantiCentrali(cercaButton);
+        Login.applicaStilePulsantiCentrali(resetButton);
+        Login.applicaStilePulsantiCentrali(assegnaPazienteButton);
+        Login.applicaStilePulsantiCentrali(storicoLettiButton);
     }
 
     /**
@@ -182,6 +99,7 @@ public class Letti extends JFrame {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             Letti frame = new Letti();
+            controller.Controller.impostaSchermata(frame, frame.mainPanel, "Gestione Letti", JFrame.EXIT_ON_CLOSE);
             frame.setVisible(true);
         });
     }

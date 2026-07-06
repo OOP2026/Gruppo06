@@ -20,8 +20,8 @@ public class Registrazione {
     private JLabel accediLabel;
 
     public Registrazione() {
-        applicaStilePulsantiCentrali(registratiButton);
-        applicaStileLabelLink(accediLabel);
+        Login.applicaStilePulsantiCentrali(registratiButton);
+        Login.applicaStileLabelLink(accediLabel);
     }
 
     public String getNome() {
@@ -58,53 +58,5 @@ public class Registrazione {
 
     public void showMessage(String title, String message, int messageType) {
         JOptionPane.showMessageDialog(mainPanel, message, title, messageType);
-    }
-
-    private void applicaStilePulsantiCentrali(JButton bottone) {
-        Color sfondoDefault = Color.WHITE;
-        Color testoDefault  = Color.BLACK;
-        Color sfondoHover   = new Color(70, 132, 197);
-        Color testoHover    = Color.WHITE;
-        impostaColoriEdEffetti(bottone, sfondoDefault, testoDefault, sfondoHover, testoHover);
-    }
-
-    private void impostaColoriEdEffetti(JButton bottone, Color sfondoDefault, Color testoDefault,
-                                        Color sfondoHover, Color testoHover) {
-        if (bottone == null) return;
-        bottone.setBackground(sfondoDefault);
-        bottone.setForeground(testoDefault);
-        bottone.setFocusPainted(false);
-        bottone.setBorderPainted(false);
-        bottone.setContentAreaFilled(true);
-        bottone.setOpaque(true);
-        bottone.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
-        bottone.addMouseListener(new MouseAdapter() {
-            @Override public void mouseEntered(MouseEvent e) {
-                bottone.setBackground(sfondoHover);
-                bottone.setForeground(testoHover);
-            }
-            @Override public void mouseExited(MouseEvent e) {
-                bottone.setBackground(sfondoDefault);
-                bottone.setForeground(testoDefault);
-            }
-        });
-    }
-
-    private void applicaStileLabelLink(JLabel label) {
-        if (label == null) return;
-        label.setForeground(new Color(70, 132, 197));
-        label.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
-        label.addMouseListener(new MouseAdapter() {
-            @Override public void mouseEntered(MouseEvent e) {
-                String testo = label.getText().replace("<html><u>","").replace("</u></html>","");
-                label.setText("<html><u>" + testo + "</u></html>");
-            }
-            @Override public void mouseExited(MouseEvent e) {
-                String testo = label.getText().replace("<html><u>","").replace("</u></html>","");
-                label.setText(testo);
-            }
-        });
     }
 }

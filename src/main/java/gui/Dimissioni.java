@@ -24,12 +24,6 @@ public class Dimissioni extends JFrame {
     private JButton archiviaDimissioneButton;
     private JTextField nomeCognomeField;
 
-    private static final Color AZZURRO_HOME = new Color(70, 132, 197);
-    private static final Color SELECTION_BG = new Color(187, 222, 247);
-    private static final Color ALT_ROW_BG = new Color(0xf5, 0xf8, 0xfc);
-    private static final Font BASE_FONT = new Font("SansSerif", Font.PLAIN, 12);
-    private static final Font HEADER_FONT = new Font("SansSerif", Font.BOLD, 12);
-
     private static final String[] COLONNE = {
             "ID Paziente", "Paziente", "Codice Fiscale",
             "Reparto Dimissione", "Tipo Dimissione", "Data Dimissione"
@@ -139,95 +133,19 @@ public class Dimissioni extends JFrame {
     }
 
     private void setupStyles() {
-        // Stile Tabella
-        pazientiTable.setRowHeight(26);
-        pazientiTable.setShowGrid(false);
-        pazientiTable.setIntercellSpacing(new Dimension(0, 0));
-        pazientiTable.setSelectionBackground(SELECTION_BG);
-        pazientiTable.setSelectionForeground(Color.BLACK);
-        pazientiTable.setFont(BASE_FONT);
-
-        JTableHeader th = pazientiTable.getTableHeader();
-        th.setBackground(AZZURRO_HOME);
-        th.setForeground(Color.WHITE);
-        th.setFont(HEADER_FONT);
-        th.setPreferredSize(new Dimension(th.getWidth(), 30));
-        th.setReorderingAllowed(false);
-
-        pazientiTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
-            @Override
-            public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int row, int col) {
-                super.getTableCellRendererComponent(t, v, sel, foc, row, col);
-                if (!sel) {
-                    setBackground(row % 2 == 0 ? Color.WHITE : ALT_ROW_BG);
-                    setForeground(Color.BLACK);
-                }
-                setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 6));
-                return this;
-            }
-        });
-
-        // Stile Liste
-        repartoList.setSelectionBackground(AZZURRO_HOME);
-        repartoList.setSelectionForeground(Color.WHITE);
-        repartoList.setFont(BASE_FONT);
-
-        tipoDimissioneList.setSelectionBackground(AZZURRO_HOME);
-        tipoDimissioneList.setSelectionForeground(Color.WHITE);
-        tipoDimissioneList.setFont(BASE_FONT);
-
-        // Stile Pulsanti
-        applicaStilePulsantiCentrali(cercaButton);
-        applicaStilePulsantiCentrali(resetButton);
-        applicaStilePulsantiCentrali(letturaDimissioneButton);
-        applicaStilePulsantiCentrali(archiviaDimissioneButton);
-    }
-
-    private void applicaStilePulsantiCentrali(JButton bottone) {
-        Color coloreSfondoDefault = Color.WHITE;
-        Color coloreTestoDefault = Color.BLACK;
-        Color coloreSfondoHover = AZZURRO_HOME;
-        Color coloreTestoHover = Color.WHITE;
-
-        bottone.setBackground(coloreSfondoDefault);
-        bottone.setForeground(coloreTestoDefault);
-        bottone.setFocusPainted(false);
-        bottone.setContentAreaFilled(true);
-        bottone.setOpaque(true);
-        bottone.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        bottone.setBorder(BorderFactory.createLineBorder(AZZURRO_HOME, 1));
-        bottone.setBorderPainted(true);
-
-        bottone.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                bottone.setBackground(coloreSfondoHover);
-                bottone.setForeground(coloreTestoHover);
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-                bottone.setBackground(coloreSfondoDefault);
-                bottone.setForeground(coloreTestoDefault);
-            }
-        });
+        Login.setupTableStyle(pazientiTable);
+        Login.styleList(repartoList);
+        Login.styleList(tipoDimissioneList);
+        Login.applicaStilePulsantiCentrali(cercaButton);
+        Login.applicaStilePulsantiCentrali(resetButton);
+        Login.applicaStilePulsantiCentrali(letturaDimissioneButton);
+        Login.applicaStilePulsantiCentrali(archiviaDimissioneButton);
     }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             Dimissioni frame = new Dimissioni();
-
-            Dimension strictSize = new Dimension(1000, 680);
-            if (frame.mainPanel != null) {
-                frame.mainPanel.setPreferredSize(strictSize);
-                frame.setContentPane(frame.mainPanel);
-            }
-
-            frame.setTitle("Ricerca Dimissioni");
-            frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-            frame.pack();
-            frame.setResizable(false);
-            frame.setLocationRelativeTo(null);
+            controller.Controller.impostaSchermata(frame, frame.mainPanel, "Ricerca Dimissioni", JFrame.EXIT_ON_CLOSE);
             frame.setVisible(true);
         });
     }

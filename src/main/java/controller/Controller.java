@@ -787,12 +787,12 @@ public class Controller {
 		prestazioniFrame.setSize(1000, 680);
 		prestazioniFrame.setLocationRelativeTo(null);
 		prestazioniFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-		prestazioniFrame.aggiornaTabella(new Object[0][0]); // TODO: Integrare con relativo DAO per DB
+		prestazioniFrame.aggiornaTabella(new Object[0][0]);
 		mostraFinestraSecondaria(prestazioniFrame);
 	}
 
 	public void avviaSchermataMedico(String nomeUtente) {
-		gui.Schermata_Medico medicoHome = new gui.Schermata_Medico(nomeUtente);
+		gui.SchermataMedico medicoHome = new gui.SchermataMedico(nomeUtente);
 		
 		homeFrame = medicoHome; // Imposta come schermata principale
 
@@ -1036,12 +1036,19 @@ public class Controller {
         if (utenteLoggato == null) return;
         Object[][] dati = formattaDatiAgenda(getEventiPerMedico(utenteLoggato.getMatricola()));
         if (frame instanceof gui.SchermataAmministratore) ((gui.SchermataAmministratore) frame).aggiornaAgenda(dati);
-        if (frame instanceof gui.Schermata_Medico) ((gui.Schermata_Medico) frame).aggiornaAgenda(dati);
+        if (frame instanceof gui.SchermataMedico) ((gui.SchermataMedico) frame).aggiornaAgenda(dati);
     }
 
 	// =========================================================
 	// METODI DI AVVIO PRINCIPALE APP E AUTENTICAZIONE
 	// =========================================================
+
+	public static void main(String[] args) {
+		SwingUtilities.invokeLater(() -> {
+			Controller app = new Controller();
+			app.avvia(); // Questo farà partire la tua schermata di Login!
+		});
+	}
 
 	public void avvia() {
 		avviaSchermataLogin();

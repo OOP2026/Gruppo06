@@ -11,7 +11,7 @@ import java.sql.SQLException;
 public final class ConnessioneDatabase {
     private static final String URL = "jdbc:postgresql://localhost:5432/OspedaleOOP";
     private static final String USER = "postgres";
-    private static final String PASSWORD = ""; //RIMUOVO PER PROBLEMI DI CODESMELLS - SICUREZZA
+    private static final String PASSWORD = "191123"; //RIMUOVO PER PROBLEMI DI CODESMELLS - SICUREZZA
 
     /**
      * Impedisce l'istanziazione della classe di utilità.

@@ -1,5 +1,7 @@
 package gui;
 
+import controller.Controller;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.Color;
@@ -9,7 +11,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-public class Schermata_Medico extends JFrame {
+public class SchermataMedico extends JFrame {
     private JPanel panelMedico;
     private JButton ricoveroButton;
     private JButton turniButton;
@@ -19,16 +21,16 @@ public class Schermata_Medico extends JFrame {
     private JButton lettiButton;
     private JButton dimissioniButton;
     private JButton prestazioniButton;
-    private JPanel AgendaPanel;
-    private JTextField DataField;
+    private JPanel agendaPanel;
+    private JTextField dataField;
     private JButton ricercaButton;
-    private JTable AgendaTable;
-    private JButton NewEventButton;
+    private  JTable agendaTable ;
+    private JButton newEventButton;
 
-    public Schermata_Medico(String nomeUtente) {
+    public SchermataMedico(String nomeUtente) {
         this.setTitle("Ospedale - Home Medico");
         this.setContentPane(panelMedico);
-        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         this.setSize(1000, 680);
         this.setResizable(false);
         this.setLocationRelativeTo(null);
@@ -39,6 +41,11 @@ public class Schermata_Medico extends JFrame {
             utenteLoggatoLabel.setFont(new Font("Arial", Font.BOLD, 14));
         }
 
+        // --- FORZA IL COLORE BIANCO PER IL TITOLO DEL PANNELLO "AGENDA" ---
+        if (agendaPanel != null && agendaPanel.getBorder() instanceof javax.swing.border.TitledBorder) {
+            ((javax.swing.border.TitledBorder) agendaPanel.getBorder()).setTitleColor(Color.WHITE);
+        }
+
         // --- STILE MENU LATERALE ---
         applicaStileMenuLaterale(prestazioniButton);
         applicaStileMenuLaterale(ricoveroButton);
@@ -47,7 +54,7 @@ public class Schermata_Medico extends JFrame {
 
         // Pulsanti dell'agenda nel menu laterale
         applicaStilePulsantiCentrali(ricercaButton);
-        applicaStilePulsantiCentrali(NewEventButton);
+        applicaStilePulsantiCentrali(newEventButton);
 
         // --- STILE PULSANTI CENTRALI ---
         applicaStilePulsantiCentrali(pazientiButton);
@@ -91,7 +98,7 @@ public class Schermata_Medico extends JFrame {
     }
 
     public void addNewEventListener(ActionListener listener) {
-        if (NewEventButton != null) NewEventButton.addActionListener(listener);
+        if (newEventButton != null) newEventButton.addActionListener(listener);
     }
 
     public void addEsciListener(ActionListener listener) {
@@ -99,8 +106,8 @@ public class Schermata_Medico extends JFrame {
     }
 
     public void aggiornaAgenda(Object[][] dati) {
-        if (AgendaTable != null) {
-            DefaultTableModel model = (DefaultTableModel) AgendaTable.getModel();
+        if (agendaTable != null) {
+            DefaultTableModel model = (DefaultTableModel) agendaTable.getModel();
             model.setRowCount(0); // Svuota la tabella dai vecchi dati
             for (Object[] riga : dati) {
                 model.addRow(riga);
@@ -109,7 +116,7 @@ public class Schermata_Medico extends JFrame {
     }
 
     private void popolaTabellaAgenda() {
-        if (AgendaTable != null) {
+        if (agendaTable != null) {
             String[] colonne = {"Ora", "Evento"};
 
             DefaultTableModel model = new DefaultTableModel(new Object[0][0], colonne) {
@@ -119,14 +126,14 @@ public class Schermata_Medico extends JFrame {
                 }
             };
 
-            AgendaTable.setModel(model);
-            AgendaTable.setRowHeight(30);
-            AgendaTable.setForeground(Color.BLACK);
-            AgendaTable.setBackground(Color.WHITE);
-            AgendaTable.setSelectionBackground(new Color(180, 210, 240));
-            AgendaTable.setSelectionForeground(Color.BLACK);
-            AgendaTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 12));
-            AgendaTable.getTableHeader().setForeground(Color.BLACK);
+            agendaTable.setModel(model);
+            agendaTable.setRowHeight(30);
+            agendaTable.setForeground(Color.BLACK);
+            agendaTable.setBackground(Color.WHITE);
+            agendaTable.setSelectionBackground(new Color(180, 210, 240));
+            agendaTable.setSelectionForeground(Color.BLACK);
+            agendaTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 12));
+            agendaTable.getTableHeader().setForeground(Color.BLACK);
         }
     }
 
@@ -176,7 +183,7 @@ public class Schermata_Medico extends JFrame {
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             // Avviamo tramite il Controller per agganciare i bottoni!
-            controller.Controller ctrl = new controller.Controller();
+            Controller ctrl = new Controller();
             ctrl.avviaSchermataMedico("Dott. Luigi Verdi (TEST)");
         });
     }

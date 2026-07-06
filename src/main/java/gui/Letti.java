@@ -10,13 +10,12 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public class Letti extends JFrame {
-    public JPanel LettiPanel;
+    public JPanel mainPanel;
     private JRadioButton tuttiRadioButton;
     private JRadioButton disponibileRadioButton;
     private JRadioButton occupatoRadioButton;
     private JList repartoList;
     private JList tipologiaList;
-    private JLabel tipoLabel;
     private JButton cercaButton;
     private JButton resetButton;
     private JTable lettiTable; // Questa è la tabella che mostra i letti
@@ -38,11 +37,11 @@ public class Letti extends JFrame {
 
     public Letti() {
         this.setTitle("Gestione Letti");
-        this.setContentPane(LettiPanel);
-        this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE); // Chiude solo questa finestra
-        this.setLocationRelativeTo(null);
+        this.setContentPane(mainPanel);
+        this.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         this.setSize(1000, 680);
         this.setResizable(false);
+        this.setLocationRelativeTo(null);
 
         initComponents();
         setupStyles();
@@ -57,9 +56,7 @@ public class Letti extends JFrame {
             }
         };
 
-        if (lettiTable != null) {
-            lettiTable.setModel(model);
-        }
+        lettiTable.setModel(model);
 
         // Raggruppa i radio button per permettere una sola selezione
         ButtonGroup statoLettoGroup = new ButtonGroup();
@@ -100,10 +97,10 @@ public class Letti extends JFrame {
             }
         });
 
-        if(cercaButton != null) applicaStilePulsantiCentrali(cercaButton);
-        if(resetButton != null) applicaStilePulsantiCentrali(resetButton);
-        if(assegnaPazienteButton != null) applicaStilePulsantiCentrali(assegnaPazienteButton);
-        if(storicoLettiButton != null) applicaStilePulsantiCentrali(storicoLettiButton);
+        applicaStilePulsantiCentrali(cercaButton);
+        applicaStilePulsantiCentrali(resetButton);
+        applicaStilePulsantiCentrali(assegnaPazienteButton);
+        applicaStilePulsantiCentrali(storicoLettiButton);
     }
 
     private void styleList(JList list) {
@@ -162,7 +159,6 @@ public class Letti extends JFrame {
     public String getIdLettoSelezionato() {
         int rigaSelezionata = lettiTable.getSelectedRow();
         if (rigaSelezionata == -1) {
-            JOptionPane.showMessageDialog(this, "Per favore, seleziona un letto dalla tabella.", "Nessun Letto Selezionato", JOptionPane.WARNING_MESSAGE);
             return null;
         }
         // Si assume che l'ID del letto sia nella prima colonna (indice 0)
@@ -174,13 +170,13 @@ public class Letti extends JFrame {
      * @param dati Una matrice di oggetti da visualizzare nella tabella.
      */
     public void aggiornaTabella(Object[][] dati) {
-        DefaultTableModel model = new DefaultTableModel(dati, COLONNE) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false; // Rende la tabella non modificabile
+        DefaultTableModel model = (DefaultTableModel) lettiTable.getModel();
+        model.setRowCount(0); // Pulisce la tabella
+        if (dati != null) {
+            for (Object[] riga : dati) {
+                model.addRow(riga);
             }
-        };
-        lettiTable.setModel(model);
+        }
     }
 
     public static void main(String[] args) {

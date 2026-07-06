@@ -12,7 +12,6 @@ public class Turni extends JFrame {
 
     // Dichiarazione componenti GUI
     public JPanel panelHome;
-    private JLabel mansioneLabel;
     private JTextField nomeField;
     private JTextField codiceField;
     private JSpinner dataSpinner;

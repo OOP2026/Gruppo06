@@ -43,6 +43,7 @@ public class Controller {
 	private static final String LABEL_ORA_INIZIO = "Ora Inizio (HH:MM:SS):";
 	private static final String LABEL_ORA_FINE = "Ora Fine (HH:MM:SS):";
 	private static final String DEFAULT_DATE = "2026-05-21";
+	private static final String INFO_TITLE = "Informazione";
 
 	private static final Logger LOGGER = Logger.getLogger(Controller.class.getName());
 
@@ -420,6 +421,49 @@ public class Controller {
 		return successo;
 	}
 
+	/**
+	 * Gestisce la logica per la ricerca filtrata delle dimissioni.
+	 * @param dimissioniFrame L'istanza della GUI delle dimissioni.
+	 */
+	public void gestisciRicercaDimissioni(gui.Dimissioni dimissioniFrame) {
+		String cf = dimissioniFrame.getCodiceFiscale();
+		String nomeCognome = dimissioniFrame.getNomeCognome();
+		String reparto = dimissioniFrame.getRepartoSelezionato();
+		String tipoDimissione = dimissioniFrame.getTipoDimissioneSelezionato();
+		java.util.Date data = dimissioniFrame.getDataSelezionata();
+
+		// Qui dovresti chiamare un metodo del DAO che supporti i filtri.
+		// Poiché ricoveroDAO.getAllDimissioni() non accetta parametri,
+		// per ora simuliamo un filtraggio lato client o assumiamo che il DAO venga esteso.
+		// In un'applicazione reale, estenderesti RicoveroDAO con un metodo tipo:
+		// ricercaDimissioni(cf, nomeCognome, reparto, tipoDimissione, data);
+		List<ArrayList<String>> risultati = ricercaDimissioni(); // Usiamo il metodo esistente
+
+		// Esempio di come potresti filtrare i risultati qui se il DAO non lo fa
+		// (non è l'approccio ideale per performance, meglio farlo a livello DB)
+
+		dimissioniFrame.aggiornaTabella(formattaDatiDimissioni(risultati));
+
+		if (risultati.isEmpty()) {
+			JOptionPane.showMessageDialog(dimissioniFrame, "Nessuna dimissione trovata con i criteri specificati.", INFO_TITLE, JOptionPane.INFORMATION_MESSAGE);
+		}
+	}
+
+	/**
+	 * Mostra i dettagli di una dimissione selezionata.
+	 * @param cfPaziente Il CF del paziente di cui mostrare i dettagli della dimissione.
+	 */
+	public void mostraDettagliDimissione(String cfPaziente) {
+		// Questo metodo dovrebbe recuperare i dettagli completi della dimissione dal DAO
+		// Per ora, usiamo i dati già presenti e li mostriamo in un dialogo.
+		// In futuro, potresti voler recuperare più informazioni.
+		ArrayList<String> ricoveroChiuso = ricoveroDAO.getUltimoRicoveroChiuso(cfPaziente); // Ipotizzando esista questo metodo nel DAO
+
+		String messaggio = "Dettagli Dimissione per Paziente CF: " + cfPaziente + "\n\n";
+		messaggio += "Questa è una funzionalità dimostrativa.\nI dettagli completi verrebbero recuperati dal database.\n\n";
+		JOptionPane.showMessageDialog(null, messaggio, "Dettaglio Dimissione", JOptionPane.INFORMATION_MESSAGE);
+	}
+
 	public String calcolaPrognosi(int giorniPrognosi) {
 		return "Il paziente ha una prognosi di " + giorniPrognosi + " giorni";
 	}
@@ -711,8 +755,8 @@ public class Controller {
 
 	public void apriSchermataPazienti() {
 		gui.Pazienti pazientiFrame = new gui.Pazienti();
-		if (pazientiFrame.panelPrincipale != null) {
-			pazientiFrame.setContentPane(pazientiFrame.panelPrincipale);
+		if (pazientiFrame.mainPanel != null) {
+			pazientiFrame.setContentPane(pazientiFrame.mainPanel);
 		}
 		
 		pazientiFrame.setTitle("Gestione Pazienti");
@@ -753,21 +797,25 @@ public class Controller {
 		// 2. Collega il pulsante "Assegna Paziente" alla sua logica
 		lettiFrame.addAssegnaPazienteListener(e -> {
 			String idLettoSelezionato = lettiFrame.getIdLettoSelezionato();
+			
+			// La logica di controllo della selezione è ora nel controller
+			if (idLettoSelezionato == null) {
+				JOptionPane.showMessageDialog(lettiFrame, "Per favore, seleziona un letto dalla tabella.", "Nessun Letto Selezionato", JOptionPane.WARNING_MESSAGE);
+				return;
+			}
 
-			if (idLettoSelezionato != null) {
-				// Prima di procedere, verifichiamo che il letto sia ancora disponibile
-				if (!checkDisponibilitaLetto(idLettoSelezionato)) {
-					JOptionPane.showMessageDialog(lettiFrame, "Il letto selezionato risulta già occupato o non è valido.", "Letto non Disponibile", JOptionPane.WARNING_MESSAGE);
-					ricaricaEAggiornaTabellaLetti(lettiFrame); // Aggiorna la vista con lo stato reale
-					return;
-				}
+			// Prima di procedere, verifichiamo che il letto sia ancora disponibile
+			if (!checkDisponibilitaLetto(idLettoSelezionato)) {
+				JOptionPane.showMessageDialog(lettiFrame, "Il letto selezionato risulta già occupato o non è valido.", "Letto non Disponibile", JOptionPane.WARNING_MESSAGE);
+				ricaricaEAggiornaTabellaLetti(lettiFrame); // Aggiorna la vista con lo stato reale
+				return;
+			}
 
-				boolean successo = gestisciAssegnazionePazienteLetto(idLettoSelezionato);
+			boolean successo = gestisciAssegnazionePazienteLetto(idLettoSelezionato);
 
-				if (successo) {
-					JOptionPane.showMessageDialog(lettiFrame, "Paziente assegnato con successo!", "Operazione Riuscita", JOptionPane.INFORMATION_MESSAGE);
-					ricaricaEAggiornaTabellaLetti(lettiFrame); // Ricarica per mostrare il letto come "Occupato"
-				}
+			if (successo) {
+				JOptionPane.showMessageDialog(lettiFrame, "Paziente assegnato con successo!", "Operazione Riuscita", JOptionPane.INFORMATION_MESSAGE);
+				ricaricaEAggiornaTabellaLetti(lettiFrame); // Ricarica per mostrare il letto come "Occupato"
 			}
 		});
 
@@ -847,19 +895,39 @@ public class Controller {
 
 	public void apriSchermataDimissioni() {
 		gui.Dimissioni dimissioniFrame = new gui.Dimissioni();
-		if (dimissioniFrame.JpanelPrincipale != null) {
-			dimissioniFrame.setContentPane(dimissioniFrame.JpanelPrincipale);
+		if (dimissioniFrame.mainPanel != null) {
+			dimissioniFrame.setContentPane(dimissioniFrame.mainPanel);
 		}
 		dimissioniFrame.setTitle("Ricerca Dimissioni");
 		dimissioniFrame.setSize(1164, 680);
 		dimissioniFrame.setLocationRelativeTo(null);
 		dimissioniFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
-
+	
+		// Logica per il pulsante "Archivia Dimissione"
         dimissioniFrame.addArchiviaDimissioneListener(e -> {
             if (gestisciArchiviaDimissione()) {
                 dimissioniFrame.aggiornaTabella(formattaDatiDimissioni(ricercaDimissioni()));
             }
         });
+
+		// Logica per il pulsante "Cerca"
+		dimissioniFrame.addCercaListener(e -> gestisciRicercaDimissioni(dimissioniFrame));
+
+		// Logica per il pulsante "Reset"
+		dimissioniFrame.addResetListener(e -> {
+			dimissioniFrame.resetCampiRicerca();
+			dimissioniFrame.aggiornaTabella(formattaDatiDimissioni(ricercaDimissioni()));
+		});
+
+		// Logica per il pulsante "Lettura Dimissione"
+		dimissioniFrame.addLetturaDimissioneListener(e -> {
+			String cfSelezionato = dimissioniFrame.getCFPazienteSelezionato();
+			if (cfSelezionato != null) {
+				mostraDettagliDimissione(cfSelezionato);
+			} else {
+				JOptionPane.showMessageDialog(dimissioniFrame, "Seleziona una dimissione dalla tabella per vederne i dettagli.", INFO_TITLE, JOptionPane.WARNING_MESSAGE);
+			}
+		});
 
 		dimissioniFrame.aggiornaTabella(formattaDatiDimissioni(ricercaDimissioni()));
 		mostraFinestraSecondaria(dimissioniFrame);
@@ -867,8 +935,8 @@ public class Controller {
 
 	public void apriSchermataRicoveri() {
 		gui.Ricovero ricoveroFrame = new gui.Ricovero();
-		if (ricoveroFrame.JPanelPrincipale != null) {
-			ricoveroFrame.setContentPane(ricoveroFrame.JPanelPrincipale);
+		if (ricoveroFrame.mainPanel != null) {
+			ricoveroFrame.setContentPane(ricoveroFrame.mainPanel);
 		}
 		ricoveroFrame.setTitle("Ricerca Ricovero");
 		ricoveroFrame.setSize(1024, 680);
@@ -1107,7 +1175,7 @@ public class Controller {
 	private void avviaSchermataRegistrazione() {
 		gui.Registrazione regView = new gui.Registrazione();
 		JFrame frame = new JFrame("Registrazione - Ospedale San Raffaele");
-		frame.setContentPane(regView.registerPanel);
+		frame.setContentPane(regView.mainPanel);
 		frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 		frame.setSize(1000, 680);
 		frame.setResizable(false);

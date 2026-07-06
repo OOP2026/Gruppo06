@@ -12,10 +12,9 @@ import java.util.List;
 
 public class Pazienti extends JFrame {
 
-    public JPanel panelPrincipale;
+    public JPanel mainPanel;
     private JTextField nomeField;
     private JTextField codiceField;
-    private JLabel RepartoLabel;
     private JList<String> tipologiaList;
     private JButton resetButton;
     private JButton cercaButton;
@@ -234,9 +233,9 @@ public class Pazienti extends JFrame {
             Pazienti frame = new Pazienti();
 
             Dimension strictSize = new Dimension(1000, 680);
-            frame.panelPrincipale.setPreferredSize(strictSize);
+            frame.mainPanel.setPreferredSize(strictSize);
 
-            frame.setContentPane(frame.panelPrincipale);
+            frame.setContentPane(frame.mainPanel);
             frame.setTitle("Ricerca Pazienti");
             frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
             frame.pack();

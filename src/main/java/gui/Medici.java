@@ -14,7 +14,6 @@ public class Medici extends JFrame {
     private JTextField nomeField;
     private JTextField codiceField;
     private JSpinner dataSpinner;
-    private JLabel tipoLabel;
     private JButton resetButton;
     private JButton cercaButton;
     private JTable mediciTable;

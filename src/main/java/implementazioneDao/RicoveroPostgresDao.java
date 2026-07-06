@@ -106,4 +106,34 @@ public class RicoveroPostgresDao implements RicoveroDAO {
         }
         return dimissioni;
     }
+
+    @Override
+    public ArrayList<String> getUltimoRicoveroChiuso(String cfPaziente) {
+        String query = "SELECT * FROM ricovero WHERE cf_paziente = ? AND data_fine IS NOT NULL ORDER BY data_fine DESC LIMIT 1";
+        try (Connection conn = ConnessioneDatabase.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, cfPaziente);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                ArrayList<String> ricovero = new ArrayList<>();
+                ricovero.add(String.valueOf(rs.getInt("id_ricovero")));
+                ricovero.add(rs.getString("cf_paziente"));
+                ricovero.add(rs.getString("id_letto"));
+
+                java.sql.Timestamp dataInizio = rs.getTimestamp("data_inizio");
+                ricovero.add(dataInizio != null ? dataInizio.toString() : "");
+
+                java.sql.Timestamp dataFine = rs.getTimestamp("data_fine");
+                ricovero.add(dataFine != null ? dataFine.toString() : "");
+
+                ricovero.add(rs.getString("motivo"));
+                ricovero.add(rs.getString("prognosi"));
+                ricovero.add(rs.getString("esito"));
+                return ricovero;
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Errore durante il recupero dell'ultimo ricovero chiuso per il paziente " + cfPaziente, e);
+        }
+        return new ArrayList<>();
+    }
 }

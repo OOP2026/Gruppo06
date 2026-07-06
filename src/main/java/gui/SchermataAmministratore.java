@@ -11,7 +11,7 @@ import java.awt.event.MouseEvent;
 
 public class SchermataAmministratore extends JFrame {
 
-    private JPanel panelHome;
+    private JPanel mainPanel;
     private JButton pazientiButton;
     private JButton lettiButton;
     private JButton dimissioniButton;
@@ -33,7 +33,7 @@ public class SchermataAmministratore extends JFrame {
     public SchermataAmministratore(String nomeUtente) {
 
         this.setTitle("Ospedale - Home");
-        this.setContentPane(panelHome);
+        this.setContentPane(mainPanel);
         this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE); // Chiude tutto se chiudi la Home
         this.setSize(1000, 680);
         this.setResizable(false);

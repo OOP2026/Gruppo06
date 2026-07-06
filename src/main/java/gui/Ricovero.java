@@ -6,26 +6,26 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Calendar;
+import java.awt.event.ActionListener;
 import java.util.Date;
 
 public class Ricovero extends JFrame {
 
-    public JPanel JPanelPrincipale;
+    public JPanel mainPanel;
     private JTextField nomeField;
     private JTextField codiceField;
+    private JTextField idField;
     private JList<String> repartoList;
     private JSpinner dataSpinner;
     private JSpinner oraSpinner;
 
     private JButton cercaButton;
     private JButton resetButton;
-    private JTable PazientiTable;
+    private JTable ricoveriTable;
 
     private JButton nuovoRicoveroButton;
     private JButton gestisciRicoveroButton;
-    private JTextField textField1;
-    private JTextField textField2;
-    private JTextField textField3;
+
 
     private static final Color AZZURRO_HOME = new Color(70, 132, 197);
     private static final Color SELECTION_BG = new Color(187, 222, 247);
@@ -39,94 +39,118 @@ public class Ricovero extends JFrame {
             "Reparto di Ricovero", "Data Ingresso", "Ora Ingresso"
     };
 
-    private Object[][] datiRicoveri = new Object[0][0];
-
     public Ricovero() {
         initComponents();
         setupStyles();
-        setupListeners();
-        loadTableData(null, null, null);
     }
 
     public void aggiornaTabella(Object[][] dati) {
-        this.datiRicoveri = dati != null ? dati : new Object[0][0];
-        loadTableData(null, null, null);
+        DefaultTableModel model = (DefaultTableModel) ricoveriTable.getModel();
+        model.setRowCount(0); // Pulisce la tabella
+        if (dati != null) {
+            for (Object[] riga : dati) {
+                model.addRow(riga);
+            }
+        }
     }
 
-    public void addNuovoRicoveroListener(java.awt.event.ActionListener listener) {
-        if (nuovoRicoveroButton != null) nuovoRicoveroButton.addActionListener(listener);
+    // Metodi per aggiungere i listener ai pulsanti
+    public void addNuovoRicoveroListener(ActionListener listener) {
+        nuovoRicoveroButton.addActionListener(listener);
+    }
+
+    public void addGestisciRicoveroListener(ActionListener listener) {
+        gestisciRicoveroButton.addActionListener(listener);
+    }
+
+    public void addCercaListener(ActionListener listener) {
+        cercaButton.addActionListener(listener);
+    }
+
+    public void addResetListener(ActionListener listener) {
+        resetButton.addActionListener(listener);
+    }
+
+    // Metodi per ottenere i valori dai campi di input
+    public String getNome() {
+        return nomeField.getText();
+    }
+
+    public String getCodiceFiscale() {
+        return codiceField.getText();
+    }
+
+    public String getIdPaziente() {
+        return idField.getText();
+    }
+
+    public String getRepartoSelezionato() {
+        return repartoList.getSelectedValue();
+    }
+
+    public void resetCampiRicerca() {
+        nomeField.setText("");
+        codiceField.setText("");
+        idField.setText("");
+        repartoList.clearSelection();
+        dataSpinner.setValue(new Date());
+        oraSpinner.setValue(new Date());
     }
 
     private void initComponents() {
+        SpinnerDateModel dateModel = new SpinnerDateModel(new Date(), null, null, Calendar.DAY_OF_MONTH);
+        dataSpinner.setModel(dateModel);
+        dataSpinner.setEditor(new JSpinner.DateEditor(dataSpinner, "dd/MM/yyyy"));
 
-            if (dataSpinner != null) {
-                SpinnerDateModel dateModel = new SpinnerDateModel(new Date(), null, null, Calendar.DAY_OF_MONTH);
-                dataSpinner.setModel(dateModel);
-                dataSpinner.setEditor(new JSpinner.DateEditor(dataSpinner, "dd/MM/yyyy"));
+        SpinnerDateModel timeModel = new SpinnerDateModel(new Date(), null, null, Calendar.HOUR_OF_DAY);
+        oraSpinner.setModel(timeModel);
+        oraSpinner.setEditor(new JSpinner.DateEditor(oraSpinner, "HH:mm"));
+
+        repartoList.setListData(new String[]{"Cardiologia", "Chirurgia Generale", "Ortopedia", "Terapia Intensiva", "Pediatria", "Neurologia"});
+
+        DefaultTableModel model = new DefaultTableModel(new Object[0][0], COLONNE) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
             }
-
-            if (oraSpinner != null) {
-                SpinnerDateModel timeModel = new SpinnerDateModel(new Date(), null, null, Calendar.HOUR_OF_DAY);
-                oraSpinner.setModel(timeModel);
-                oraSpinner.setEditor(new JSpinner.DateEditor(oraSpinner, "HH:mm"));
-            }
-
-
-        if (repartoList != null) {
-            repartoList.setListData(new String[]{
-                    "Cardiologia", "Chirurgia Generale", "Ortopedia",
-                    "Terapia Intensiva", "Pediatria", "Neurologia"
-            });
-        }
-
-
-        if (PazientiTable != null) {
-            DefaultTableModel model = new DefaultTableModel(COLONNE, 0) {
-                @Override
-                public boolean isCellEditable(int row, int column) {
-                    return false;
-                }
-            };
-            PazientiTable.setModel(model);
-        }
+        };
+        ricoveriTable.setModel(model);
     }
 
     private void setupStyles() {
-        if (repartoList != null) styleList(repartoList);
+        styleList(repartoList);
 
-        if (PazientiTable != null) {
-            PazientiTable.setRowHeight(26);
-            PazientiTable.setShowGrid(false);
-            PazientiTable.setIntercellSpacing(new Dimension(0, 0));
-            PazientiTable.setSelectionBackground(SELECTION_BG);
-            PazientiTable.setSelectionForeground(Color.BLACK);
-            PazientiTable.setFont(BASE_FONT);
+        ricoveriTable.setRowHeight(26);
+        ricoveriTable.setShowGrid(false);
+        ricoveriTable.setIntercellSpacing(new Dimension(0, 0));
+        ricoveriTable.setSelectionBackground(SELECTION_BG);
+        ricoveriTable.setSelectionForeground(Color.BLACK);
+        ricoveriTable.setFont(BASE_FONT);
 
-            JTableHeader th = PazientiTable.getTableHeader();
-            th.setBackground(AZZURRO_HOME);
-            th.setForeground(Color.WHITE);
-            th.setFont(HEADER_FONT);
-            th.setPreferredSize(new Dimension(th.getWidth(), 30));
-            th.setReorderingAllowed(false);
+        JTableHeader th = ricoveriTable.getTableHeader();
+        th.setBackground(AZZURRO_HOME);
+        th.setForeground(Color.WHITE);
+        th.setFont(HEADER_FONT);
+        th.setPreferredSize(new Dimension(th.getWidth(), 30));
+        th.setReorderingAllowed(false);
 
-            PazientiTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
-                @Override
-                public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int row, int col) {
-                    super.getTableCellRendererComponent(t, v, sel, foc, row, col);
-                    if (!sel) {
-                        setBackground(row % 2 == 0 ? Color.WHITE : ALT_ROW_BG);
-                        setForeground(Color.BLACK);
-                    }
-                    setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 6));
-                    return this;
+        ricoveriTable.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean foc, int row, int col) {
+                super.getTableCellRendererComponent(t, v, sel, foc, row, col);
+                if (!sel) {
+                    setBackground(row % 2 == 0 ? Color.WHITE : ALT_ROW_BG);
+                    setForeground(Color.BLACK);
                 }
-            });
-        }
+                setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 6));
+                return this;
+            }
+        });
 
-        if(cercaButton != null) applicaStilePulsantiCentrali(cercaButton);
-        if(resetButton != null) applicaStilePulsantiCentrali(resetButton);
-        if(nuovoRicoveroButton != null) applicaStilePulsantiCentrali(nuovoRicoveroButton);
-        if(gestisciRicoveroButton != null) applicaStilePulsantiCentrali(gestisciRicoveroButton);
+        applicaStilePulsantiCentrali(cercaButton);
+        applicaStilePulsantiCentrali(resetButton);
+        applicaStilePulsantiCentrali(nuovoRicoveroButton);
+        applicaStilePulsantiCentrali(gestisciRicoveroButton);
     }
 
     private void styleList(JList<String> list) {
@@ -165,62 +189,15 @@ public class Ricovero extends JFrame {
         });
     }
 
-    private void setupListeners() {
-        if (cercaButton != null) {
-            cercaButton.addActionListener(e -> {
-                String nome = (nomeField != null) ? nomeField.getText().toLowerCase().trim() : "";
-                String codice = (codiceField != null) ? codiceField.getText().toLowerCase().trim() : "";
-                String reparto = (repartoList != null) ? repartoList.getSelectedValue() : null;
-
-                loadTableData(nome, codice, reparto);
-            });
-        }
-
-        if (resetButton != null) {
-            resetButton.addActionListener(e -> {
-                if (nomeField != null) nomeField.setText("");
-                if (codiceField != null) codiceField.setText("");
-                if (repartoList != null) repartoList.clearSelection();
-                if (dataSpinner != null) dataSpinner.setValue(new Date());
-                if (oraSpinner != null) oraSpinner.setValue(new Date());
-
-                loadTableData(null, null, null);
-            });
-        }
-    }
-
-    private void loadTableData(String filtroNome, String filtroCodice, String filtroReparto) {
-        if (PazientiTable == null) return;
-
-        DefaultTableModel m = (DefaultTableModel) PazientiTable.getModel();
-        m.setRowCount(0);
-
-        for (Object[] row : datiRicoveri) {
-            String rNome = ((String) row[1]).toLowerCase();
-            String rCodice = ((String) row[2]).toLowerCase();
-            String rReparto = (String) row[3];
-
-
-            boolean matchNome = (filtroNome == null || filtroNome.isEmpty() || rNome.contains(filtroNome));
-            boolean matchCodice = (filtroCodice == null || filtroCodice.isEmpty() || rCodice.contains(filtroCodice));
-            boolean matchReparto = (filtroReparto == null || rReparto.equals(filtroReparto));
-
-
-            if (matchNome && matchCodice && matchReparto) {
-                m.addRow(row);
-            }
-        }
-    }
-
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
             Ricovero frame = new Ricovero();
 
             Dimension strictSize = new Dimension(1000, 680);
 
-            if (frame.JPanelPrincipale != null) {
-                frame.JPanelPrincipale.setPreferredSize(strictSize);
-                frame.setContentPane(frame.JPanelPrincipale);
+            if (frame.mainPanel != null) {
+                frame.mainPanel.setPreferredSize(strictSize);
+                frame.setContentPane(frame.mainPanel);
             }
 
             frame.setTitle("Ricerca Ricovero");

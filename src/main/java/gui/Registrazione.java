@@ -7,7 +7,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public class Registrazione {
-    public JPanel registerPanel;
+    public JPanel mainPanel;
 
     private JTextField nomeField;
     private JTextField cognomeField;
@@ -57,7 +57,7 @@ public class Registrazione {
     }
 
     public void showMessage(String title, String message, int messageType) {
-        JOptionPane.showMessageDialog(registerPanel, message, title, messageType);
+        JOptionPane.showMessageDialog(mainPanel, message, title, messageType);
     }
 
     private void applicaStilePulsantiCentrali(JButton bottone) {

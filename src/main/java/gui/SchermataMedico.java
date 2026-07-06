@@ -12,7 +12,7 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
 public class SchermataMedico extends JFrame {
-    private JPanel panelMedico;
+    private JPanel mainPanel;
     private JButton ricoveroButton;
     private JButton turniButton;
     private JLabel utenteLoggatoLabel;
@@ -29,7 +29,7 @@ public class SchermataMedico extends JFrame {
 
     public SchermataMedico(String nomeUtente) {
         this.setTitle("Ospedale - Home Medico");
-        this.setContentPane(panelMedico);
+        this.setContentPane(mainPanel);
         this.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
         this.setSize(1000, 680);
         this.setResizable(false);
@@ -47,7 +47,6 @@ public class SchermataMedico extends JFrame {
         }
 
         // --- STILE MENU LATERALE ---
-        applicaStileMenuLaterale(prestazioniButton);
         applicaStileMenuLaterale(ricoveroButton);
         applicaStileMenuLaterale(turniButton);
         applicaStileMenuLaterale(esciButton);
@@ -60,6 +59,7 @@ public class SchermataMedico extends JFrame {
         applicaStilePulsantiCentrali(pazientiButton);
         applicaStilePulsantiCentrali(lettiButton);
         applicaStilePulsantiCentrali(dimissioniButton);
+        applicaStilePulsantiCentrali(prestazioniButton);
 
         // --- POPOLA LA TABELLA DELL'AGENDA ---
         popolaTabellaAgenda();
@@ -151,7 +151,7 @@ public class SchermataMedico extends JFrame {
         Color coloreSfondoDefault = Color.WHITE; // Bianco di base
         Color coloreTestoDefault = Color.BLACK;  // Testo nero per essere leggibile
         Color coloreSfondoHover = new Color(70, 132, 197); // Azzurro hover
-        Color coloreTestoHover = Color.WHITE;              
+        Color coloreTestoHover = Color.WHITE;
         impostaColoriEdEffetti(bottone, coloreSfondoDefault, coloreTestoDefault, coloreSfondoHover, coloreTestoHover);
     }
 

@@ -7,10 +7,15 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-public class Turno_LavoroPostgresDao implements Turno_LavoroDAO {
+public class TurnoLavoroPostgresDao implements Turno_LavoroDAO {
+
+    private static final Logger LOGGER = Logger.getLogger(TurnoLavoroPostgresDao.class.getName());
 
     @Override
     public boolean aggiungiTurno(String matricola, String data, String inizioTurno, String fineTurno, String idAgenda) {
@@ -19,15 +24,15 @@ public class Turno_LavoroPostgresDao implements Turno_LavoroDAO {
              PreparedStatement stmt = conn.prepareStatement(query)) {
 
             stmt.setInt(1, Integer.parseInt(idAgenda));
-            stmt.setDate(2, java.sql.Date.valueOf(data));
-            stmt.setTimestamp(3, Timestamp.valueOf(data + " " + inizioTurno));
-            stmt.setTimestamp(4, Timestamp.valueOf(data + " " + fineTurno));
+            stmt.setObject(2, LocalDate.parse(data));
+            stmt.setObject(3, LocalDateTime.parse(data + "T" + inizioTurno));
+            stmt.setObject(4, LocalDateTime.parse(data + "T" + fineTurno));
             stmt.setString(5, matricola);
             stmt.setInt(6, Integer.parseInt(idAgenda));
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Errore durante l'aggiunta del turno", e);
         }
         return false;
     }
@@ -39,28 +44,28 @@ public class Turno_LavoroPostgresDao implements Turno_LavoroDAO {
              PreparedStatement stmt = conn.prepareStatement(query)) {
 
             stmt.setString(1, matricola);
-            stmt.setDate(2, java.sql.Date.valueOf(data));
-            stmt.setTimestamp(3, Timestamp.valueOf(data + " " + inizioTurno));
+            stmt.setObject(2, LocalDate.parse(data));
+            stmt.setObject(3, LocalDateTime.parse(data + "T" + inizioTurno));
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 ArrayList<String> turno = new ArrayList<>();
                 turno.add(rs.getString("matricola"));
 
-                java.sql.Date dataDb = rs.getDate("data");
+                LocalDate dataDb = rs.getObject("data", LocalDate.class);
                 turno.add(dataDb != null ? dataDb.toString() : "");
 
-                Timestamp inizioDb = rs.getTimestamp("inizio_turno");
-                turno.add(inizioDb != null ? inizioDb.toString() : "");
+                LocalDateTime inizioDb = rs.getObject("inizio_turno", LocalDateTime.class);
+                turno.add(inizioDb != null ? inizioDb.toString().replace("T", " ") : "");
 
-                Timestamp fineDb = rs.getTimestamp("fine_turno");
-                turno.add(fineDb != null ? fineDb.toString() : "");
+                LocalDateTime fineDb = rs.getObject("fine_turno", LocalDateTime.class);
+                turno.add(fineDb != null ? fineDb.toString().replace("T", " ") : "");
 
                 return turno;
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Errore durante il recupero del turno", e);
         }
-        return null;
+        return new ArrayList<>();
     }
 
     @Override
@@ -76,19 +81,19 @@ public class Turno_LavoroPostgresDao implements Turno_LavoroDAO {
                 ArrayList<String> turno = new ArrayList<>();
                 turno.add(rs.getString("matricola"));
 
-                java.sql.Date dataDb = rs.getDate("data");
+                LocalDate dataDb = rs.getObject("data", LocalDate.class);
                 turno.add(dataDb != null ? dataDb.toString() : "");
 
-                Timestamp inizioDb = rs.getTimestamp("inizio_turno");
-                turno.add(inizioDb != null ? inizioDb.toString() : "");
+                LocalDateTime inizioDb = rs.getObject("inizio_turno", LocalDateTime.class);
+                turno.add(inizioDb != null ? inizioDb.toString().replace("T", " ") : "");
 
-                Timestamp fineDb = rs.getTimestamp("fine_turno");
-                turno.add(fineDb != null ? fineDb.toString() : "");
+                LocalDateTime fineDb = rs.getObject("fine_turno", LocalDateTime.class);
+                turno.add(fineDb != null ? fineDb.toString().replace("T", " ") : "");
 
                 turni.add(turno);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Errore durante il recupero dei turni per medico", e);
         }
         return turni;
     }
@@ -98,13 +103,13 @@ public class Turno_LavoroPostgresDao implements Turno_LavoroDAO {
         String query = "UPDATE turni_lavoro SET fine_turno = ? WHERE matricola = ? AND data = ? AND inizio_turno = ?";
         try (Connection conn = ConnessioneDatabase.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
-            stmt.setTimestamp(1, Timestamp.valueOf(data + " " + fineTurno));
+            stmt.setObject(1, LocalDateTime.parse(data + "T" + fineTurno));
             stmt.setString(2, matricola);
-            stmt.setDate(3, java.sql.Date.valueOf(data));
-            stmt.setTimestamp(4, Timestamp.valueOf(data + " " + inizioTurno));
+            stmt.setObject(3, LocalDate.parse(data));
+            stmt.setObject(4, LocalDateTime.parse(data + "T" + inizioTurno));
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Errore durante l'aggiornamento del turno", e);
         }
         return false;
     }
@@ -115,11 +120,11 @@ public class Turno_LavoroPostgresDao implements Turno_LavoroDAO {
         try (Connection conn = ConnessioneDatabase.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setString(1, matricola);
-            stmt.setDate(2, java.sql.Date.valueOf(data));
-            stmt.setTimestamp(3, Timestamp.valueOf(data + " " + inizioTurno));
+            stmt.setObject(2, LocalDate.parse(data));
+            stmt.setObject(3, LocalDateTime.parse(data + "T" + inizioTurno));
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Errore durante l'eliminazione del turno", e);
         }
         return false; 
     }

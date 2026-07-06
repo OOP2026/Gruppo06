@@ -8,8 +8,13 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class LettoPostgresDao implements LettoDAO {
+
+    private static final Logger LOGGER = Logger.getLogger(LettoPostgresDao.class.getName());
+
     @Override
     public boolean aggiungiLetto(String idLetto, String reparto) {
         // Questa funzione non è più del tutto compatibile con la nuova struttura del DB (manca num_stanza)
@@ -21,7 +26,7 @@ public class LettoPostgresDao implements LettoDAO {
             stmt.setString(2, reparto);
             return stmt.executeUpdate() > 0; // Restituisce true se l'inserimento va a buon fine
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Errore durante l'aggiunta del letto", e);
         }
         return false;
     }
@@ -43,9 +48,9 @@ public class LettoPostgresDao implements LettoDAO {
                 return letto;
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Errore durante il recupero del letto per ID", e);
         }
-        return null;
+        return new ArrayList<>();
     }
 
     @Override
@@ -66,7 +71,7 @@ public class LettoPostgresDao implements LettoDAO {
                 letti.add(letto);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Errore durante il recupero di tutti i letti", e);
         }
         return letti;
     }
@@ -81,7 +86,7 @@ public class LettoPostgresDao implements LettoDAO {
             stmt.setString(2, idLetto);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Errore durante l'aggiornamento dello stato del letto", e);
         }
         return false;
     }

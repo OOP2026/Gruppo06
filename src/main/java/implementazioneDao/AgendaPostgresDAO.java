@@ -58,9 +58,8 @@ public class AgendaPostgresDAO implements AgendaDAO {
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Errore durante l'inserimento dell'evento nel database", e);
         }
-        return false;
     }
 
     @Override

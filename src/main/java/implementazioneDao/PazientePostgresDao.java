@@ -61,7 +61,7 @@ public class PazientePostgresDao implements PazienteDAO {
         } catch (SQLException e) {
             throw new RuntimeException("Errore nel recupero del paziente dal database", e);
         }
-        return null;
+        return new ArrayList<>();
     }
 
     @Override

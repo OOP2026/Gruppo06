@@ -8,8 +8,12 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class RicoveroPostgresDao implements RicoveroDAO {
+
+    private static final Logger LOGGER = Logger.getLogger(RicoveroPostgresDao.class.getName());
 
     @Override
     public boolean aggiungiRicovero(String cfPaziente, String idLetto, String dataInizio, String motivo) {
@@ -22,7 +26,7 @@ public class RicoveroPostgresDao implements RicoveroDAO {
             stmt.setString(4, motivo);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Errore durante l'aggiunta del ricovero", e);
         }
         return false;
     }
@@ -38,7 +42,7 @@ public class RicoveroPostgresDao implements RicoveroDAO {
             stmt.setInt(4, Integer.parseInt(idRicovero));
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Errore durante l'aggiornamento della dimissione", e);
         }
         return false;
     }
@@ -61,9 +65,9 @@ public class RicoveroPostgresDao implements RicoveroDAO {
                 return ricovero;
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Errore durante il recupero del ricovero attivo", e);
         }
-        return null;
+        return new ArrayList<>();
     }
 
     @Override
@@ -98,7 +102,7 @@ public class RicoveroPostgresDao implements RicoveroDAO {
                 dimissioni.add(ricovero);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Errore durante il recupero di tutte le dimissioni", e);
         }
         return dimissioni;
     }

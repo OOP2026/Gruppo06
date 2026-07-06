@@ -8,8 +8,12 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class UtentePostgresDao implements UtenteDAO{
+
+        private static final Logger LOGGER = Logger.getLogger(UtentePostgresDao.class.getName());
 
         @Override
         public boolean checkLoginEsistente(String login) {
@@ -22,7 +26,7 @@ public class UtentePostgresDao implements UtenteDAO{
                 return rs.next(); // Ritorna true se trova una corrispondenza
 
             } catch (SQLException e) {
-                e.printStackTrace();
+                LOGGER.log(Level.SEVERE, "Errore durante la verifica del login", e);
             }
             return false;
         }
@@ -49,7 +53,7 @@ public class UtentePostgresDao implements UtenteDAO{
 
                 return stmt.executeUpdate() > 0;
             } catch (SQLException e) {
-                e.printStackTrace();
+                LOGGER.log(Level.SEVERE, "Errore durante l'aggiunta dell'utente", e);
             }
             return false;
         }
@@ -79,8 +83,8 @@ public class UtentePostgresDao implements UtenteDAO{
                     return datiUtente;
                 }
             } catch (SQLException e) {
-                e.printStackTrace();
+                LOGGER.log(Level.SEVERE, "Errore durante il recupero dell'utente per login e password", e);
             }
-            return null;
+            return new ArrayList<>();
         }
 }

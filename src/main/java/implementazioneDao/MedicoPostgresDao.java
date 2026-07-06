@@ -8,8 +8,12 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class MedicoPostgresDao implements MedicoDAO {
+
+    private static final Logger LOGGER = Logger.getLogger(MedicoPostgresDao.class.getName());
 
     @Override
     public boolean aggiungiMedico(String nome, String cognome, String login, String password, String matricola, String iscrizioneAlbo, String specializzazione, String reparto) {
@@ -33,7 +37,7 @@ public class MedicoPostgresDao implements MedicoDAO {
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Errore durante l'aggiunta del medico", e);
         }
         return false;
     }
@@ -64,9 +68,9 @@ public class MedicoPostgresDao implements MedicoDAO {
                 return datiMedico;
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Errore durante il recupero del medico per matricola", e);
         }
-        return null;
+        return new ArrayList<>();
     }
 
     @Override
@@ -94,7 +98,7 @@ public class MedicoPostgresDao implements MedicoDAO {
                 medici.add(datiMedico);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Errore durante il recupero di tutti i medici", e);
         }
         return medici;
     }
@@ -121,7 +125,7 @@ public class MedicoPostgresDao implements MedicoDAO {
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Errore durante l'aggiornamento del medico", e);
         }
         return false;
     }

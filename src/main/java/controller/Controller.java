@@ -54,7 +54,7 @@ public class Controller {
 		//inizializzazione DAO per Postgre
 		utenteDAO = new UtentePostgresDao();
 		medicoDAO = new MedicoPostgresDao();
-		turnoDAO = new Turno_LavoroPostgresDao();
+		turnoDAO = new TurnoLavoroPostgresDao();
 		assenzaDAO = new AssenzaPostgresDao();
 		pazienteDAO = new PazientePostgresDao();
 		lettoDAO = new LettoPostgresDao();

@@ -8,8 +8,12 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class AssenzaPostgresDao implements AssenzaDAO {
+
+    private static final Logger LOGGER = Logger.getLogger(AssenzaPostgresDao.class.getName());
 
     @Override
     public boolean aggiungiAssenza(String matricola, String dataInizio, String dataFine, String motivazione, boolean approvazione) {
@@ -25,7 +29,7 @@ public class AssenzaPostgresDao implements AssenzaDAO {
             
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Errore durante l'aggiunta dell'assenza", e);
         }
         return false;
     }
@@ -55,9 +59,9 @@ public class AssenzaPostgresDao implements AssenzaDAO {
                 return assenza;
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Errore durante il recupero dell'assenza", e);
         }
-        return null;
+        return new ArrayList<>();
     }
 
     @Override
@@ -85,7 +89,7 @@ public class AssenzaPostgresDao implements AssenzaDAO {
                 assenze.add(assenza);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Errore durante il recupero delle assenze del medico", e);
         }
         return assenze;
     }
@@ -102,7 +106,7 @@ public class AssenzaPostgresDao implements AssenzaDAO {
             stmt.setDate(5, java.sql.Date.valueOf(dataInizio));
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Errore durante l'aggiornamento dell'assenza", e);
         }
         return false;
     }
@@ -116,7 +120,7 @@ public class AssenzaPostgresDao implements AssenzaDAO {
             stmt.setDate(2, java.sql.Date.valueOf(dataInizio));
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            e.printStackTrace();
+            LOGGER.log(Level.SEVERE, "Errore durante l'eliminazione dell'assenza", e);
         }
         return false;
     }

@@ -90,6 +90,16 @@ public class Ricovero extends JFrame {
         oraSpinner.setValue(new Date());
     }
 
+    public String[] getRicoveroSelezionato() {
+        int rigaSelezionata = ricoveriTable.getSelectedRow();
+        if (rigaSelezionata == -1) {
+            return null;
+        }
+        String idRicovero = (String) ricoveriTable.getValueAt(rigaSelezionata, 0);
+        String cf = (String) ricoveriTable.getValueAt(rigaSelezionata, 2);
+        return new String[]{idRicovero, cf};
+    }
+
     private void initComponents() {
         SpinnerDateModel dateModel = new SpinnerDateModel(new Date(), null, null, Calendar.DAY_OF_MONTH);
         dataSpinner.setModel(dateModel);

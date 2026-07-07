@@ -471,7 +471,7 @@ public class Controller {
 	}
 
 	public String calcolaPrognosi(int giorniPrognosi) {
-		return "Il paziente ha una prognosi di " + giorniPrognosi + " giorni";
+		return giorniPrognosi + " giorni";
 	}
 
 	public boolean dimissioni(String cfPaziente, String esito, int giorniPrognosi) {
@@ -751,6 +751,32 @@ public class Controller {
         return false;
 	}
 
+	public boolean gestisciDimissioneDaRicovero(String cfPaziente) {
+		JTextField esitoInput = new JTextField();
+		JTextField prognosiInput = new JTextField("0");
+
+		JPanel panel = new JPanel(new GridLayout(2, 2, 10, 10));
+		panel.add(new JLabel("Esito:")); panel.add(esitoInput);
+		panel.add(new JLabel("Giorni Prognosi:")); panel.add(prognosiInput);
+
+		int result = JOptionPane.showConfirmDialog(null, panel, "Dimetti Paziente " + cfPaziente, JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+		if (result == JOptionPane.OK_OPTION) {
+            try {
+			    boolean successo = dimissioni(cfPaziente, esitoInput.getText().trim(), Integer.parseInt(prognosiInput.getText().trim()));
+			    if (successo) {
+				    JOptionPane.showMessageDialog(null, "Paziente dimesso con successo!\nIl posto letto è stato liberato.", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
+				    return true;
+			    } else {
+				    JOptionPane.showMessageDialog(null, "Errore durante la dimissione. Il paziente è ancora ricoverato?", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+			    }
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(null, "Inserisci un numero valido per la prognosi.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+            }
+		}
+        return false;
+	}
+
 	// =========================================================
 	// METODI DI NAVIGAZIONE E GESTIONE SCHERMATE (ORCHESTRAZIONE GUI)
 	// =========================================================
@@ -989,6 +1015,17 @@ public class Controller {
                 caricaDatiRicoveri(ricoveroFrame);
             }
         });
+
+		ricoveroFrame.addGestisciRicoveroListener(e -> {
+			String[] selezionato = ricoveroFrame.getRicoveroSelezionato();
+			if (selezionato != null) {
+				if (gestisciDimissioneDaRicovero(selezionato[1])) {
+					caricaDatiRicoveri(ricoveroFrame); // Ricarica la tabella dopo la dimissione
+				}
+			} else {
+				JOptionPane.showMessageDialog(ricoveroFrame, "Per favore, seleziona un ricovero dalla tabella prima di cliccare su Gestisci Ricovero.", "Nessun Ricovero Selezionato", JOptionPane.WARNING_MESSAGE);
+			}
+		});
 
 		caricaDatiRicoveri(ricoveroFrame);
 		mostraFinestraSecondaria(ricoveroFrame, frameDaChiudere);

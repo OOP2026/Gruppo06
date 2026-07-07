@@ -33,7 +33,7 @@ public class UtentePostgresDao implements UtenteDAO{
 
     @Override
     public boolean aggiungiUtente(String matricola, String login, String password, String nome, String cognome, String ruolo) {
-        String query = "INSERT INTO utente (matricola, login, password, nome, cognome, ruolo) VALUES (?, ?, ?, ?, ?, ?)";
+        String query = "INSERT INTO utente (matricola, login, password, nome, cognome) VALUES (?, ?, ?, ?, ?)";
         try (Connection conn = ConnessioneDatabase.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setString(1, matricola);
@@ -41,7 +41,6 @@ public class UtentePostgresDao implements UtenteDAO{
             stmt.setString(3, password);
             stmt.setString(4, nome);
             stmt.setString(5, cognome);
-            stmt.setString(6, ruolo);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Errore durante l'inserimento dell'utente nel DB", e);
@@ -67,10 +66,6 @@ public class UtentePostgresDao implements UtenteDAO{
                     datiUtente.add(rs.getString("login"));
                     datiUtente.add(rs.getString("password"));
                     datiUtente.add(rs.getString("matricola"));
-                    datiUtente.add(rs.getString("ruolo"));
-
-                    String pinEstratto = rs.getString("pin");
-                    datiUtente.add(pinEstratto != null ? pinEstratto : "");
                     
                     return datiUtente;
                 }

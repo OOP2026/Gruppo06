@@ -101,24 +101,27 @@ public class Controller {
 	 *
 	 * @param login     the login
 	 * @param password  the password
+	 * @param pin       the pin (se inserito nel form)
 	 * @return the boolean
 	 */
 	//Metodo di riconoscimento e futura impostazione schermata
-	public boolean whoIsAsking(String login, String password) {
+	public boolean whoIsAsking(String login, String password, String pin) {
 		ArrayList<String> datiUtente = utenteDAO.getUtenteByLoginAndPassword(login, password);
 
 		if (datiUtente != null && !datiUtente.isEmpty()) {
 			String nome = datiUtente.get(0);
 			String cognome = datiUtente.get(1);
 			String matricola = datiUtente.get(4);
-			String ruolo = datiUtente.get(5);
+			
+			// Determina il ruolo runtime: se c'è un PIN inserito, è Amministratore. Altrimenti Medico.
+			String ruolo = (pin != null && !pin.trim().isEmpty()) ? "amministratore" : "medico";
 
 			if ("amministratore".equalsIgnoreCase(ruolo)) {
-				this.utenteLoggato = new Amministratore(matricola, login, password, nome, cognome, ruolo);
+				this.utenteLoggato = new Amministratore(matricola, nome, cognome, login, ruolo);
 				LOGGER.info("Accesso Amministratore confermato per " + login);
 				return true;
 			} else if ("medico".equalsIgnoreCase(ruolo)) {
-				this.utenteLoggato = new Medico(matricola, nome, cognome, login, password, ruolo);
+				this.utenteLoggato = new Medico(matricola, nome, cognome, login, ruolo);
 				LOGGER.info("Accesso Medico confermato per " + login);
 				return true;
 			}
@@ -170,8 +173,8 @@ public class Controller {
 		return medicoDAO.getAllMedici();
 	}
 
-	public boolean aggiornaMedico(String nome, String cognome, String matricola, String iscrizioneAlbo, String specializzazione) {
-		return medicoDAO.aggiornaMedico(nome, cognome, matricola, iscrizioneAlbo, specializzazione);
+	public boolean aggiornaMedico(String nome, String cognome, String matricola, String iscrizioneAlbo, String specializzazione, String reparto) {
+		return medicoDAO.aggiornaMedico(nome, cognome, matricola, iscrizioneAlbo, specializzazione, reparto);
 	}
 
 	public boolean eliminaMedico(String matricola) {
@@ -1150,10 +1153,10 @@ public class Controller {
 
 	public void avvia() {
 		// Avvio diretto della schermata amministratore per saltare il login durante lo sviluppo
-		this.utenteLoggato = new model.Amministratore("A001", "admin", "pass", "Admin", "Test", "amministratore");
-		avviaSchermataAmministratore("Dott. Admin Test");
+		// this.utenteLoggato = new model.Amministratore("A001", "Admin", "Test", "admin", "amministratore");
+		// avviaSchermataAmministratore("Dott. Admin Test");
 		// Per ripristinare il normale flusso di avvio, decommenta la riga seguente e commenta le due sopra.
-		// avviaSchermataLogin();
+		avviaSchermataLogin();
 	}
 
 	private void avviaSchermataLogin() {
@@ -1165,13 +1168,15 @@ public class Controller {
 		loginView.addLoginListener(e -> {
 			String username = loginView.getUsername();
 			String password = loginView.getPassword();
+			// Legge il PIN dalla GUI. Se la GUI Login non lo ha, aggiungi il campo e il metodo getPin()!
+			String pin = loginView.getPin(); 
 
 			if (username.isEmpty() || password.isEmpty()) {
 				loginView.showMessage("Campi vuoti", "Inserisci Username e Password per accedere.", JOptionPane.WARNING_MESSAGE);
 				return;
 			}
 
-			if (whoIsAsking(username, password)) {
+			if (whoIsAsking(username, password, pin)) {
 				frame.dispose(); // Chiude la schermata di login
 				indirizzaUtenteLoggato();
 			} else {

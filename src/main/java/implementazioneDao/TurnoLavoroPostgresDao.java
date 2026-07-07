@@ -19,7 +19,7 @@ public class TurnoLavoroPostgresDao implements Turno_LavoroDAO {
 
     @Override
     public boolean aggiungiTurno(String matricola, String data, String inizioTurno, String fineTurno, String idAgenda) {
-        String query = "INSERT INTO turni_lavoro (id_turno, data, inizio_turno, fine_turno, matricola, id_agenda) VALUES (?, ?, ?, ?, ?, ?)";
+        String query = "INSERT INTO turno_lavorativo (id_turno, data_turno, ora_inizio, ora_fine, matricola_medico, id_agenda) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection conn = ConnessioneDatabase.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
 
@@ -39,7 +39,7 @@ public class TurnoLavoroPostgresDao implements Turno_LavoroDAO {
 
     @Override
     public ArrayList<String> getTurno(String matricola, String data, String inizioTurno) {
-        String query = "SELECT * FROM turni_lavoro WHERE matricola = ? AND data = ? AND inizio_turno = ?";
+        String query = "SELECT * FROM turno_lavorativo WHERE matricola_medico = ? AND data_turno = ? AND ora_inizio = ?";
         try (Connection conn = ConnessioneDatabase.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
 
@@ -49,15 +49,15 @@ public class TurnoLavoroPostgresDao implements Turno_LavoroDAO {
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 ArrayList<String> turno = new ArrayList<>();
-                turno.add(rs.getString("matricola"));
+                turno.add(rs.getString("matricola_medico"));
 
-                LocalDate dataDb = rs.getObject("data", LocalDate.class);
+                LocalDate dataDb = rs.getObject("data_turno", LocalDate.class);
                 turno.add(dataDb != null ? dataDb.toString() : "");
 
-                LocalDateTime inizioDb = rs.getObject("inizio_turno", LocalDateTime.class);
+                LocalDateTime inizioDb = rs.getObject("ora_inizio", LocalDateTime.class);
                 turno.add(inizioDb != null ? inizioDb.toString().replace("T", " ") : "");
 
-                LocalDateTime fineDb = rs.getObject("fine_turno", LocalDateTime.class);
+                LocalDateTime fineDb = rs.getObject("ora_fine", LocalDateTime.class);
                 turno.add(fineDb != null ? fineDb.toString().replace("T", " ") : "");
 
                 return turno;
@@ -71,7 +71,7 @@ public class TurnoLavoroPostgresDao implements Turno_LavoroDAO {
     @Override
     public ArrayList<ArrayList<String>> getTurniByMedico(String matricola) {
         ArrayList<ArrayList<String>> turni = new ArrayList<>();
-        String query = "SELECT * FROM turni_lavoro WHERE matricola = ? ORDER BY data ASC, inizio_turno ASC";
+        String query = "SELECT * FROM  turno_lavorativo WHERE matricola_medico = ? ORDER BY data_turno ASC, ora_inizio ASC";
         try (Connection conn = ConnessioneDatabase.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
 
@@ -79,15 +79,15 @@ public class TurnoLavoroPostgresDao implements Turno_LavoroDAO {
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 ArrayList<String> turno = new ArrayList<>();
-                turno.add(rs.getString("matricola"));
+                turno.add(rs.getString("matricola_medico"));
 
-                LocalDate dataDb = rs.getObject("data", LocalDate.class);
+                LocalDate dataDb = rs.getObject("data_turno", LocalDate.class);
                 turno.add(dataDb != null ? dataDb.toString() : "");
 
-                LocalDateTime inizioDb = rs.getObject("inizio_turno", LocalDateTime.class);
+                LocalDateTime inizioDb = rs.getObject("ora_inizio", LocalDateTime.class);
                 turno.add(inizioDb != null ? inizioDb.toString().replace("T", " ") : "");
 
-                LocalDateTime fineDb = rs.getObject("fine_turno", LocalDateTime.class);
+                LocalDateTime fineDb = rs.getObject("ora_fine", LocalDateTime.class);
                 turno.add(fineDb != null ? fineDb.toString().replace("T", " ") : "");
 
                 turni.add(turno);
@@ -100,7 +100,7 @@ public class TurnoLavoroPostgresDao implements Turno_LavoroDAO {
 
     @Override
     public boolean aggiornaTurno(String matricola, String data, String inizioTurno, String fineTurno) {
-        String query = "UPDATE turni_lavoro SET fine_turno = ? WHERE matricola = ? AND data = ? AND inizio_turno = ?";
+        String query = "UPDATE  turno_lavorativo SET ora_fine = ? WHERE matricola_medico = ? AND data_turno = ? AND ora_inizio = ?";
         try (Connection conn = ConnessioneDatabase.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setObject(1, LocalDateTime.parse(data + "T" + fineTurno));
@@ -116,7 +116,7 @@ public class TurnoLavoroPostgresDao implements Turno_LavoroDAO {
 
     @Override
     public boolean eliminaTurno(String matricola, String data, String inizioTurno) {
-        String query = "DELETE FROM turni_lavoro WHERE matricola = ? AND data = ? AND inizio_turno = ?";
+        String query = "DELETE FROM  turno_lavorativo WHERE matricola_medico = ? AND data_turno = ? AND ora_inizio = ?";
         try (Connection conn = ConnessioneDatabase.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setString(1, matricola);

@@ -9,20 +9,15 @@ package model;
  * di dati, come dovrebbe essere un modello.
  */
 public class Letto {
-    private String idLetto;
     private String reparto;
     private boolean occupato;
 
-    public Letto(String idLetto, String reparto, boolean occupato) {
-        this.idLetto = idLetto;
+    public Letto( String reparto, boolean occupato) {
         this.reparto = reparto;
         this.occupato = occupato;
     }
 
     // --- Getters ---
-    public String getIdLetto() {
-        return idLetto;
-    }
 
     public String getReparto() {
         return reparto;
@@ -40,7 +35,6 @@ public class Letto {
     @Override
     public String toString() {
         return "Letto{" +
-                "idLetto='" + idLetto + '\'' +
                 ", reparto='" + reparto + '\'' +
                 ", occupato=" + occupato +
                 '}';

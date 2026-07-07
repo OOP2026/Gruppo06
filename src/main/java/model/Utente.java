@@ -3,32 +3,32 @@ package model;
 public class Utente {
 
     protected String login;
-    protected String password;
     protected String matricola;
+    protected String ruolo;
 
 
     /**
      * Instantiates a new Utente.
      *
-     * @param login     the login
-     * @param password  the password
      * @param matricola the matricola
+     * @param login     the login
+     * @param ruolo     the ruolo
      */
-    public Utente(String login, String password, String matricola) {
-        this.login = login;
-        this.password = password;
+    public Utente(String matricola, String login, String ruolo) {
         this.matricola = matricola;
+        this.login = login;
+        this.ruolo = ruolo;
     }
 
 
-    public String getPassword() {
-        return this.password;
-    }
     public String getLogin(){
         return this.login;
     }
     public String getMatricola(){
         return this.matricola;
+    }
+    public String getRuolo(){
+        return this.ruolo;
     }
 
 

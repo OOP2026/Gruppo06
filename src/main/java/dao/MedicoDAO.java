@@ -8,6 +8,6 @@ public interface MedicoDAO {
     ArrayList<String> getMedicoByMatricola(String matricola);
     ArrayList<ArrayList<String>> getAllMedici();
     
-    boolean aggiornaMedico(String nome, String cognome, String login, String password, String matricola, String iscrizioneAlbo, String specializzazione, String reparto);
+    boolean aggiornaMedico(String nome, String cognome, String matricola, String iscrizioneAlbo, String specializzazione, String reparto);
     boolean eliminaMedico(String matricola);
 }

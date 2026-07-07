@@ -3,15 +3,15 @@ package model;
 import java.util.Date;
 
 public class Turno_Lavoro{
-    public Date data;
-    public Date inizio_turno;
-    public Date fine_turno;
+    public Date data_turno;
+    public Date ora_inizio;
+    public Date ora_fine;
     public Medico medico;
 
-    public Turno_Lavoro(Date data, Date inizio_turno, Date fine_turno){
-        this.data = data;
-        this.inizio_turno = fine_turno;
-        this.fine_turno = fine_turno;
+    public Turno_Lavoro(Date data_turno, Date ora_inizio, Date ora_fine){
+        this.data_turno = data_turno;
+        this.ora_inizio = ora_inizio;
+        this.ora_fine = ora_fine;
     }
 
     public void checkTurno(){

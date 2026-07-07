@@ -9,19 +9,14 @@ public class Amministratore extends Utente {
     //Richiamo classi
     protected String nome;
     protected String cognome;
-    protected String pin;
 
-    public Amministratore(String nome, String cognome, String login, String password, String matricola, String pin) {
-        super(login, password, matricola);
+    public Amministratore(String matricola, String nome, String cognome, String login, String ruolo) {
+        super(matricola, login, ruolo);
         this.nome = nome;
         this.cognome = cognome;
-        this.pin = pin;
     }
 
 
-    public String getPin(){
-        return this.pin;
-    }
 
     public String getNome(){
         return this.nome;

@@ -41,6 +41,13 @@ public class Login {
         return new String(passwordField.getPassword()).trim();
     }
 
+    public String getPin() {
+        if (pinField != null) {
+            return new String(pinField.getPassword()).trim();
+        }
+        return "";
+    }
+
     public void addLoginListener(java.awt.event.ActionListener listener) {
         accediButton.addActionListener(listener);
     }

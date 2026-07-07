@@ -23,8 +23,7 @@ public class Letti extends JFrame {
     private JButton storicoLettiButton;
 
     private static final String[] COLONNE = {
-            "ID Letto", "Tipologia Letto", "Reparto",
-            "Stanza", "Numero Letto", "Stato"
+            "Numero Letto", "Stanza", "Nome Paziente", "Codice Fiscale", "Reparto", "Stato"
     };
 
     public Letti() {
@@ -59,6 +58,13 @@ public class Letti extends JFrame {
         Login.applicaStilePulsantiCentrali(resetButton);
         Login.applicaStilePulsantiCentrali(assegnaPazienteButton);
         Login.applicaStilePulsantiCentrali(storicoLettiButton);
+        
+        // Centra il testo nelle colonne della tabella per far risaltare meglio le emoji
+        DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
+        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+        for (int i = 0; i < lettiTable.getColumnCount(); i++) {
+            lettiTable.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
+        }
     }
 
     /**
@@ -80,6 +86,18 @@ public class Letti extends JFrame {
         }
         // Si assume che l'ID del letto sia nella prima colonna (indice 0)
         return (String) lettiTable.getValueAt(rigaSelezionata, 0);
+    }
+
+    /**
+     * Recupera il Reparto del letto attualmente selezionato nella tabella.
+     * @return Il Reparto del letto come String, o null se non c'è nessuna selezione.
+     */
+    public String getRepartoLettoSelezionato() {
+        int rigaSelezionata = lettiTable.getSelectedRow();
+        if (rigaSelezionata == -1) {
+            return null;
+        }
+        return (String) lettiTable.getValueAt(rigaSelezionata, 4);
     }
 
     /**

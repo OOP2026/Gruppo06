@@ -8,6 +8,6 @@ public interface Turno_LavoroDAO {
     ArrayList<String> getTurno(String matricola, String data, String inizioTurno);
     ArrayList<ArrayList<String>> getTurniByMedico(String matricola);
     
-    boolean aggiornaTurno(String matricola, String data, String inizioTurno, String fineTurno);
+    boolean aggiornaTurno(String matricola, String data, String vecchioInizio, String nuovoInizio, String nuovaFine);
     boolean eliminaTurno(String matricola, String data, String inizioTurno);
 }

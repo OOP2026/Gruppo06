@@ -17,7 +17,7 @@ public class UtentePostgresDao implements UtenteDAO{
 
         @Override
         public boolean checkLoginEsistente(String login) {
-            String query = "SELECT 1 FROM utente WHERE login = ?";
+        String query = "SELECT 1 FROM amministratore WHERE login = ?";
             try (Connection conn = ConnessioneDatabase.getConnection();
                  PreparedStatement stmt = conn.prepareStatement(query)) {
 
@@ -33,7 +33,7 @@ public class UtentePostgresDao implements UtenteDAO{
 
     @Override
     public boolean aggiungiUtente(String matricola, String login, String password, String nome, String cognome, String ruolo) {
-        String query = "INSERT INTO utente (matricola, login, password, nome, cognome) VALUES (?, ?, ?, ?, ?)";
+        String query = "INSERT INTO amministratore (matricola, login, password, nome, cognome) VALUES (?, ?, ?, ?, ?)";
         try (Connection conn = ConnessioneDatabase.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setString(1, matricola);
@@ -51,7 +51,7 @@ public class UtentePostgresDao implements UtenteDAO{
 
     @Override
         public ArrayList<String> getUtenteByLoginAndPassword(String login, String password) {
-            String query = "SELECT * FROM utente WHERE login = ? AND password = ?";
+        String query = "SELECT nome, cognome, login, password, matricola FROM amministratore WHERE login = ? AND password = ?";
             try (Connection conn = ConnessioneDatabase.getConnection();
                  PreparedStatement stmt = conn.prepareStatement(query)) {
 
@@ -61,8 +61,12 @@ public class UtentePostgresDao implements UtenteDAO{
 
                 if (rs.next()) {
                     ArrayList<String> datiUtente = new ArrayList<>();
-                    datiUtente.add(rs.getString("nome"));
-                    datiUtente.add(rs.getString("cognome"));
+                    // L'ordine è importante per il Controller: nome, cognome, login, password, matricola
+                    String nome = rs.getString("nome");
+                    String cognome = rs.getString("cognome");
+
+                datiUtente.add(nome);
+                datiUtente.add(cognome);
                     datiUtente.add(rs.getString("login"));
                     datiUtente.add(rs.getString("password"));
                     datiUtente.add(rs.getString("matricola"));

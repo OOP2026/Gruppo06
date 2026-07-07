@@ -28,8 +28,8 @@ public class Ricovero extends JFrame {
 
 
     private static final String[] COLONNE = {
-            "ID Paziente", "Paziente", "Codice Fiscale",
-            "Reparto di Ricovero", "Data Ingresso", "Ora Ingresso"
+            "ID Ricovero", "Paziente", "Codice Fiscale", 
+            "Motivazione Ricovero", "Reparto di Ricovero", "Data e Ora Ingresso"
     };
 
     public Ricovero() {

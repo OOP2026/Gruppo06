@@ -31,12 +31,14 @@ public class LettoPostgresDao implements LettoDAO {
         return false;
     }
 
+    // NOTA: Aggiorna la firma in LettoDAO aggiungendo 'String reparto'
     @Override
-    public ArrayList<String> getLettoById(String idLetto) {
-        String query = "SELECT numero_letto, reparto_di_appartenenza, is_libero, num_stanza FROM letto WHERE numero_letto = ?";
+    public ArrayList<String> getLettoById(String idLetto, String reparto) {
+        String query = "SELECT numero_letto, reparto_di_appartenenza, is_libero, num_stanza FROM letto WHERE numero_letto = ? AND reparto_di_appartenenza = ?";
         try (Connection conn = ConnessioneDatabase.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setString(1, idLetto);
+            stmt.setString(2, reparto);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 ArrayList<String> letto = new ArrayList<>();
@@ -76,14 +78,16 @@ public class LettoPostgresDao implements LettoDAO {
         return letti;
     }
 
+    // NOTA: Aggiorna la firma in LettoDAO aggiungendo 'String reparto'
     @Override
-    public boolean aggiornaStatoLetto(String idLetto, boolean occupato) {
-        String query = "UPDATE letto SET is_libero = ? WHERE numero_letto = ?";
+    public boolean aggiornaStatoLetto(String idLetto, String reparto, boolean occupato) {
+        String query = "UPDATE letto SET is_libero = ? WHERE numero_letto = ? AND reparto_di_appartenenza = ?";
         boolean isLibero = !occupato; // La logica è invertita: se è occupato, non è libero.
         try (Connection conn = ConnessioneDatabase.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setBoolean(1, isLibero);
             stmt.setString(2, idLetto);
+            stmt.setString(3, reparto);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Errore durante l'aggiornamento dello stato del letto", e);

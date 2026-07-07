@@ -150,7 +150,7 @@ public class Controller {
 	// METODI PER LA GESTIONE DEI MEDICI
 	// =========================================================
 
-	public boolean aggiungiMedico(String nome, String cognome, String matricola, String iscrizioneAlbo, String specializzazione, String reparto) {
+	public boolean aggiungiMedico(String nome, String cognome, String matricola, String login, String password, String iscrizioneAlbo, String specializzazione, String reparto) {
 		// Validazione campi obbligatori
 		if (isNullOrEmpty(matricola) || isNullOrEmpty(nome) || isNullOrEmpty(cognome)) {
 			LOGGER.warning("Errore: Nome, Cognome e Matricola sono campi obbligatori per il medico.");
@@ -162,7 +162,7 @@ public class Controller {
 			LOGGER.warning(() -> "Errore: Impossibile aggiungere. Esiste già un medico con matricola " + matricola);
 			return false;
 		}
-		return medicoDAO.aggiungiMedico(nome, cognome, matricola, iscrizioneAlbo, specializzazione, reparto);
+		return medicoDAO.aggiungiMedico(nome, cognome, matricola, login, password, iscrizioneAlbo, specializzazione, reparto);
 	}
 
 	public List<String> getMedicoByMatricola(String matricola) {
@@ -209,8 +209,8 @@ public class Controller {
 		return turnoDAO.getTurniByMedico(matricola);
 	}
 
-	public boolean aggiornaTurno(String matricola, String data, String inizioTurno, String fineTurno) {
-		return turnoDAO.aggiornaTurno(matricola, data, inizioTurno, fineTurno);
+	public boolean aggiornaTurno(String matricola, String data, String vecchioInizio, String nuovoInizio, String nuovaFine) {
+		return turnoDAO.aggiornaTurno(matricola, data, vecchioInizio, nuovoInizio, nuovaFine);
 	}
 
 	public boolean eliminaTurno(String matricola, String data, String inizioTurno) {
@@ -318,8 +318,8 @@ public class Controller {
 		return pazienteDAO.aggiungiPaziente(cf, nome, cognome, dataNascita, sesso, residenza, diagnosi);
 	}
 
-	public boolean assegnaLetto(String idLetto, boolean occupato) {
-		return lettoDAO.aggiornaStatoLetto(idLetto, occupato);
+	public boolean assegnaLetto(String idLetto, String reparto, boolean occupato) {
+		return lettoDAO.aggiornaStatoLetto(idLetto, reparto, occupato);
 	}
 
 	public String setDataOraInizio() {
@@ -328,22 +328,22 @@ public class Controller {
 		return now.format(formatter);
 	}
 
-	public boolean registraRicovero(String cfPaziente, String idLetto, String motivo) {
-		if (isNullOrEmpty(cfPaziente) || isNullOrEmpty(idLetto)) {
-			LOGGER.warning("Errore: CF Paziente o ID Letto mancanti.");
+	public boolean registraRicovero(String cfPaziente, String idLetto, String reparto, String motivo) {
+		if (isNullOrEmpty(cfPaziente) || isNullOrEmpty(idLetto) || isNullOrEmpty(reparto)) {
+			LOGGER.warning("Errore: CF Paziente, ID Letto o Reparto mancanti.");
 			return false;
 		}
 		
-		if (!checkDisponibilitaLetto(idLetto)) {
+		if (!checkDisponibilitaLetto(idLetto, reparto)) {
 			LOGGER.warning("Errore: Letto non disponibile o inesistente.");
 			return false;
 		}
 
 		String dataInizio = setDataOraInizio();
-		boolean successo = ricoveroDAO.aggiungiRicovero(cfPaziente, idLetto, dataInizio, motivo);
+		boolean successo = ricoveroDAO.aggiungiRicovero(cfPaziente, idLetto, reparto, dataInizio, motivo);
 		
 		if (successo) {
-			lettoDAO.aggiornaStatoLetto(idLetto, true); // Cambia lo stato del letto ad occupato.
+			lettoDAO.aggiornaStatoLetto(idLetto, reparto, true); // Cambia lo stato del letto ad occupato.
 			LOGGER.info("Ricovero registrato e letto assegnato con successo.");
 		}
 		return successo;
@@ -355,27 +355,41 @@ public class Controller {
 	 * @param idLetto L'ID del letto a cui si vuole assegnare il paziente.
 	 * @return true se l'operazione ha successo, false altrimenti.
 	 */
-	public boolean gestisciAssegnazionePazienteLetto(String idLetto) {
+	public boolean gestisciAssegnazionePazienteLetto(String idLetto, String reparto) {
 		// 1. Controlla la disponibilità del letto. Il chiamante (GUI) dovrebbe averlo già fatto,
 		// ma lo ricontrolliamo per sicurezza. Il messaggio di errore viene gestito dal chiamante.
-		if (isNullOrEmpty(idLetto) || !checkDisponibilitaLetto(idLetto)) {
+		if (isNullOrEmpty(idLetto) || isNullOrEmpty(reparto) || !checkDisponibilitaLetto(idLetto, reparto)) {
 			// Non mostriamo un dialogo qui per evitare di duplicare i messaggi.
 			return false;
 		}
 
-		// 2. Ottieni la lista di pazienti non ricoverati
+		// 2. Ottieni la lista di pazienti non ricoverati (LOGICA OTTIMIZZATA)
+
+		// Creiamo un set con i CF di tutti i pazienti che hanno già un ricovero attivo.
+		// Questo è molto più efficiente che interrogare il DB per ogni singolo paziente.
+		java.util.Set<String> pazientiRicoverati = new java.util.HashSet<>();
+		List<ArrayList<String>> ricoveriAttivi = ricoveroDAO.getAllRicoveriAttivi();
+		if (ricoveriAttivi != null) {
+			for (List<String> ricovero : ricoveriAttivi) {
+				if (ricovero.size() > 1) {
+					pazientiRicoverati.add(ricovero.get(1)); // Indice 1 è cf_paziente nella tabella ricoveri
+				}
+			}
+		}
+
+		// Ora scorriamo tutti i pazienti e aggiungiamo alla lista solo quelli il cui CF non è nel set.
 		List<ArrayList<String>> tuttiPazienti = pazienteDAO.getAllPazienti();
 		List<String> pazientiDisponibili = new ArrayList<>();
 		List<String> cfPazientiDisponibili = new ArrayList<>();
 
-		for (List<String> datiPaziente : tuttiPazienti) {
-			String cf = datiPaziente.get(0);
-			String nome = datiPaziente.get(1);
-			String cognome = datiPaziente.get(2);
-			// Controlla se il paziente ha un ricovero attivo
-			if (ricoveroDAO.getRicoveroAttivo(cf) == null) {
-				pazientiDisponibili.add(cognome + " " + nome + " (" + cf + ")");
-				cfPazientiDisponibili.add(cf);
+		if (tuttiPazienti != null) {
+			for (List<String> datiPaziente : tuttiPazienti) {
+				String cf = datiPaziente.get(0);
+				// Se il paziente NON è nel set dei ricoverati, è disponibile.
+				if (!pazientiRicoverati.contains(cf)) {
+					pazientiDisponibili.add(datiPaziente.get(2) + " " + datiPaziente.get(1) + " (" + cf + ")"); // Cognome + Nome + CF
+					cfPazientiDisponibili.add(cf);
+				}
 			}
 		}
 
@@ -405,7 +419,7 @@ public class Controller {
 		if (motivo == null) return false; // L'utente ha annullato
 
 		// 5. Registra il ricovero usando il metodo esistente
-		boolean successo = registraRicovero(cfScelto, idLetto, motivo);
+		boolean successo = registraRicovero(cfScelto, idLetto, reparto, motivo);
 		if (!successo) {
 			// Se la registrazione fallisce, mostra un messaggio di errore specifico.
 			JOptionPane.showMessageDialog(null, "Impossibile completare l'assegnazione. Errore durante la registrazione del ricovero nel database.", "Errore di Registrazione", JOptionPane.ERROR_MESSAGE);
@@ -469,12 +483,13 @@ public class Controller {
 		
 		String idRicovero = ricoveroAttivo.get(0);
 		String idLetto = ricoveroAttivo.get(2);
+		String reparto = ricoveroAttivo.get(3);
 		String dataFine = setDataOraInizio();
 		String prognosi = calcolaPrognosi(giorniPrognosi);
 
 		boolean successo = ricoveroDAO.aggiornaRicoveroDimissione(idRicovero, dataFine, prognosi, esito);
 		if (successo) {
-			lettoDAO.aggiornaStatoLetto(idLetto, false); // Libera il letto
+			lettoDAO.aggiornaStatoLetto(idLetto, reparto, false); // Libera il letto
 			LOGGER.info("Paziente dimesso e letto liberato.");
 		}
 		return successo;
@@ -484,12 +499,21 @@ public class Controller {
 		return ricoveroDAO.getAllDimissioni();
 	}
 
-	public boolean checkDisponibilitaLetto(String idLetto) {
-		List<String> letto = lettoDAO.getLettoById(idLetto);
-		if (letto != null && !letto.isEmpty()) {
-			return "false".equals(letto.get(2)); // true se il letto (parametro occupato=false) è libero.
+	public boolean checkDisponibilitaLetto(String idLetto, String reparto) {
+		// Un letto è disponibile se esiste e non ha un ricovero attivo associato.
+		// Questa è la "source of truth", la stessa usata per visualizzare lo stato nella tabella.
+
+		// 1. Verifichiamo che il letto esista fisicamente nel DB.
+		List<String> letto = lettoDAO.getLettoById(idLetto, reparto);
+		if (letto == null || letto.isEmpty()) {
+			LOGGER.warning("Tentativo di verificare disponibilità per un letto inesistente: ID " + idLetto);
+			return false; // Il letto non esiste, quindi non è disponibile.
 		}
-		return false;
+
+		// 2. Verifichiamo se è occupato secondo la fonte di verità (tabella ricoveri).
+		// Il metodo isLettoAttualmenteOccupato interroga la tabella ricoveri.
+		// Se NON è occupato, allora è disponibile.
+		return !ricoveroDAO.isLettoAttualmenteOccupato(idLetto, reparto);
 	}
 
 	// =========================================================
@@ -583,10 +607,7 @@ public class Controller {
 			String specializzazione = specializzazioneInput.getText().trim();
 			String reparto = repartoInput.getText().trim();
 
-			// Logica di registrazione a due fasi: prima l'utente, poi il medico.
-			// Ora la creazione è in un unico passaggio nel DAO del medico
-			// La firma di aggiungiMedico andrà aggiornata per prendere anche login e password
-			boolean successo = aggiungiMedico(nome, cognome, matricola, iscrizioneAlbo, specializzazione, reparto);
+			boolean successo = aggiungiMedico(nome, cognome, matricola, login, password, iscrizioneAlbo, specializzazione, reparto);
 
 			if (successo) {
 				JOptionPane.showMessageDialog(null, "Medico aggiunto con successo al database!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
@@ -632,20 +653,66 @@ public class Controller {
         return false;
 	}
 
+	public boolean gestisciModificaTurno(String matricola, String data, String orarioEffettivo) {
+		// Estrai il vecchio orario di inizio dalla stringa "inizio - fine"
+		String[] orari = orarioEffettivo.split(" - ");
+		String vecchioInizio = orari.length > 0 ? orari[0].trim() : "08:00:00";
+		String vecchiaFine = orari.length > 1 ? orari[1].trim() : "14:00:00";
+
+		// Prepara i campi per il nuovo orario, pre-compilandoli con i valori attuali
+		JTextField nuovoInizioInput = new JTextField(vecchioInizio);
+		JTextField nuovaFineInput = new JTextField(vecchiaFine);
+
+		// Crea il pannello del dialogo
+		JPanel panel = new JPanel(new GridLayout(4, 2, 10, 10));
+		panel.add(new JLabel(LABEL_MATRICOLA_MEDICO));
+		panel.add(new JLabel("<html><b>" + matricola + "</b></html>")); // Mostra la matricola (non editabile)
+		panel.add(new JLabel(LABEL_DATA));
+		panel.add(new JLabel("<html><b>" + data + "</b></html>")); // Mostra la data (non editabile)
+		panel.add(new JLabel("Nuovo " + LABEL_ORA_INIZIO));
+		panel.add(nuovoInizioInput);
+		panel.add(new JLabel("Nuova " + LABEL_ORA_FINE));
+		panel.add(nuovaFineInput);
+
+		int result = JOptionPane.showConfirmDialog(null, panel, "Modifica Turno", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+		if (result == JOptionPane.OK_OPTION) {
+			try {
+				String nuovoInizio = nuovoInizioInput.getText().trim();
+				String nuovaFine = nuovaFineInput.getText().trim();
+
+				boolean successo = aggiornaTurno(matricola, data, vecchioInizio, nuovoInizio, nuovaFine);
+
+				if (successo) {
+					JOptionPane.showMessageDialog(null, "Turno modificato con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
+					return true;
+				} else {
+					JOptionPane.showMessageDialog(null, "Errore durante la modifica del turno. Verifica i dati.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+				}
+			} catch (Exception ex) {
+				LOGGER.log(java.util.logging.Level.SEVERE, "Errore nel parsing per la modifica del turno", ex);
+				JOptionPane.showMessageDialog(null, "Formato ora non valido. Assicurati di usare HH:MM:SS.", "Errore di Formato", JOptionPane.ERROR_MESSAGE);
+			}
+		}
+		return false;
+	}
+
 	public boolean gestisciCreazioneNuovoRicovero() {
 		JTextField cfInput = new JTextField();
 		JTextField lettoInput = new JTextField();
+		JTextField repartoInput = new JTextField();
 		JTextField motivoInput = new JTextField();
 
-		JPanel panel = new JPanel(new GridLayout(3, 2, 10, 10));
+		JPanel panel = new JPanel(new GridLayout(4, 2, 10, 10));
 		panel.add(new JLabel("CF Paziente:")); panel.add(cfInput);
 		panel.add(new JLabel("ID Letto:")); panel.add(lettoInput);
+		panel.add(new JLabel("Reparto:")); panel.add(repartoInput);
 		panel.add(new JLabel("Motivo:")); panel.add(motivoInput);
 
 		int result = JOptionPane.showConfirmDialog(null, panel, "Registra Nuovo Ricovero", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 
 		if (result == JOptionPane.OK_OPTION) {
-			boolean successo = registraRicovero(cfInput.getText().trim(), lettoInput.getText().trim(), motivoInput.getText().trim());
+			boolean successo = registraRicovero(cfInput.getText().trim(), lettoInput.getText().trim(), repartoInput.getText().trim(), motivoInput.getText().trim());
 			if (successo) {
 				JOptionPane.showMessageDialog(null, "Ricovero aggiunto con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
 				return true;
@@ -794,21 +861,22 @@ public class Controller {
 		// 2. Collega il pulsante "Assegna Paziente" alla sua logica
 		lettiFrame.addAssegnaPazienteListener(e -> {
 			String idLettoSelezionato = lettiFrame.getIdLettoSelezionato();
+			String repartoLettoSelezionato = lettiFrame.getRepartoLettoSelezionato();
 			
 			// La logica di controllo della selezione è ora nel controller
-			if (idLettoSelezionato == null) {
+			if (idLettoSelezionato == null || repartoLettoSelezionato == null) {
 				JOptionPane.showMessageDialog(lettiFrame, "Per favore, seleziona un letto dalla tabella.", "Nessun Letto Selezionato", JOptionPane.WARNING_MESSAGE);
 				return;
 			}
 
 			// Prima di procedere, verifichiamo che il letto sia ancora disponibile
-			if (!checkDisponibilitaLetto(idLettoSelezionato)) {
+			if (!checkDisponibilitaLetto(idLettoSelezionato, repartoLettoSelezionato)) {
 				JOptionPane.showMessageDialog(lettiFrame, "Il letto selezionato risulta già occupato o non è valido.", "Letto non Disponibile", JOptionPane.WARNING_MESSAGE);
 				ricaricaEAggiornaTabellaLetti(lettiFrame); // Aggiorna la vista con lo stato reale
 				return;
 			}
 
-			boolean successo = gestisciAssegnazionePazienteLetto(idLettoSelezionato);
+			boolean successo = gestisciAssegnazionePazienteLetto(idLettoSelezionato, repartoLettoSelezionato);
 
 			if (successo) {
 				JOptionPane.showMessageDialog(lettiFrame, "Paziente assegnato con successo!", "Operazione Riuscita", JOptionPane.INFORMATION_MESSAGE);
@@ -936,6 +1004,19 @@ public class Controller {
             }
         });
 
+		// Aggiungiamo il listener per la modifica del turno
+		turniFrame.addModificaTurnoListener(e -> {
+			String[] datiSelezionati = turniFrame.getDatiTurnoSelezionato();
+			if (datiSelezionati != null) {
+				// datiSelezionati[0] = data, [1] = matricola, [2] = orario
+				if (gestisciModificaTurno(datiSelezionati[1], datiSelezionati[0], datiSelezionati[2])) {
+					caricaDatiTurni(turniFrame); // Ricarica i dati se la modifica ha successo
+				}
+			} else {
+				JOptionPane.showMessageDialog(turniFrame, "Per favore, seleziona un turno dalla tabella prima di cliccare Modifica.", "Nessun Turno Selezionato", JOptionPane.WARNING_MESSAGE);
+			}
+		});
+
 		caricaDatiTurni(turniFrame);
 		mostraFinestraSecondaria(turniFrame, frameDaChiudere);
 	}
@@ -1034,15 +1115,36 @@ public class Controller {
 
 	private Object[][] formattaDatiTurni(List<ArrayList<String>> turniDb) {
 		if (turniDb == null) return new Object[0][0];
-		Object[][] dati = new Object[turniDb.size()][5];
+		// La GUI si aspetta 7 colonne: ID Turno, Data, Matricola, Dipendente, Ruolo, Reparto, Orario
+		Object[][] dati = new Object[turniDb.size()][7];
 		for (int i = 0; i < turniDb.size(); i++) {
 			List<String> t = turniDb.get(i);
 			try {
-				dati[i][0] = t.get(0); // Matricola
-				dati[i][1] = t.get(1); // Data
-				dati[i][2] = t.get(2); // Ora Inizio
-				dati[i][3] = t.get(3); // Ora Fine
-				dati[i][4] = "Standard"; // Tipo Turno
+				// Leggiamo i dati nell'ordine corretto fornito dal DAO
+				String idTurno =   t.size() > 0 && t.get(0) != null ? t.get(0) : "";
+				String matricola = t.size() > 1 && t.get(1) != null ? t.get(1) : "";
+				String data =      t.size() > 2 && t.get(2) != null ? t.get(2) : "";
+				String oraInizio = t.size() > 3 && t.get(3) != null ? t.get(3) : "";
+				String oraFine =   t.size() > 4 && t.get(4) != null ? t.get(4) : "";
+
+				// Recuperiamo le info del medico (nome, cognome, reparto)
+				List<String> medico = medicoDAO.getMedicoByMatricola(matricola);
+				String nomeCognome = "Sconosciuto";
+				String reparto = "-";
+				if (medico != null && !medico.isEmpty()) {
+					nomeCognome = (medico.size() > 1 ? medico.get(1) : "") + " " + (medico.size() > 0 ? medico.get(0) : ""); // Cognome + Nome
+					if (medico.size() > 7 && medico.get(7) != null && !medico.get(7).trim().isEmpty()) {
+						reparto = medico.get(7);
+					}
+				}
+				// Costruiamo la riga nell'ordine atteso dalla GUI
+				dati[i][0] = idTurno;
+				dati[i][1] = data;
+				dati[i][2] = matricola;
+				dati[i][3] = nomeCognome.trim();
+				dati[i][4] = "Medico";
+				dati[i][5] = reparto;
+				dati[i][6] = oraInizio + " - " + oraFine;
 			} catch (Exception e) {
 				final int riga = i;
 				LOGGER.warning(() -> "Errore nella formattazione dei dati turni alla riga " + riga + ": " + e.getMessage());
@@ -1053,16 +1155,30 @@ public class Controller {
 
 	private Object[][] formattaDatiRicoveri(List<ArrayList<String>> ricoveriDb) {
 		if (ricoveriDb == null) return new Object[0][0];
-		// Colonne: CF, Letto, Data Inizio, Motivo
-		Object[][] dati = new Object[ricoveriDb.size()][4];
+		// Colonne: ID Ricovero, Paziente, Codice Fiscale, Motivazione Ricovero, Reparto di Ricovero, Data e Ora Ingresso
+		Object[][] dati = new Object[ricoveriDb.size()][6];
 		for (int i = 0; i < ricoveriDb.size(); i++) {
 			List<String> r = ricoveriDb.get(i);
 			try {
-				// getRicoveroAttivo restituisce: id_ricovero, cf_paziente, id_letto, data_inizio, motivo
-				dati[i][0] = r.get(1); // CF Paziente
-				dati[i][1] = r.get(2); // ID Letto
-				dati[i][2] = r.get(3); // Data Inizio
-				dati[i][3] = r.get(4); // Motivo
+				String idRicovero = r.get(0);
+				String cf = r.get(1);
+				String idLetto = r.get(2);
+				String reparto = r.get(3);
+				String dataInizio = r.get(4);
+				String motivazione = r.get(5);
+				
+				List<String> paziente = pazienteDAO.getPazienteByCf(cf);
+				String nomePaziente = "Sconosciuto";
+				if (paziente != null && !paziente.isEmpty()) {
+					nomePaziente = (paziente.size() > 1 ? paziente.get(1) : "") + " " + (paziente.size() > 2 ? paziente.get(2) : "");
+				}
+				
+				dati[i][0] = idRicovero;
+				dati[i][1] = nomePaziente.trim();
+				dati[i][2] = cf;
+				dati[i][3] = motivazione;
+				dati[i][4] = reparto;
+				dati[i][5] = dataInizio;
 			} catch (Exception e) {
 				final int riga = i;
 				LOGGER.warning(() -> "Errore nella formattazione dei dati ricoveri alla riga " + riga + ": " + e.getMessage());
@@ -1093,15 +1209,58 @@ public class Controller {
 	 */
 	private Object[][] preparaDatiLettiPerTabella(List<ArrayList<String>> datiLetti) {
 		if (datiLetti == null || datiLetti.isEmpty()) {
-			return new Object[0][3];
+			return new Object[0][6]; // Colonne: Numero Letto, Stanza, Nome Paziente, Codice Fiscale, Reparto, Stato
 		}
 
-		Object[][] dati = new Object[datiLetti.size()][3];
+		// LA LOGICA VIENE CAMBIATA: si usa la tabella dei ricoveri come UNICA FONTE DI VERITÀ
+		// per determinare se un letto è occupato, ignorando il flag "occupato" della tabella letti
+		// che potrebbe essere non aggiornato.
+		java.util.Map<String, String[]> ricoveriMap = new java.util.HashMap<>();
+		if (ricoveroDAO != null && pazienteDAO != null) {
+			// 1. Otteniamo tutti i ricoveri ancora aperti (source of truth)
+			List<ArrayList<String>> ricoveriAttivi = ricoveroDAO.getAllRicoveriAttivi(); // Assumiamo che questo metodo esista
+
+			for (ArrayList<String> ricovero : ricoveriAttivi) {
+				String cfPaziente = ricovero.get(1);
+				String idLetto = ricovero.get(2);
+				String repartoRicovero = ricovero.get(3);
+
+				// 2. Per ogni ricovero, troviamo i dettagli del paziente
+				List<String> paziente = pazienteDAO.getPazienteByCf(cfPaziente);
+				if (paziente != null && !paziente.isEmpty()) {
+					String nomeCompleto = (paziente.size() > 2 ? paziente.get(2) : "") + " " + (paziente.size() > 1 ? paziente.get(1) : "");
+					// Usiamo una chiave composta per distinguere i letti omonimi in reparti diversi
+					ricoveriMap.put(idLetto + "_" + repartoRicovero, new String[]{nomeCompleto.trim(), cfPaziente});
+				}
+			}
+		}
+
+		Object[][] dati = new Object[datiLetti.size()][6];
 		for (int i = 0; i < datiLetti.size(); i++) {
 			List<String> letto = datiLetti.get(i);
-			dati[i][0] = letto.get(0); // ID Letto
-			dati[i][1] = letto.get(1); // Reparto
-			dati[i][2] = Boolean.parseBoolean(letto.get(2)) ? "Occupato" : "Disponibile";
+			
+			String idLetto = letto.size() > 0 ? letto.get(0) : "-";
+			String repartoLetto = letto.size() > 1 ? letto.get(1) : "-";
+
+			// 2. Si determina lo stato controllando la chiave composta (id_reparto)
+			boolean isOccupato = ricoveriMap.containsKey(idLetto + "_" + repartoLetto);
+
+			// Popolamento dati fissi del letto
+			dati[i][0] = idLetto;                                    // Numero Letto (ID)
+			dati[i][1] = letto.size() > 3 ? letto.get(3) : "-";      // Stanza
+			dati[i][4] = repartoLetto;                               // Reparto
+
+			// Popolamento dati variabili in base allo stato di occupazione
+			if (isOccupato) {
+				String[] infoPaziente = ricoveriMap.get(idLetto + "_" + repartoLetto);
+				dati[i][2] = infoPaziente[0];                        // Nome Paziente
+				dati[i][3] = infoPaziente[1];                        // Codice Fiscale
+				dati[i][5] = "🔴 Occupato";                           // Stato con emoji
+			} else {
+				dati[i][2] = "-";                                    // Nome Paziente
+				dati[i][3] = "-";                                    // Codice Fiscale
+				dati[i][5] = "🟢 Libero";                             // Stato con emoji
+			}
 		}
 		return dati;
 	}
@@ -1121,15 +1280,9 @@ public class Controller {
     }
 
     private void caricaDatiRicoveri(gui.Ricovero ricoveroFrame) {
-        List<ArrayList<String>> ricoveriAttivi = new ArrayList<>();
-        List<ArrayList<String>> pazienti = pazienteDAO.getAllPazienti();
-        for (ArrayList<String> paziente : pazienti) {
-            String cf = paziente.get(0);
-            List<String> ricovero = ricoveroDAO.getRicoveroAttivo(cf);
-            if (ricovero != null && !ricovero.isEmpty()) {
-                ricoveriAttivi.add(new ArrayList<>(ricovero));
-            }
-        }
+        // La logica precedente era inefficiente e nascondeva il problema di ricoveri multipli per un singolo paziente.
+        // Questa nuova logica è più corretta ed efficiente: chiede al DB tutti i ricoveri attivi in una sola volta.
+        List<ArrayList<String>> ricoveriAttivi = ricoveroDAO.getAllRicoveriAttivi();
         ricoveroFrame.aggiornaTabella(formattaDatiRicoveri(ricoveriAttivi));
     }
 
@@ -1153,10 +1306,10 @@ public class Controller {
 
 	public void avvia() {
 		// Avvio diretto della schermata amministratore per saltare il login durante lo sviluppo
-		// this.utenteLoggato = new model.Amministratore("A001", "Admin", "Test", "admin", "amministratore");
-		// avviaSchermataAmministratore("Dott. Admin Test");
+		this.utenteLoggato = new model.Amministratore("A001", "Admin", "Test", "admin", "amministratore");
+		avviaSchermataAmministratore("Dott. Admin Test");
 		// Per ripristinare il normale flusso di avvio, decommenta la riga seguente e commenta le due sopra.
-		avviaSchermataLogin();
+		// avviaSchermataLogin();
 	}
 
 	private void avviaSchermataLogin() {

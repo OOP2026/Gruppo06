@@ -16,17 +16,19 @@ public class MedicoPostgresDao implements MedicoDAO {
     private static final Logger LOGGER = Logger.getLogger(MedicoPostgresDao.class.getName());
 
     @Override
-    public boolean aggiungiMedico(String nome, String cognome, String matricola, String iscrizioneAlbo, String specializzazione, String reparto) {
-        String query = "INSERT INTO medico (nome, cognome, matricola, iscrizione_albo, specializzazione, reparto) VALUES (?, ?, ?, ?, ?, ?)";
+    public boolean aggiungiMedico(String nome, String cognome, String matricola, String login, String password, String iscrizioneAlbo, String specializzazione, String reparto) {
+        String query = "INSERT INTO medico (nome, cognome, matricola, login, password, iscrizione_albo, specializzazione, reparto) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = ConnessioneDatabase.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
 
             stmt.setString(1, nome);
             stmt.setString(2, cognome);
             stmt.setString(3, matricola);
-            stmt.setString(4, iscrizioneAlbo);
-            stmt.setString(5, specializzazione);
-            stmt.setString(6, reparto);
+            stmt.setString(4, login);
+            stmt.setString(5, password);
+            stmt.setString(6, iscrizioneAlbo);
+            stmt.setString(7, specializzazione);
+            stmt.setString(8, reparto);
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -38,7 +40,7 @@ public class MedicoPostgresDao implements MedicoDAO {
 
     @Override
     public ArrayList<String> getMedicoByMatricola(String matricola) {
-        String query = "SELECT * FROM utente WHERE matricola = ?";
+        String query = "SELECT nome, cognome, login, password, matricola, iscrizione_albo, specializzazione, reparto FROM medico WHERE matricola = ?";
         try (Connection conn = ConnessioneDatabase.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
 
@@ -70,7 +72,7 @@ public class MedicoPostgresDao implements MedicoDAO {
     @Override
     public ArrayList<ArrayList<String>> getAllMedici() {
         ArrayList<ArrayList<String>> medici = new ArrayList<>();
-        String query = "SELECT * FROM utente";
+        String query = "SELECT nome, cognome, login, password, matricola, iscrizione_albo, specializzazione, reparto FROM medico";
         try (Connection conn = ConnessioneDatabase.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query);
              ResultSet rs = stmt.executeQuery()) {
@@ -99,7 +101,7 @@ public class MedicoPostgresDao implements MedicoDAO {
 
     @Override
     public boolean aggiornaMedico(String nome, String cognome, String matricola, String iscrizioneAlbo, String specializzazione, String reparto) {
-        String query = "UPDATE utente SET nome = ?, cognome = ?, iscrizione_albo = ?, specializzazione = ?, reparto = ? WHERE matricola = ?";
+        String query = "UPDATE medico SET nome = ?, cognome = ?, iscrizione_albo = ?, specializzazione = ?, reparto = ? WHERE matricola = ?";
         try (Connection conn = ConnessioneDatabase.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setString(1, nome);

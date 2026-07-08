@@ -3,11 +3,9 @@ package gui;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.Color;
-import java.awt.Cursor;
 import java.awt.Font;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 
 public class SchermataAmministratore extends JFrame {
 
@@ -15,9 +13,9 @@ public class SchermataAmministratore extends JFrame {
     private JButton pazientiButton;
     private JButton lettiButton;
     private JButton dimissioniButton;
-    private JButton mediciButton;
-    private JButton prestazioniButton;
     private JButton ricoveroButton;
+    private JButton prestazioniButton;
+    private JButton mediciButton;
     private JButton turniButton;
     private JLabel utenteLoggatoLabel;
     private JButton esciButton;
@@ -27,6 +25,7 @@ public class SchermataAmministratore extends JFrame {
     private JButton ricercaButton;
     private JPanel agendaPanel;
     private JTable agendaTable;
+    private JButton settimanaleButton;
     private JButton newEventButton;
 
     // COSTRUTTORE
@@ -50,19 +49,20 @@ public class SchermataAmministratore extends JFrame {
 
         // --- STILE MENU LATERALE ---
         Login.applicaStileMenuLaterale(prestazioniButton);
-        Login.applicaStileMenuLaterale(ricoveroButton);
+        Login.applicaStileMenuLaterale(mediciButton);
         Login.applicaStileMenuLaterale(turniButton);
         Login.applicaStileMenuLaterale(esciButton);
 
         //pulsanti dell'agenda nel menu laterale
         Login.applicaStilePulsantiCentrali(ricercaButton);
         Login.applicaStilePulsantiCentrali(newEventButton);
+        Login.applicaStilePulsantiCentrali(settimanaleButton);
 
         // --- STILE PULSANTI CENTRALI ---
         Login.applicaStilePulsantiCentrali(pazientiButton);
         Login.applicaStilePulsantiCentrali(lettiButton);
         Login.applicaStilePulsantiCentrali(dimissioniButton);
-        Login.applicaStilePulsantiCentrali(mediciButton);
+        Login.applicaStilePulsantiCentrali(ricoveroButton);
 
         // --- POPOLA LA TABELLA DELL'AGENDA ---
         Login.setupAgendaTableStyle(agendaTable);
@@ -89,7 +89,7 @@ public class SchermataAmministratore extends JFrame {
     }
 
     public void addMediciListener(ActionListener listener) {
-        this.mediciButton.addActionListener(listener);
+        this.ricoveroButton.addActionListener(listener);
     }
 
     public void addDimissioniListener(ActionListener listener) {
@@ -97,7 +97,7 @@ public class SchermataAmministratore extends JFrame {
     }
 
     public void addRicoveroListener(ActionListener listener) {
-        this.ricoveroButton.addActionListener(listener);
+        this.mediciButton.addActionListener(listener);
     }
 
     public void addTurniListener(ActionListener listener) {

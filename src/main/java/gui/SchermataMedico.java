@@ -3,26 +3,25 @@ package gui;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.GridLayout;
 import java.awt.event.ActionListener;
 
 public class SchermataMedico extends JFrame {
     public JPanel mainPanel;
-    private JButton ricoveroButton;
+    private JButton prestazioniButton;
     private JButton turniButton;
     private JLabel utenteLoggatoLabel;
     private JButton esciButton;
     private JButton pazientiButton;
     private JButton lettiButton;
     private JButton dimissioniButton;
-    private JButton prestazioniButton;
+    private JButton ricoveroButton;
     private JPanel agendaPanel;
     private JTextField dataField;
     private JButton ricercaButton;
     private  JTable agendaTable ;
     private JButton newEventButton;
+    private JButton settimanaleButton;
 
     public SchermataMedico(String nomeUtente) {
         if (utenteLoggatoLabel != null) {
@@ -48,19 +47,20 @@ public class SchermataMedico extends JFrame {
         }
 
         // --- STILE MENU LATERALE ---
-        Login.applicaStileMenuLaterale(ricoveroButton);
+        Login.applicaStileMenuLaterale(prestazioniButton);
         Login.applicaStileMenuLaterale(turniButton);
         Login.applicaStileMenuLaterale(esciButton);
 
         // Pulsanti dell'agenda nel menu laterale
         Login.applicaStilePulsantiCentrali(ricercaButton);
         Login.applicaStilePulsantiCentrali(newEventButton);
+        Login.applicaStilePulsantiCentrali(settimanaleButton);
 
         // --- STILE PULSANTI CENTRALI ---
         Login.applicaStilePulsantiCentrali(pazientiButton);
         Login.applicaStilePulsantiCentrali(lettiButton);
         Login.applicaStilePulsantiCentrali(dimissioniButton);
-        Login.applicaStilePulsantiCentrali(prestazioniButton);
+        Login.applicaStilePulsantiCentrali(ricoveroButton);
 
 
         // --- POPOLA LA TABELLA DELL'AGENDA ---
@@ -80,7 +80,7 @@ public class SchermataMedico extends JFrame {
     }
 
     public void addPrestazioniListener(ActionListener listener) {
-        if (prestazioniButton != null) prestazioniButton.addActionListener(listener);
+        if (ricoveroButton != null) ricoveroButton.addActionListener(listener);
     }
 
     public void addDimissioniListener(ActionListener listener) {
@@ -88,7 +88,7 @@ public class SchermataMedico extends JFrame {
     }
 
     public void addRicoveroListener(ActionListener listener) {
-        if (ricoveroButton != null) ricoveroButton.addActionListener(listener);
+        if (prestazioniButton != null) prestazioniButton.addActionListener(listener);
     }
 
     public void addTurniListener(ActionListener listener) {

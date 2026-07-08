@@ -3,15 +3,12 @@ package gui;
 import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
-import java.util.Calendar;
-import java.util.Date;
 
 public class Medici extends JFrame {
     //Dichiarazione componenti GUI
     public JPanel mainPanel;
     private JTextField nomeField;
     private JTextField codiceField;
-    private JSpinner dataSpinner;
     private JButton resetButton;
     private JButton cercaButton;
     private JTable mediciTable;
@@ -21,7 +18,10 @@ public class Medici extends JFrame {
     private JList<String> repartoList;
     private JButton assenzaButton;
     private JButton modificamedicoButton;
-    
+    private JRadioButton tuttiRadioButton;
+    private JRadioButton attivoRadioButton;
+    private JRadioButton assenteRadioButton;
+
     //Selezione colori GUI
     private static final Color AZZURRO_HOME = new Color(70, 132, 197);
     private static final Color SELECTION_BG = new Color(187, 222, 247);
@@ -72,10 +72,6 @@ public class Medici extends JFrame {
     }
     //Inserimento parametri list e definizione modelli Table
     private void initComponents() {
-        SpinnerDateModel dateModel = new SpinnerDateModel(new Date(), null, null, Calendar.DAY_OF_MONTH);
-        dataSpinner.setModel(dateModel);
-        dataSpinner.setEditor(new JSpinner.DateEditor(dataSpinner, "yyyy-MM-dd"));
-
         specializzazioneList.setListData(new String[]{
                 "Chirurgia Generale", "Cardiologia", "Neurologia",
                 "Anestesia", "Chirurgia Toracica", "Ematologia", "Otorinolaringoiatria"
@@ -85,6 +81,13 @@ public class Medici extends JFrame {
                 "Blocco Operatorio", "Terapia Intensiva", "Neuroradiologia",
                 "Chirurgia Toracica", "Laboratorio Analisi", "Pronto Soccorso"
         });
+
+        // Raggruppa i radio button per consentire una sola selezione
+        ButtonGroup statoGroup = new ButtonGroup();
+        statoGroup.add(tuttiRadioButton);
+        statoGroup.add(attivoRadioButton);
+        statoGroup.add(assenteRadioButton);
+        tuttiRadioButton.setSelected(true); // Imposta "Tutti" come predefinito
 
         DefaultTableModel model = new DefaultTableModel(COLONNE, 0) {
             @Override
@@ -121,7 +124,7 @@ public class Medici extends JFrame {
             codiceField.setText("");
             specializzazioneList.clearSelection();
             repartoList.clearSelection();
-            dataSpinner.setValue(new Date());
+            tuttiRadioButton.setSelected(true);
 
             loadTableData(null, null, null, null);
         });

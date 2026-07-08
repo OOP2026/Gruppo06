@@ -39,7 +39,7 @@
             </properties>
             <border type="none"/>
             <children>
-              <component id="bebaa" class="javax.swing.JButton" binding="ricoveroButton" default-binding="true">
+              <component id="bebaa" class="javax.swing.JButton" binding="prestazioniButton">
                 <constraints>
                   <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
@@ -47,7 +47,7 @@
                   <background color="-12155707"/>
                   <font size="14"/>
                   <horizontalAlignment value="2"/>
-                  <text value="    Ricovero"/>
+                  <text value="    Prestazioni"/>
                 </properties>
               </component>
               <component id="7c116" class="javax.swing.JButton" binding="turniButton" default-binding="true">
@@ -117,7 +117,7 @@
                   <text value="_____________________"/>
                 </properties>
               </component>
-              <grid id="9412f" binding="agendaPanel" layout-manager="GridLayoutManager" row-count="4" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+              <grid id="9412f" binding="agendaPanel" layout-manager="GridLayoutManager" row-count="5" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
                 <margin top="5" left="0" bottom="5" right="0"/>
                 <constraints>
                   <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false">
@@ -148,39 +148,58 @@
                   <component id="9f2f3" class="javax.swing.JButton" binding="ricercaButton" default-binding="true">
                     <constraints>
                       <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false">
-                        <minimum-size width="170" height="-1"/>
-                        <preferred-size width="170" height="-1"/>
-                        <maximum-size width="170" height="-1"/>
+                        <minimum-size width="170" height="23"/>
+                        <preferred-size width="170" height="35"/>
+                        <maximum-size width="170" height="35"/>
                       </grid>
                     </constraints>
                     <properties>
                       <text value="Ricerca"/>
                     </properties>
                   </component>
-                  <component id="f1741" class="javax.swing.JTable" binding="agendaTable">
+                  <component id="248e" class="javax.swing.JButton" binding="settimanaleButton">
                     <constraints>
-                      <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="6" anchor="0" fill="3" indent="0" use-parent-layout="false">
-                        <minimum-size width="170" height="-1"/>
-                        <preferred-size width="170" height="-1"/>
-                        <maximum-size width="170" height="-1"/>
+                      <grid row="4" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="3" indent="0" use-parent-layout="false">
+                        <minimum-size width="170" height="35"/>
+                        <preferred-size width="170" height="35"/>
+                        <maximum-size width="170" height="35"/>
                       </grid>
                     </constraints>
                     <properties>
-                      <foreground color="-525825"/>
+                      <text value="Settimanale"/>
                     </properties>
                   </component>
-                  <component id="6c65b" class="javax.swing.JButton" binding="newEventButton">
+                  <component id="eabd6" class="javax.swing.JButton" binding="newEventButton">
                     <constraints>
-                      <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false">
-                        <minimum-size width="170" height="-1"/>
-                        <preferred-size width="170" height="-1"/>
-                        <maximum-size width="170" height="-1"/>
+                      <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="3" indent="0" use-parent-layout="false">
+                        <minimum-size width="170" height="23"/>
+                        <preferred-size width="170" height="23"/>
+                        <maximum-size width="170" height="23"/>
                       </grid>
                     </constraints>
                     <properties>
                       <text value="Nuovo Evento"/>
                     </properties>
                   </component>
+                  <scrollpane id="91ee8">
+                    <constraints>
+                      <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false">
+                        <minimum-size width="170" height="-1"/>
+                        <preferred-size width="170" height="-1"/>
+                        <maximum-size width="170" height="-1"/>
+                      </grid>
+                    </constraints>
+                    <properties/>
+                    <border type="none"/>
+                    <children>
+                      <component id="f1741" class="javax.swing.JTable" binding="agendaTable">
+                        <constraints/>
+                        <properties>
+                          <foreground color="-525825"/>
+                        </properties>
+                      </component>
+                    </children>
+                  </scrollpane>
                 </children>
               </grid>
             </children>
@@ -278,7 +297,7 @@
             </properties>
             <border type="none"/>
             <children>
-              <component id="1b9ac" class="javax.swing.JButton" binding="prestazioniButton" default-binding="true">
+              <component id="1b9ac" class="javax.swing.JButton" binding="ricoveroButton">
                 <constraints>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false">
                     <minimum-size width="380" height="310"/>
@@ -288,7 +307,7 @@
                 </constraints>
                 <properties>
                   <font size="40"/>
-                  <text value="Prestazioni"/>
+                  <text value="Ricovero"/>
                 </properties>
               </component>
             </children>

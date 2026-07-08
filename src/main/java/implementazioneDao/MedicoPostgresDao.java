@@ -26,7 +26,13 @@ public class MedicoPostgresDao implements MedicoDAO {
             stmt.setString(3, matricola);
             stmt.setString(4, login);
             stmt.setString(5, password);
-            stmt.setString(6, iscrizioneAlbo);
+            
+            if (iscrizioneAlbo != null && !iscrizioneAlbo.trim().isEmpty()) {
+                stmt.setDate(6, java.sql.Date.valueOf(iscrizioneAlbo));
+            } else {
+                stmt.setNull(6, java.sql.Types.DATE);
+            }
+            
             stmt.setString(7, specializzazione);
             stmt.setString(8, reparto);
 

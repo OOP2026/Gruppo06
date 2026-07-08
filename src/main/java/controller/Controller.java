@@ -61,6 +61,15 @@ public class Controller {
 		ricoveroDAO = new RicoveroPostgresDao();
 		agendaDAO = new AgendaPostgresDAO();
 		utenteDAO = new UtentePostgresDao();
+
+		// Test di connessione al database all'avvio
+		try (java.sql.Connection conn = database_connection.ConnessioneDatabase.getConnection()) {
+			if (conn != null && !conn.isClosed()) {
+				LOGGER.info("CONNESSIONE AL DB RIUSCITA!");
+			}
+		} catch (java.sql.SQLException e) {
+			LOGGER.log(java.util.logging.Level.SEVERE, "Connessione al database fallita all'avvio", e);
+		}
 	}
 
 	/**

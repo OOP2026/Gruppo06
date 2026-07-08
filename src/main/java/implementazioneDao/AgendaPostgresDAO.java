@@ -6,8 +6,12 @@ import model.Agenda;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class AgendaPostgresDAO implements AgendaDAO {
+
+    private static final Logger LOGGER = Logger.getLogger(AgendaPostgresDAO.class.getName());
 
     // Centralizzazione delle query SQL come costanti per migliorare la leggibilità e la manutenibilità
     private static final String GET_EVENTI_BY_MEDICO_QUERY = "SELECT id_agenda, matricola_medico, titolo, descrizione, data_ora_inizio, data_ora_fine FROM agenda WHERE matricola_medico = ? ORDER BY data_ora_inizio ASC";
@@ -38,9 +42,7 @@ public class AgendaPostgresDAO implements AgendaDAO {
                 }
             }
         } catch (SQLException e) {
-            // Lanciare una RuntimeException avvolgendo la SQLException originale
-            // permette ai livelli superiori di gestire l'errore in modo appropriato.
-            throw new RuntimeException("Errore nel recupero degli eventi dal database", e);
+            LOGGER.log(Level.SEVERE, "Errore nel recupero degli eventi dal database", e);
         }
         return eventi;
     }
@@ -58,7 +60,8 @@ public class AgendaPostgresDAO implements AgendaDAO {
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            throw new RuntimeException("Errore durante l'inserimento dell'evento nel database", e);
+            LOGGER.log(Level.SEVERE, "Errore durante l'inserimento dell'evento nel database", e);
+            return false;
         }
     }
 
@@ -75,7 +78,8 @@ public class AgendaPostgresDAO implements AgendaDAO {
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            throw new RuntimeException("Errore durante l'aggiornamento dell'evento nel database", e);
+            LOGGER.log(Level.SEVERE, "Errore durante l'aggiornamento dell'evento nel database", e);
+            return false;
         }
     }
 
@@ -86,7 +90,8 @@ public class AgendaPostgresDAO implements AgendaDAO {
             stmt.setInt(1, idEvento);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            throw new RuntimeException("Errore durante l'eliminazione dell'evento dal database", e);
+            LOGGER.log(Level.SEVERE, "Errore durante l'eliminazione dell'evento dal database", e);
+            return false;
         }
     }
 }

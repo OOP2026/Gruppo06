@@ -18,7 +18,7 @@ public class AgendaPostgresDAO implements AgendaDAO {
     private static final String ADD_EVENTO_QUERY = "INSERT INTO agenda (id_agenda, titolo, matricola_medico, descrizione, data_ora_inizio, data_ora_fine) VALUES (?, ?, ?, ?, ?, ?)";
     private static final String UPDATE_EVENTO_QUERY = "UPDATE agenda SET titolo = ?, descrizione = ?, data_ora_inizio = ?, data_ora_fine = ? WHERE id_agenda = ?";
     private static final String DELETE_EVENTO_QUERY = "DELETE FROM agenda WHERE id_agenda = ?";
-    private static final String CREA_AGENDA_QUERY = "INSERT INTO agenda (matricola_medico, titolo, descrizione) VALUES (?, 'Agenda Principale', 'Agenda creata automaticamente')";
+    private static final String CREA_AGENDA_QUERY = "INSERT INTO agenda (id_agenda, matricola_medico, titolo, descrizione, data_ora_inizio, data_ora_fine) VALUES ((SELECT COALESCE(MAX(id_agenda), 0) + 1 FROM agenda), ?, 'Agenda Principale', 'Agenda creata automaticamente', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
 
     // Costanti per i nomi delle colonne
     private static final String COL_ID_AGENDA = "id_agenda";

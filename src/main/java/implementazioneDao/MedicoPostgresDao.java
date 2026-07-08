@@ -17,7 +17,7 @@ public class MedicoPostgresDao implements MedicoDAO {
     
     private static final String AGGIUNGI_MEDICO_QUERY = "INSERT INTO medico (nome, cognome, matricola, login, password, iscrizione_albo, specializzazione, reparto) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
     private static final String GET_MEDICO_BY_MATRICOLA_QUERY = "SELECT nome, cognome, login, password, matricola, iscrizione_albo, specializzazione, reparto FROM medico WHERE matricola = ?";
-    private static final String GET_ALL_MEDICI_QUERY = "SELECT nome, cognome, login, password, matricola, iscrizione_albo, specializzazione, reparto FROM medico";
+    private static final String GET_ALL_MEDICI_QUERY = "SELECT nome, cognome, login, password, matricola, iscrizione_albo, specializzazione, reparto FROM medico WHERE matricola LIKE 'M%'";
     private static final String GET_MEDICO_BY_LOGIN_AND_PASSWORD_QUERY = "SELECT nome, cognome, login, password, matricola, iscrizione_albo, specializzazione, reparto FROM medico WHERE login = ? AND password = ?";
     private static final String CHECK_LOGIN_ESISTENTE_QUERY = "SELECT 1 FROM medico WHERE login = ?";
     private static final String AGGIORNA_MEDICO_QUERY = "UPDATE medico SET nome = ?, cognome = ?, iscrizione_albo = ?, specializzazione = ?, reparto = ? WHERE matricola = ?";

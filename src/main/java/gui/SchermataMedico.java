@@ -80,7 +80,7 @@ public class SchermataMedico extends JFrame {
     }
 
     public void addPrestazioniListener(ActionListener listener) {
-        if (ricoveroButton != null) ricoveroButton.addActionListener(listener);
+        if (prestazioniButton != null) prestazioniButton.addActionListener(listener);
     }
 
     public void addDimissioniListener(ActionListener listener) {
@@ -88,7 +88,7 @@ public class SchermataMedico extends JFrame {
     }
 
     public void addRicoveroListener(ActionListener listener) {
-        if (prestazioniButton != null) prestazioniButton.addActionListener(listener);
+        if (ricoveroButton != null) ricoveroButton.addActionListener(listener);
     }
 
     public void addTurniListener(ActionListener listener) {
@@ -105,6 +105,10 @@ public class SchermataMedico extends JFrame {
 
     public void addNewEventListener(ActionListener listener) {
         if (newEventButton != null) newEventButton.addActionListener(listener);
+    }
+
+    public void addSettimanaleListener(ActionListener listener) {
+        if (settimanaleButton != null) settimanaleButton.addActionListener(listener);
     }
 
     public void addProfiloListener(java.awt.event.MouseAdapter listener) {

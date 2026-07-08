@@ -1,10 +1,12 @@
 package controller;
 
 import dao.*;
+import database_connection.ConnessioneDatabase;
 import implementazioneDao.*;
 import model.*;
 
 import java.time.Clock;
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
@@ -13,6 +15,8 @@ import java.time.format.DateTimeFormatter;
 import java.util.logging.Logger;
 import javax.swing.*;
 import java.awt.*;
+import java.sql.Connection;
+import java.sql.SQLException;
 
 /**
  * The type Controller.
@@ -43,7 +47,7 @@ public class Controller {
 	private static final String LABEL_MATRICOLA_MEDICO = "Matricola Medico:";
 	private static final String LABEL_DATA = "Data (AAAA-MM-GG):";
 	private static final String LABEL_ORA_INIZIO = "Ora Inizio (HH:MM:SS):";
-	private static final String LABEL_ORA_FINE = "Ora Fine (HH:MM:SS):";
+	private static final String LABEL_ORA_FINE = "Ora Fine (HH:MM:SS):"; 
 	private static final String DEFAULT_DATE = java.time.LocalDate.now().toString();
 	private static final String INFO_TITLE = "Informazione";
 
@@ -67,11 +71,11 @@ public class Controller {
 		prestazioneDAO = new PrestazionePostgresDao();
 
 		// Test di connessione al database all'avvio
-		try (java.sql.Connection conn = database_connection.ConnessioneDatabase.getConnection()) {
+		try (Connection conn = ConnessioneDatabase.getConnection()) {
 			if (conn != null && !conn.isClosed()) {
 				LOGGER.info("CONNESSIONE AL DB RIUSCITA!");
 			}
-		} catch (java.sql.SQLException e) {
+		} catch (SQLException e) {
 			LOGGER.log(java.util.logging.Level.SEVERE, "Connessione al database fallita all'avvio", e);
 		}
 	}
@@ -102,18 +106,22 @@ public class Controller {
 				return false;
 			}
 			LOGGER.info("Tentativo di registrazione nuovo amministratore con matricola: " + matricola);
-			return amministratoreDAO.aggiungiAmministratore(matricola, login, password, nome, cognome, pin);
+			boolean successoAdmin = amministratoreDAO.aggiungiAmministratore(matricola, login, password, nome, cognome, pin);
+
+			// La registrazione ha successo solo se vengono creati sia l'utente che la sua agenda.
+			// L'istanza dell'agenda non viene più creata di default alla registrazione.
+			return successoAdmin;
 		} else {
 			if (medicoDAO.checkLoginEsistente(login)) {
 				LOGGER.warning("Tentativo di registrazione con login già esistente: " + login);
 				return false;
 			}
 			LOGGER.info("Tentativo di registrazione nuovo medico con matricola: " + matricola);
-			boolean successo = medicoDAO.aggiungiMedico(nome, cognome, matricola, login, password, null, null, null);
-			if (successo) {
-				agendaDAO.creaAgendaPerMedico(matricola);
-			}
-			return successo;
+			boolean successoMedico = medicoDAO.aggiungiMedico(nome, cognome, matricola, login, password, null, null, null);
+
+			// La registrazione ha successo solo se vengono creati sia l'utente che la sua agenda.
+			// L'istanza dell'agenda non viene più creata di default alla registrazione.
+			return successoMedico;
 		}
 	}
 
@@ -187,9 +195,6 @@ public class Controller {
 			return false;
 		}
 		boolean successo = medicoDAO.aggiungiMedico(nome, cognome, matricola, login, password, iscrizioneAlbo, specializzazione, reparto);
-		if (successo) {
-			agendaDAO.creaAgendaPerMedico(matricola);
-		}
 		return successo;
 	}
 
@@ -666,25 +671,25 @@ public class Controller {
 	// METODI PER LA GESTIONE DELL'AGENDA
 	// =========================================================
 
-	public List<ArrayList<String>> getEventiPerMedico(String matricola) {
+	public List<ArrayList<String>> getEventiPerUtente(String matricola) {
 		if (isNullOrEmpty(matricola)) {
 			LOGGER.warning("Matricola non valida per la ricerca eventi.");
 			return new ArrayList<>(); // Ritorna una lista vuota per evitare NullPointerException
 		}
-		return agendaDAO.getEventiByMedico(matricola);
+		return agendaDAO.getEventiByMatricola(matricola);
 	}
 
-	public boolean addEvento(int idEvento, String matricola, String titolo, String descrizione, java.sql.Timestamp inizio, java.sql.Timestamp fine) {
+	public boolean addEvento(String matricola, String titolo, String descrizione, java.sql.Timestamp inizio, java.sql.Timestamp fine) {
 		if (inizio == null || fine == null) {
 			LOGGER.warning("Errore: L'oggetto evento non può essere nullo.");
 			return false;
 		}
 		// Business Logic: Controlla sovrapposizioni prima di aggiungere
-		if (checkSovrapposizioneEvento(idEvento, matricola, inizio, fine)) {
+		if (checkSovrapposizioneEvento(-1, matricola, inizio, fine)) {
 			JOptionPane.showMessageDialog(null, "L'orario selezionato si sovrappone con un altro evento esistente.", "Errore di Sovrapposizione", JOptionPane.ERROR_MESSAGE);
 			return false;
 		}
-		return agendaDAO.addEvento(idEvento, titolo, matricola, descrizione, inizio, fine);
+		return agendaDAO.addEvento(titolo, matricola, descrizione, inizio, fine);
 	}
 
 	public boolean updateEvento(int idEvento, String matricola, String titolo, String descrizione, java.sql.Timestamp inizio, java.sql.Timestamp fine) {
@@ -705,7 +710,7 @@ public class Controller {
 	}
 
 	private boolean checkSovrapposizioneEvento(int nuovoId, String matricola, java.util.Date nuovoInizio, java.util.Date nuovoFine) {
-		List<ArrayList<String>> eventiEsistenti = getEventiPerMedico(matricola);
+		List<ArrayList<String>> eventiEsistenti = getEventiPerUtente(matricola);
 		for (ArrayList<String> eventoEsistente : eventiEsistenti) {
 			// Salta il controllo se stiamo modificando lo stesso evento
 			if (Integer.parseInt(eventoEsistente.get(0)) == nuovoId) {
@@ -775,33 +780,63 @@ public class Controller {
         return false;
 	}
 
+	private void impostaIdAgendaPerMatricola(String matricola, JTextField idAgendaInput) {
+		if (matricola == null || matricola.isEmpty()) {
+			idAgendaInput.setText("");
+			return;
+		}
+		List<ArrayList<String>> eventi = agendaDAO.getEventiByMatricola(matricola);
+		if (eventi == null || eventi.isEmpty()) {
+			if (matricola.toUpperCase().startsWith("A")) {
+				agendaDAO.creaAgendaPerAmministratore(matricola);
+			} else {
+				agendaDAO.creaAgendaPerMedico(matricola);
+			}
+			eventi = agendaDAO.getEventiByMatricola(matricola);
+		}
+		if (eventi != null && !eventi.isEmpty()) {
+			idAgendaInput.setText(eventi.get(0).get(0));
+		} else {
+			idAgendaInput.setText("");
+		}
+	}
+
 	public boolean gestisciCreazioneNuovoTurno() {
 		boolean isMedico = utenteLoggato instanceof Medico;
 		String matricolaDefault = isMedico ? utenteLoggato.getMatricola() : "";
-		String idAgendaDefault = "";
 
-		if (isMedico) {
-			List<ArrayList<String>> eventi = agendaDAO.getEventiByMedico(matricolaDefault);
-			if (eventi == null || eventi.isEmpty()) {
-				agendaDAO.creaAgendaPerMedico(matricolaDefault);
-				eventi = agendaDAO.getEventiByMedico(matricolaDefault);
-			}
-
-			if (eventi != null && !eventi.isEmpty()) {
-				idAgendaDefault = eventi.get(0).get(0); // Deduce l'ID dell'agenda
+		List<ArrayList<String>> tuttiMedici = medicoDAO.getAllMedici();
+		List<String> matricoleList = new ArrayList<>();
+		if (tuttiMedici != null) {
+			for (List<String> medico : tuttiMedici) {
+				if (medico.size() > 4) matricoleList.add(medico.get(4));
 			}
 		}
 
-		JTextField matricolaInput = new JTextField(matricolaDefault);
-		matricolaInput.setEditable(!isMedico); // Blocca la modifica se è Medico
+		JComboBox<String> matricolaComboBox = new JComboBox<>(matricoleList.toArray(new String[0]));
+		JTextField idAgendaInput = new JTextField();
+		idAgendaInput.setEditable(false); // L'ID Agenda si autodetermina
+
+		if (isMedico) {
+			matricolaComboBox.setSelectedItem(matricolaDefault);
+			matricolaComboBox.setEnabled(false);
+			impostaIdAgendaPerMatricola(matricolaDefault, idAgendaInput);
+		} else {
+			if (matricolaComboBox.getItemCount() > 0) {
+				impostaIdAgendaPerMatricola((String) matricolaComboBox.getSelectedItem(), idAgendaInput);
+			}
+			matricolaComboBox.addActionListener(e -> {
+				String selezionata = (String) matricolaComboBox.getSelectedItem();
+				impostaIdAgendaPerMatricola(selezionata, idAgendaInput);
+			});
+		}
+
 		JTextField dataInput = new JTextField(DEFAULT_DATE); // YYYY-MM-DD
 		JTextField inizioInput = new JTextField("08:00:00");
 		JTextField fineInput = new JTextField("14:00:00");
-		JTextField idAgendaInput = new JTextField(idAgendaDefault);
-		idAgendaInput.setEditable(!isMedico); // Blocca la modifica se è Medico
 
 		JPanel panel = new JPanel(new GridLayout(5, 2, 10, 10));
-		panel.add(new JLabel(LABEL_MATRICOLA_MEDICO)); panel.add(matricolaInput);
+		panel.add(new JLabel(LABEL_MATRICOLA_MEDICO)); panel.add(matricolaComboBox);
 		panel.add(new JLabel(LABEL_DATA)); panel.add(dataInput);
 		panel.add(new JLabel(LABEL_ORA_INIZIO)); panel.add(inizioInput);
 		panel.add(new JLabel(LABEL_ORA_FINE)); panel.add(fineInput);
@@ -811,7 +846,8 @@ public class Controller {
 
 		if (result == JOptionPane.OK_OPTION) {
 			try {
-				boolean successo = aggiungiTurno(matricolaInput.getText().trim(), dataInput.getText().trim(), inizioInput.getText().trim(), fineInput.getText().trim(), idAgendaInput.getText().trim());
+				String matricola = (String) matricolaComboBox.getSelectedItem();
+				boolean successo = aggiungiTurno(matricola, dataInput.getText().trim(), inizioInput.getText().trim(), fineInput.getText().trim(), idAgendaInput.getText().trim());
 				if (successo) {
 					JOptionPane.showMessageDialog(null, "Turno aggiunto con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
 					return true;
@@ -1096,6 +1132,9 @@ public class Controller {
 		adminFrame.addRicoveroListener(e -> apriSchermataRicoveri(adminFrame));
 		adminFrame.addTurniListener(e -> apriSchermataTurni(adminFrame));
 		
+		// Aggiunto listener per aprire il calendario settimanale
+		adminFrame.addSettimanaleListener(e -> apriSchermataCalendario(adminFrame));
+		
 		adminFrame.addRicercaAgendaListener(e -> aggiornaAgendaGUI(adminFrame));
 		adminFrame.addNewEventListener(e -> {
             if (gestisciNuovoEvento()) aggiornaAgendaGUI(adminFrame);
@@ -1198,9 +1237,9 @@ public class Controller {
 	 * Metodo helper per ricaricare e aggiornare la tabella dei letti.
 	 * @param lettiFrame Il frame della GUI che contiene la tabella.
 	 */
-	private void ricaricaEAggiornaTabellaLetti(gui.Letti lettiFrame) {
+	private void ricaricaEAggiornaTabellaLetti(gui.Letti lettiFrame, String statoFilter, String repartoFilter) {
 		List<ArrayList<String>> datiLetti = lettoDAO.getAllLetti();
-		Object[][] datiPerTabella = preparaDatiLettiPerTabella(datiLetti);
+		Object[][] datiPerTabella = preparaDatiLettiPerTabella(datiLetti, statoFilter, repartoFilter);
 		lettiFrame.aggiornaTabella(datiPerTabella);
 	}
 
@@ -1208,13 +1247,17 @@ public class Controller {
 		// 1. Crea l'istanza della schermata
 		gui.Letti lettiFrame = new gui.Letti();
 
+		// Popola la lista dei reparti
+		// TODO: Assicurarsi che LettoDAO abbia un metodo getAllReparti() che restituisca List<String>
+		// lettiFrame.setRepartiList(lettoDAO.getAllReparti());
+
 		impostaSchermata(lettiFrame, lettiFrame.mainPanel, "Gestione Letti", WindowConstants.DISPOSE_ON_CLOSE);
 
 		// 2. Collega il pulsante "Assegna Paziente" alla sua logica
 		lettiFrame.addAssegnaPazienteListener(e -> {
 			String idLettoSelezionato = lettiFrame.getIdLettoSelezionato();
 			String repartoLettoSelezionato = lettiFrame.getRepartoLettoSelezionato();
-			
+
 			// La logica di controllo della selezione è ora nel controller
 			if (idLettoSelezionato == null || repartoLettoSelezionato == null) {
 				JOptionPane.showMessageDialog(lettiFrame, "Per favore, seleziona un letto dalla tabella.", "Nessun Letto Selezionato", JOptionPane.WARNING_MESSAGE);
@@ -1224,7 +1267,7 @@ public class Controller {
 			// Prima di procedere, verifichiamo che il letto sia ancora disponibile
 			if (!checkDisponibilitaLetto(idLettoSelezionato, repartoLettoSelezionato)) {
 				JOptionPane.showMessageDialog(lettiFrame, "Il letto selezionato risulta già occupato o non è valido.", "Letto non Disponibile", JOptionPane.WARNING_MESSAGE);
-				ricaricaEAggiornaTabellaLetti(lettiFrame); // Aggiorna la vista con lo stato reale
+				ricaricaEAggiornaTabellaLetti(lettiFrame, lettiFrame.getSelectedStato(), lettiFrame.getSelectedReparto()); // Aggiorna la vista con lo stato reale
 				return;
 			}
 
@@ -1232,19 +1275,45 @@ public class Controller {
 
 			if (successo) {
 				JOptionPane.showMessageDialog(lettiFrame, "Paziente assegnato con successo!", "Operazione Riuscita", JOptionPane.INFORMATION_MESSAGE);
-				ricaricaEAggiornaTabellaLetti(lettiFrame); // Ricarica per mostrare il letto come "Occupato"
+				ricaricaEAggiornaTabellaLetti(lettiFrame, lettiFrame.getSelectedStato(), lettiFrame.getSelectedReparto()); // Ricarica per mostrare il letto come "Occupato"
 			}
+		});
+
+		// Collega il pulsante "Cerca" alla sua logica
+		lettiFrame.addCercaListener(e -> gestisciRicercaLetti(lettiFrame));
+
+		// Collega il pulsante "Reset" alla sua logica
+		lettiFrame.addResetListener(e -> {
+			lettiFrame.resetCampiRicerca(); // Resetta i campi della GUI
+			gestisciRicercaLetti(lettiFrame); // Esegue una ricerca con i campi resettati
+		});
+
+		// Collega il pulsante "Storico Letti" alla sua logica
+		lettiFrame.addStoricoLettiListener(e -> {
+			String idLettoSelezionato = lettiFrame.getIdLettoSelezionato();
+			String repartoLettoSelezionato = lettiFrame.getRepartoLettoSelezionato();
+
+			if (idLettoSelezionato == null || repartoLettoSelezionato == null) {
+				JOptionPane.showMessageDialog(lettiFrame, "Per favore, seleziona un letto dalla tabella per visualizzarne lo storico.", "Nessun Letto Selezionato", JOptionPane.WARNING_MESSAGE);
+				return;
+			}
+			gestisciStoricoLetto(idLettoSelezionato, repartoLettoSelezionato);
 		});
 
 		// 4. Mostra la finestra
 		mostraFinestraSecondaria(lettiFrame, frameDaChiudere);
 
-		// Utilizzo di SwingWorker per caricare i dati in background
+		// Caricamento iniziale dei dati con i filtri di default (Tutti, nessun reparto selezionato)
+		caricaDatiLettiAsync(lettiFrame, "Tutti", null);
+	}
+
+	private void caricaDatiLettiAsync(gui.Letti lettiFrame, String statoFilter, String repartoFilter) {
 		lettiFrame.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
 		SwingWorker<Object[][], Void> worker = new SwingWorker<Object[][], Void>() {
 			@Override
 			protected Object[][] doInBackground() throws Exception {
-				return preparaDatiLettiPerTabella(lettoDAO.getAllLetti());
+				// Passa i filtri al metodo preparaDatiLettiPerTabella
+				return preparaDatiLettiPerTabella(lettoDAO.getAllLetti(), statoFilter, repartoFilter);
 			}
 			@Override
 			protected void done() {
@@ -1255,6 +1324,49 @@ public class Controller {
 		worker.execute();
 	}
 
+	public void gestisciRicercaLetti(gui.Letti lettiFrame) {
+		String stato = lettiFrame.getSelectedStato();
+		String reparto = lettiFrame.getSelectedReparto();
+		caricaDatiLettiAsync(lettiFrame, stato, reparto);
+	}
+
+	public void gestisciStoricoLetto(String idLetto, String reparto) {
+		// TODO: Implementare in RicoveroDAO e RicoveroPostgresDao il metodo getStoricoRicoveriByLetto(idLetto, reparto)
+		// che restituisca tutti i ricoveri (anche chiusi) per un dato letto.
+		List<ArrayList<String>> storico = ricoveroDAO.getStoricoRicoveriByLetto(idLetto, reparto);
+		// List<ArrayList<String>> storico = new ArrayList<>(); // Placeholder - Rimuovi questa riga
+		if (storico.isEmpty()) {
+			JOptionPane.showMessageDialog(null, "Nessun ricovero storico trovato per il letto " + idLetto + " nel reparto " + reparto + ".", "Storico Letto", JOptionPane.INFORMATION_MESSAGE);
+			return;
+		}
+
+		String[] colonne = {"ID Ricovero", "Paziente (CF)", "Data Inizio", "Data Fine", "Motivo", "Esito"};
+		Object[][] dati = new Object[storico.size()][6];
+		for (int i = 0; i < storico.size(); i++) {
+			List<String> r = storico.get(i);
+			String cfPaziente = r.size() > 1 ? r.get(1) : "";
+			List<String> paziente = pazienteDAO.getPazienteByCf(cfPaziente);
+			String nomePaziente = (paziente != null && !paziente.isEmpty()) ? (paziente.get(1) + " " + paziente.get(2)) : "";
+
+			dati[i][0] = r.size() > 0 ? r.get(0) : ""; // ID Ricovero
+			dati[i][1] = nomePaziente.trim() + " (" + cfPaziente + ")"; // Paziente (CF)
+			dati[i][2] = r.size() > 4 ? r.get(4) : ""; // Data Inizio
+			dati[i][3] = r.size() > 5 ? r.get(5) : "In corso"; // Data Fine
+			dati[i][4] = r.size() > 6 ? r.get(6) : ""; // Motivo
+			dati[i][5] = r.size() > 8 && r.get(8) != null ? r.get(8) : ""; // Esito
+		}
+
+		JTable table = new JTable(dati, colonne) {
+			@Override
+			public boolean isCellEditable(int row, int column) { return false; }
+		};
+		gui.Login.setupTableStyle(table);
+		JScrollPane scrollPane = new JScrollPane(table);
+		scrollPane.setPreferredSize(new Dimension(800, 300));
+
+		JOptionPane.showMessageDialog(null, scrollPane, "Storico Ricoveri per Letto " + idLetto + " - Reparto " + reparto, JOptionPane.PLAIN_MESSAGE);
+	}
+
 	public boolean gestisciCreazioneNuovaPrestazione() {
 		// 1. Recupero automatico ID Agenda in base al medico loggato
 		String matricolaMedico = utenteLoggato != null ? utenteLoggato.getMatricola() : "";
@@ -1262,10 +1374,10 @@ public class Controller {
 		String idAgenda = "";
 
 		if (isMedico) {
-			List<ArrayList<String>> eventi = agendaDAO.getEventiByMedico(matricolaMedico);
+			List<ArrayList<String>> eventi = agendaDAO.getEventiByMatricola(matricolaMedico);
 			if (eventi == null || eventi.isEmpty()) {
 				agendaDAO.creaAgendaPerMedico(matricolaMedico);
-				eventi = agendaDAO.getEventiByMedico(matricolaMedico);
+				eventi = agendaDAO.getEventiByMatricola(matricolaMedico);
 			}
 			
 			if (eventi != null && !eventi.isEmpty()) {
@@ -1531,6 +1643,9 @@ public class Controller {
 		medicoHome.addDimissioniListener(e -> apriSchermataDimissioni(medicoHome));
 		medicoHome.addRicoveroListener(e -> apriSchermataRicoveri(medicoHome));
 		medicoHome.addTurniListener(e -> apriSchermataTurni(medicoHome));
+		
+		// Aggiunto listener per aprire il calendario settimanale
+		medicoHome.addSettimanaleListener(e -> apriSchermataCalendario(medicoHome));
 		
 		medicoHome.addRicercaAgendaListener(e -> aggiornaAgendaGUI(medicoHome));
 		medicoHome.addNewEventListener(e -> {
@@ -1804,18 +1919,64 @@ public class Controller {
 		worker.execute();
 	}
 
-	public boolean gestisciNuovoEvento() {
-		JTextField idEventoInput = new JTextField();
+	public void apriSchermataCalendario(JFrame frameDaChiudere) {
+		gui.Calendario calendarioFrame = new gui.Calendario();
+		impostaSchermata(calendarioFrame, calendarioFrame.mainPanel, "Calendario Settimanale", WindowConstants.DISPOSE_ON_CLOSE);
+	
+		// Funzione per ricaricare gli eventi nel calendario
+		Runnable ricaricaEventi = () -> {
+			if (utenteLoggato != null) {
+				List<ArrayList<String>> eventi = getEventiPerUtente(utenteLoggato.getMatricola());
+				calendarioFrame.setEventi(eventi);
+			}
+		};
+	
+		calendarioFrame.addAggiungiEventoListener(e -> {
+			// Recupera la data e l'ora dalla cella selezionata, se presente
+			LocalDateTime dataOraSelezionata = calendarioFrame.getTimestampCellaSelezionata();
+			if (gestisciNuovoEvento(dataOraSelezionata)) {
+				ricaricaEventi.run(); // Ricarica gli eventi dopo l'aggiunta/modifica
+			}
+		});
+	
+		calendarioFrame.addModificaEventoListener(e -> {
+			ArrayList<String> eventoSelezionato = calendarioFrame.getEventoSelezionato();
+			if (eventoSelezionato == null) {
+				JOptionPane.showMessageDialog(calendarioFrame, "Seleziona un evento dal calendario per modificarlo.", "Nessun Evento Selezionato", JOptionPane.WARNING_MESSAGE);
+				return;
+			}
+			if (gestisciModificaEvento(eventoSelezionato)) {
+				ricaricaEventi.run(); // Ricarica gli eventi dopo la modifica
+			}
+		});
+	
+		ricaricaEventi.run(); // Caricamento iniziale degli eventi
+		mostraFinestraSecondaria(calendarioFrame, frameDaChiudere);
+	}
+
+	public boolean gestisciNuovoEvento() { return gestisciNuovoEvento(null); }
+
+	public boolean gestisciNuovoEvento(LocalDateTime dataOraDefault) {
 		String defaultMatricola = utenteLoggato != null ? utenteLoggato.getMatricola() : "";
+
+		String dataDefault = DEFAULT_DATE;
+		String oraInizioDefault = "08:30:00";
+		String oraFineDefault = "10:00:00";
+
+		if (dataOraDefault != null) {
+			dataDefault = dataOraDefault.toLocalDate().format(DateTimeFormatter.ISO_LOCAL_DATE);
+			oraInizioDefault = dataOraDefault.toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+			oraFineDefault = dataOraDefault.toLocalTime().plusHours(1).format(DateTimeFormatter.ofPattern("HH:mm:ss"));
+		}
+
 		JTextField matricolaInput = new JTextField(defaultMatricola);
-		JTextField dataInput = new JTextField(DEFAULT_DATE);
-		JTextField oraInizioInput = new JTextField("08:30:00");
-		JTextField oraFineInput = new JTextField("10:00:00");
+		JTextField dataInput = new JTextField(dataDefault);
+		JTextField oraInizioInput = new JTextField(oraInizioDefault);
+		JTextField oraFineInput = new JTextField(oraFineDefault);
 		JTextField titoloInput = new JTextField("Nuova Visita");
 		JTextField descrizioneInput = new JTextField("-");
 
-		JPanel panel = new JPanel(new GridLayout(7, 2, 10, 10));
-		panel.add(new JLabel("ID Evento:")); panel.add(idEventoInput);
+		JPanel panel = new JPanel(new GridLayout(6, 2, 10, 10));
 		panel.add(new JLabel(LABEL_MATRICOLA_MEDICO)); panel.add(matricolaInput);
 		panel.add(new JLabel(LABEL_DATA)); panel.add(dataInput);
 		panel.add(new JLabel(LABEL_ORA_INIZIO)); panel.add(oraInizioInput);
@@ -1833,26 +1994,92 @@ public class Controller {
 			String descrizione = descrizioneInput.getText().trim();
 			
             try {
-			    int idEvento = Integer.parseInt(idEventoInput.getText().trim());
 			    java.sql.Timestamp tsInizio = java.sql.Timestamp.valueOf(inizio);
 			    java.sql.Timestamp tsFine = java.sql.Timestamp.valueOf(fine);
 
-			    boolean successo = addEvento(idEvento, matricola, titolo, descrizione, tsInizio, tsFine);
+			    boolean successo = addEvento(matricola, titolo, descrizione, tsInizio, tsFine);
                 if (successo) {
                     JOptionPane.showMessageDialog(null, "Evento inserito con successo nel DB!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
                     return true;
                 } else {
                     JOptionPane.showMessageDialog(null, "Errore. Verifica eventuali sovrapposizioni.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
                 }
-            } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(null, "L'ID Evento deve essere un numero intero valido.", "Errore Input", JOptionPane.ERROR_MESSAGE);
-            } catch (IllegalArgumentException ex) {
+            }  catch (IllegalArgumentException ex) {
                 JOptionPane.showMessageDialog(null, "Formato data o ora non valido.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
             } catch (Exception e) {
                 JOptionPane.showMessageDialog(null, "Errore nella creazione dell'evento.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
             }
 		}
         return false;
+	}
+
+	private boolean gestisciModificaEvento(ArrayList<String> evento) {
+		if (evento == null || evento.isEmpty()) return false;
+
+		try {
+			int idEvento = Integer.parseInt(evento.get(0));
+			String titolo = evento.get(1);
+			String descrizione = evento.get(2);
+			String matricola = evento.get(3);
+			java.sql.Timestamp tsInizio = java.sql.Timestamp.valueOf(evento.get(4));
+			java.sql.Timestamp tsFine = java.sql.Timestamp.valueOf(evento.get(5));
+
+			LocalDateTime ldtInizio = tsInizio.toLocalDateTime();
+			LocalDateTime ldtFine = tsFine.toLocalDateTime();
+
+			JTextField titoloInput = new JTextField(titolo);
+			JTextField descrizioneInput = new JTextField(descrizione);
+			JTextField dataInput = new JTextField(ldtInizio.toLocalDate().toString());
+			JTextField oraInizioInput = new JTextField(ldtInizio.toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
+			JTextField oraFineInput = new JTextField(ldtFine.toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm:ss")));
+
+			JPanel panel = new JPanel(new GridLayout(6, 2, 10, 10));
+			panel.add(new JLabel("Matricola:")); panel.add(new JLabel(matricola)); // Non modificabile
+			panel.add(new JLabel("Titolo:")); panel.add(titoloInput);
+			panel.add(new JLabel("Descrizione:")); panel.add(descrizioneInput);
+			panel.add(new JLabel(LABEL_DATA)); panel.add(dataInput);
+			panel.add(new JLabel(LABEL_ORA_INIZIO)); panel.add(oraInizioInput);
+			panel.add(new JLabel(LABEL_ORA_FINE)); panel.add(oraFineInput);
+
+			Object[] options = {"Salva Modifiche", "Elimina Evento", "Annulla"};
+			int choice = JOptionPane.showOptionDialog(null, panel, "Gestisci Evento Agenda",
+					JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
+
+			if (choice == 0) { // Salva Modifiche
+				String nuovoTitolo = titoloInput.getText().trim();
+				String nuovaDescrizione = descrizioneInput.getText().trim();
+				String nuovoInizioStr = dataInput.getText().trim() + " " + oraInizioInput.getText().trim();
+				String nuovoFineStr = dataInput.getText().trim() + " " + oraFineInput.getText().trim();
+
+				java.sql.Timestamp nuovoInizio = java.sql.Timestamp.valueOf(nuovoInizioStr);
+				java.sql.Timestamp nuovoFine = java.sql.Timestamp.valueOf(nuovoFineStr);
+
+				boolean successo = updateEvento(idEvento, matricola, nuovoTitolo, nuovaDescrizione, nuovoInizio, nuovoFine);
+				if (successo) {
+					JOptionPane.showMessageDialog(null, "Evento aggiornato con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
+					return true;
+				}
+			} else if (choice == 1) { // Elimina Evento
+				int conferma = JOptionPane.showConfirmDialog(null,
+						"Sei sicuro di voler eliminare questo evento?\nL'azione è irreversibile.",
+						"Conferma Eliminazione Evento",
+						JOptionPane.YES_NO_OPTION,
+						JOptionPane.WARNING_MESSAGE);
+				if (conferma == JOptionPane.YES_OPTION) {
+					boolean successo = deleteEvento(idEvento);
+					if (successo) {
+						JOptionPane.showMessageDialog(null, "Evento eliminato con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
+						return true;
+					} else {
+						JOptionPane.showMessageDialog(null, "Errore durante l'eliminazione dell'evento.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+					}
+				}
+			}
+		} catch (Exception e) {
+			LOGGER.log(java.util.logging.Level.SEVERE, "Errore durante la gestione della modifica evento", e);
+			JOptionPane.showMessageDialog(null, "Errore: dati dell'evento non validi o formato data/ora errato (HH:mm:ss).", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+		}
+		return false;
 	}
 
 	public boolean gestisciModificaProfiloPersonale() {
@@ -2266,7 +2493,7 @@ public class Controller {
 	 * @param datiLetti La lista di letti proveniente dal DAO.
 	 * @return Una matrice di Object pronta per essere mostrata in una JTable.
 	 */
-	private Object[][] preparaDatiLettiPerTabella(List<ArrayList<String>> datiLetti) {
+	private Object[][] preparaDatiLettiPerTabella(List<ArrayList<String>> datiLetti, String statoFilter, String repartoFilter) {
 		if (datiLetti == null || datiLetti.isEmpty()) {
 			return new Object[0][6]; // Colonne: Numero Letto, Stanza, Nome Paziente, Codice Fiscale, Reparto, Stato
 		}
@@ -2294,34 +2521,47 @@ public class Controller {
 			}
 		}
 
-		Object[][] dati = new Object[datiLetti.size()][6];
-		for (int i = 0; i < datiLetti.size(); i++) {
-			List<String> letto = datiLetti.get(i);
+		// Usiamo una lista temporanea per i dati filtrati, poi la convertiamo in array
+		java.util.List<Object[]> datiFiltrati = new java.util.ArrayList<>();
+
+		for (List<String> letto : datiLetti) {
 			
 			String idLetto = letto.size() > 0 ? letto.get(0) : "-";
 			String repartoLetto = letto.size() > 1 ? letto.get(1) : "-";
 
+			// Applica i filtri
+			if (repartoFilter != null && !repartoFilter.isEmpty() && !repartoLetto.equalsIgnoreCase(repartoFilter)) {
+				continue; // Salta questo letto se non corrisponde al reparto
+			}
+
 			// 2. Si determina lo stato controllando la chiave composta (id_reparto)
 			boolean isOccupato = ricoveriMap.containsKey(idLetto + "_" + repartoLetto);
+			String statoCorrente = isOccupato ? "Occupato" : "Libero";
 
+			if (statoFilter != null && !statoFilter.equals("Tutti") && !statoCorrente.equalsIgnoreCase(statoFilter)) {
+				continue; // Salta questo letto se non corrisponde allo stato filtrato
+			}
+
+			Object[] rigaDati = new Object[6];
 			// Popolamento dati fissi del letto
-			dati[i][0] = idLetto;                                    // Numero Letto (ID)
-			dati[i][1] = letto.size() > 3 ? letto.get(3) : "-";      // Stanza
-			dati[i][4] = repartoLetto;                               // Reparto
+			rigaDati[0] = idLetto;                                    // Numero Letto (ID)
+			rigaDati[1] = letto.size() > 3 ? letto.get(3) : "-";      // Stanza
+			rigaDati[4] = repartoLetto;                               // Reparto
 
 			// Popolamento dati variabili in base allo stato di occupazione
 			if (isOccupato) {
-				String[] infoPaziente = ricoveriMap.get(idLetto + "_" + repartoLetto);
-				dati[i][2] = infoPaziente[0];                        // Nome Paziente
-				dati[i][3] = infoPaziente[1];                        // Codice Fiscale
-				dati[i][5] = "🔴 Occupato";                           // Stato con emoji
+				String[] infoPaziente = ricoveriMap.get(idLetto + "_" + repartoLetto); // Recupera info paziente dal ricovero
+				rigaDati[2] = infoPaziente[0];                        // Nome Paziente
+				rigaDati[3] = infoPaziente[1];                        // Codice Fiscale
+				rigaDati[5] = "🔴 Occupato";                           // Stato con emoji
 			} else {
-				dati[i][2] = "-";                                    // Nome Paziente
-				dati[i][3] = "-";                                    // Codice Fiscale
-				dati[i][5] = "🟢 Libero";                             // Stato con emoji
+				rigaDati[2] = "-";                                    // Nome Paziente
+				rigaDati[3] = "-";                                    // Codice Fiscale
+				rigaDati[5] = "🟢 Libero";                             // Stato con emoji
 			}
+			datiFiltrati.add(rigaDati);
 		}
-		return dati;
+		return datiFiltrati.toArray(new Object[0][0]);
 	}
 
     private void caricaDatiTurni(gui.Turni turniFrame) {
@@ -2412,7 +2652,7 @@ public class Controller {
 
     private void aggiornaAgendaGUI(JFrame frame) {
         if (utenteLoggato == null) return;
-        Object[][] dati = formattaDatiAgenda(agendaDAO.getEventiByMedico(utenteLoggato.getMatricola()));
+        Object[][] dati = formattaDatiAgenda(agendaDAO.getEventiByMatricola(utenteLoggato.getMatricola()));
         if (frame instanceof gui.SchermataAmministratore) ((gui.SchermataAmministratore) frame).aggiornaAgenda(dati);
         if (frame instanceof gui.SchermataMedico) ((gui.SchermataMedico) frame).aggiornaAgenda(dati);
     }

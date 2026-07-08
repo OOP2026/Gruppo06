@@ -72,12 +72,13 @@ public class Turni extends JFrame {
 
         //Dichiarazione campi JList
         tipologiaList.setListData(new String[]{
-                "Medico", "Infermiere", "OSS", "Tecnico"
+                "Medico", "Amministratore"
         });
         //Dichiarazione campi JList
         repartoList.setListData(new String[]{
-                "Blocco Op.", "Terapia Intensiva", "Neuroradiologia",
-                "Chirurgia Toracica", "Laboratorio Analisi", "Pronto Soccorso"
+                "Chirurgia Generale", "Cardiologia", "Ortopedia",
+                "Pediatria", "Terapia Intensiva", "Pronto Soccorso",
+                "Bariatria", "Radiologia Interventistica", "Nessuno"
         });
 
 
@@ -144,8 +145,8 @@ public class Turni extends JFrame {
             boolean matchData = (filtroData == null || filtroData.isEmpty() || rData.equals(filtroData.toLowerCase())); // Exact match for Data
             boolean matchNome = (filtroNome == null || filtroNome.isEmpty() || rNome.contains(filtroNome));
             boolean matchMatricola = (filtroMatricola == null || filtroMatricola.isEmpty() || rMatricola.contains(filtroMatricola));
-            boolean matchRuolo = (filtroRuolo == null || rRuolo.equals(filtroRuolo));
-            boolean matchReparto = (filtroReparto == null || rReparto.equals(filtroReparto));
+            boolean matchRuolo = (filtroRuolo == null || rRuolo.equalsIgnoreCase(filtroRuolo));
+            boolean matchReparto = (filtroReparto == null || rReparto.equalsIgnoreCase(filtroReparto));
 
             if (matchIdTurno && matchData && matchNome && matchMatricola && matchRuolo && matchReparto) {
                 m.addRow(row);

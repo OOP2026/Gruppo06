@@ -1,9 +1,6 @@
 package model;
 
-import java.time.LocalDate;
-import java.time.Period;
 import java.util.Date;
-import java.util.Scanner;
 
 public class Amministratore extends Utente {
     //Richiamo classi
@@ -25,7 +22,7 @@ public class Amministratore extends Utente {
     }
 
     public void registraRicovero(){
-        System.out.println();
+        //
     }
 
     public String calcolaPrognosi(){

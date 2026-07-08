@@ -89,7 +89,7 @@ public class SchermataAmministratore extends JFrame {
     }
 
     public void addMediciListener(ActionListener listener) {
-        this.ricoveroButton.addActionListener(listener);
+        this.mediciButton.addActionListener(listener);
     }
 
     public void addDimissioniListener(ActionListener listener) {
@@ -97,7 +97,7 @@ public class SchermataAmministratore extends JFrame {
     }
 
     public void addRicoveroListener(ActionListener listener) {
-        this.mediciButton.addActionListener(listener);
+        this.ricoveroButton.addActionListener(listener);
     }
 
     public void addTurniListener(ActionListener listener) {
@@ -110,6 +110,10 @@ public class SchermataAmministratore extends JFrame {
 
     public void addNewEventListener(ActionListener listener) {
         this.newEventButton.addActionListener(listener);
+    }
+
+    public void addSettimanaleListener(ActionListener listener) {
+        this.settimanaleButton.addActionListener(listener);
     }
 
     public void addProfiloListener(MouseAdapter listener) {

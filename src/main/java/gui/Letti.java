@@ -3,19 +3,16 @@ package gui;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+
 
 public class Letti extends JFrame {
     public JPanel mainPanel;
     private JRadioButton tuttiRadioButton;
     private JRadioButton disponibileRadioButton;
-    private JRadioButton occupatoRadioButton;
-    private JList repartoList;
-    private JList tipologiaList;
+    private JRadioButton occupatoRadioButton; // Specificare il tipo generico
+    private JList<String> repartoList;
     private JButton cercaButton;
     private JButton resetButton;
     private JTable lettiTable; // Questa è la tabella che mostra i letti
@@ -51,8 +48,7 @@ public class Letti extends JFrame {
     }
 
     private void setupStyles() {
-        Login.styleList(repartoList);
-        Login.styleList(tipologiaList);
+        Login.styleList(repartoList); // Mantenuto per repartoList
         Login.setupTableStyle(lettiTable);
         Login.applicaStilePulsantiCentrali(cercaButton);
         Login.applicaStilePulsantiCentrali(resetButton);
@@ -73,6 +69,34 @@ public class Letti extends JFrame {
      */
     public void addAssegnaPazienteListener(ActionListener listener) {
         assegnaPazienteButton.addActionListener(listener);
+    }
+
+    public void addCercaListener(ActionListener listener) {
+        cercaButton.addActionListener(listener);
+    }
+
+    public void addResetListener(ActionListener listener) {
+        resetButton.addActionListener(listener);
+    }
+
+    public void addStoricoLettiListener(ActionListener listener) {
+        storicoLettiButton.addActionListener(listener);
+    }
+
+    public String getSelectedStato() {
+        if (disponibileRadioButton.isSelected()) return "Libero";
+        if (occupatoRadioButton.isSelected()) return "Occupato";
+        return "Tutti";
+    }
+
+    public String getSelectedReparto() {
+        // Se nessun reparto è selezionato, restituisce null o una stringa vuota per indicare "tutti i reparti"
+        return repartoList.getSelectedValue();
+    }
+
+    public void resetCampiRicerca() {
+        tuttiRadioButton.setSelected(true);
+        repartoList.clearSelection();
     }
 
     /**
@@ -112,6 +136,14 @@ public class Letti extends JFrame {
                 model.addRow(riga);
             }
         }
+    }
+
+    public void setRepartiList(java.util.List<String> reparti) {
+        DefaultListModel<String> model = new DefaultListModel<>();
+        for (String reparto : reparti) {
+            model.addElement(reparto);
+        }
+        repartoList.setModel(model);
     }
 
     public static void main(String[] args) {

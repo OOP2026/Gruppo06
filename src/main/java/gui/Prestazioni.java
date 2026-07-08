@@ -3,6 +3,7 @@ package gui;
 import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Calendar;
@@ -24,7 +25,7 @@ public class Prestazioni extends JFrame {
     private JTextField codiceField;
 
     private static final String[] COLONNE = {
-            "ID Prestazione", "Tipologia", "Esito", "ID Turno", "CF Paziente", "Matricola Medico", "ID Agenda"
+            "ID Prestazione", "Tipologia", "Esito", "Data Prestazione", "CF Paziente", "Matricola Medico"
     };
 
     private Object[][] datiPrestazioni = new Object[0][0];
@@ -33,12 +34,46 @@ public class Prestazioni extends JFrame {
         initComponents();
         setupStyles();
         setupListeners();
-        loadTableData(null, null, null, null);
+        loadTableData();
     }
 
     public void aggiornaTabella(Object[][] dati) {
         this.datiPrestazioni = dati != null ? dati : new Object[0][0];
-        loadTableData(null, null, null, null);
+        loadTableData();
+    }
+
+    public String getCodPrestazione() {
+        return codiceField.getText();
+    }
+
+    public String getNomeCognome() {
+        return nomeField.getText();
+    }
+
+    public String getData() {
+        Object value = dataSpinner.getValue();
+        if (value instanceof Date) {
+            java.text.SimpleDateFormat formatter = new java.text.SimpleDateFormat("yyyy-MM-dd");
+            return formatter.format((Date) value);
+        }
+        return "";
+    }
+
+    public void addCercaListener(ActionListener listener) {
+        if (cercaButton != null) cercaButton.addActionListener(listener);
+    }
+
+    public void addResetListener(ActionListener listener) {
+        if (resetButton != null) resetButton.addActionListener(listener);
+    }
+
+    public void resetCampiRicerca() {
+        nomeField.setText("");
+        codiceField.setText("");
+        dataSpinner.setValue(new Date());
+        // Anche se non usati dal controller, è buona norma resettare tutti i filtri
+        tipologiaList.clearSelection();
+        repartoList.clearSelection();
     }
 
     public void addNuovaPrestazioneListener(java.awt.event.ActionListener listener) {
@@ -48,7 +83,7 @@ public class Prestazioni extends JFrame {
     private void initComponents() {
         SpinnerDateModel dateModel = new SpinnerDateModel(new Date(), null, null, Calendar.DAY_OF_MONTH);
         dataSpinner.setModel(dateModel);
-        dataSpinner.setEditor(new JSpinner.DateEditor(dataSpinner, "dd/MM/yyyy"));
+        dataSpinner.setEditor(new JSpinner.DateEditor(dataSpinner, "yyyy-MM-dd"));
 
         tipologiaList.setListData(new String[]{
                 "Chirurgia Generale", "Radiologia Interventistica", "Diagnostica Avanzata",
@@ -80,45 +115,14 @@ public class Prestazioni extends JFrame {
     }
 
     private void setupListeners() {
-        cercaButton.addActionListener(e -> {
-            String nome = nomeField.getText().toLowerCase().trim();
-            String codice = codiceField.getText().toLowerCase().trim();
-            String tipologia = tipologiaList.getSelectedValue();
-            String reparto = repartoList.getSelectedValue();
-
-            loadTableData(nome, codice, tipologia, reparto);
-        });
-
-        resetButton.addActionListener(e -> {
-            nomeField.setText("");
-            codiceField.setText("");
-            tipologiaList.clearSelection();
-            repartoList.clearSelection();
-            dataSpinner.setValue(new Date());
-
-            loadTableData(null, null, null, null);
-        });
+        // I listener per cerca e reset sono ora gestiti dal Controller
     }
 
-    private void loadTableData(String filtroNome, String filtroCodice, String filtroTipo, String filtroReparto) {
+    private void loadTableData() {
         DefaultTableModel m = (DefaultTableModel) prestazioniTable.getModel();
         m.setRowCount(0);
-
         for (Object[] row : datiPrestazioni) {
-            String rCodice = ((String) row[1]).toLowerCase();
-            String rNome = ((String) row[2]).toLowerCase();
-            String rTipo = (String) row[3];
-            String rReparto = (String) row[4];
-
-            boolean matchNome = (filtroNome == null || filtroNome.isEmpty() || rNome.contains(filtroNome));
-            boolean matchCodice = (filtroCodice == null || filtroCodice.isEmpty() || rCodice.contains(filtroCodice));
-
-            boolean matchTipo = (filtroTipo == null || rTipo.equals(filtroTipo));
-            boolean matchReparto = (filtroReparto == null || rReparto.equals(filtroReparto));
-
-            if (matchNome && matchCodice && matchTipo && matchReparto) {
-                m.addRow(row);
-            }
+            m.addRow(row);
         }
     }
 

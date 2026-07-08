@@ -746,11 +746,29 @@ public class Controller {
 	}
 
 	public boolean gestisciCreazioneNuovoTurno() {
-		JTextField matricolaInput = new JTextField();
+		boolean isMedico = utenteLoggato instanceof Medico;
+		String matricolaDefault = isMedico ? utenteLoggato.getMatricola() : "";
+		String idAgendaDefault = "";
+
+		if (isMedico) {
+			List<ArrayList<String>> eventi = agendaDAO.getEventiByMedico(matricolaDefault);
+			if (eventi == null || eventi.isEmpty()) {
+				agendaDAO.creaAgendaPerMedico(matricolaDefault);
+				eventi = agendaDAO.getEventiByMedico(matricolaDefault);
+			}
+
+			if (eventi != null && !eventi.isEmpty()) {
+				idAgendaDefault = eventi.get(0).get(0); // Deduce l'ID dell'agenda
+			}
+		}
+
+		JTextField matricolaInput = new JTextField(matricolaDefault);
+		matricolaInput.setEditable(!isMedico); // Blocca la modifica se è Medico
 		JTextField dataInput = new JTextField(DEFAULT_DATE); // YYYY-MM-DD
 		JTextField inizioInput = new JTextField("08:00:00");
 		JTextField fineInput = new JTextField("14:00:00");
-		JTextField idAgendaInput = new JTextField();
+		JTextField idAgendaInput = new JTextField(idAgendaDefault);
+		idAgendaInput.setEditable(!isMedico); // Blocca la modifica se è Medico
 
 		JPanel panel = new JPanel(new GridLayout(5, 2, 10, 10));
 		panel.add(new JLabel(LABEL_MATRICOLA_MEDICO)); panel.add(matricolaInput);
@@ -1111,39 +1129,115 @@ public class Controller {
 	}
 
 	public boolean gestisciCreazioneNuovaPrestazione() {
-		JTextField idPrestazioneInput = new JTextField();
+		// 1. Recupero automatico ID Agenda in base al medico loggato
+		String matricolaMedico = utenteLoggato != null ? utenteLoggato.getMatricola() : "";
+		boolean isMedico = utenteLoggato instanceof Medico;
+		String idAgenda = "";
+
+		if (isMedico) {
+			List<ArrayList<String>> eventi = agendaDAO.getEventiByMedico(matricolaMedico);
+			if (eventi == null || eventi.isEmpty()) {
+				agendaDAO.creaAgendaPerMedico(matricolaMedico);
+				eventi = agendaDAO.getEventiByMedico(matricolaMedico);
+			}
+			
+			if (eventi != null && !eventi.isEmpty()) {
+				idAgenda = eventi.get(0).get(0); // Prende il primo id_agenda associato al medico
+			} else {
+				JOptionPane.showMessageDialog(null, "Errore: Impossibile recuperare o creare un'agenda per questo medico.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+				return false;
+			}
+		}
+
 		JComboBox<String> tipologiaInput = new JComboBox<>(new String[]{
 				"Chirurgia Generale", "Radiologia Interventistica", "Diagnostica Avanzata",
 				"Chirurgia Robotica", "Procedure Endoscopiche", "Radioterapia", "Cardiologia", "Oncologia"
 		});
-		JTextField esitoInput = new JTextField();
-		JTextField idTurnoInput = new JTextField();
-		JTextField cfPazienteInput = new JTextField();
-		JTextField matricolaInput = new JTextField();
-		JTextField idAgendaInput = new JTextField();
 
-		JPanel panel = new JPanel(new GridLayout(7, 2, 10, 10));
-		panel.add(new JLabel("ID Prestazione:")); panel.add(idPrestazioneInput);
+		JComboBox<String> esitoInput = new JComboBox<>(new String[]{
+				"Erogata", "Non erogata"
+		});
+
+		// 2. Tendina dinamica dei Turni del Medico odierni
+		String[] turniOdierni;
+		if (isMedico) {
+			turniOdierni = ottieniTurniOggiPerMedico(matricolaMedico);
+		} else {
+			turniOdierni = new String[]{"Inserimento manuale per Admin"};
+		}
+
+		JComponent turnoInput;
+		if (isMedico) {
+			turnoInput = new JComboBox<>(turniOdierni);
+		} else {
+			turnoInput = new JTextField();
+		}
+
+		// Popola la tendina per la selezione del paziente
+		List<ArrayList<String>> tuttiPazienti = pazienteDAO.getAllPazienti();
+		List<String> pazientiNomi = new ArrayList<>();
+		List<String> pazientiCf = new ArrayList<>();
+		if (tuttiPazienti != null) {
+			for (List<String> datiPaziente : tuttiPazienti) {
+				// Formato DAO: cf, nome, cognome, ...
+				if (datiPaziente.size() >= 3) {
+					String cf = datiPaziente.get(0);
+					String nome = datiPaziente.get(1);
+					String cognome = datiPaziente.get(2);
+					pazientiNomi.add(cognome + " " + nome + " (" + cf + ")");
+					pazientiCf.add(cf);
+				}
+			}
+		}
+		JComboBox<String> cfPazienteInput = new JComboBox<>(pazientiNomi.toArray(new String[0]));
+		JTextField matricolaInput = new JTextField(matricolaMedico);
+		matricolaInput.setEditable(!isMedico);
+		JTextField idAgendaInput = new JTextField(idAgenda);
+		idAgendaInput.setEditable(!isMedico);
+
+		JPanel panel = new JPanel(new GridLayout(isMedico ? 4 : 6, 2, 10, 10));
 		panel.add(new JLabel("Tipologia:")); panel.add(tipologiaInput);
 		panel.add(new JLabel("Esito Prestazione:")); panel.add(esitoInput);
-		panel.add(new JLabel("ID Turno:")); panel.add(idTurnoInput);
+		panel.add(new JLabel("ID Turno (Oggi):")); panel.add(turnoInput);
 		panel.add(new JLabel("CF Paziente:")); panel.add(cfPazienteInput);
-		panel.add(new JLabel("Matricola Medico:")); panel.add(matricolaInput);
-		panel.add(new JLabel("ID Agenda:")); panel.add(idAgendaInput);
+
+		if (!isMedico) {
+			panel.add(new JLabel("Matricola Medico:")); panel.add(matricolaInput);
+			panel.add(new JLabel("ID Agenda:")); panel.add(idAgendaInput);
+		}
 
 		int result = JOptionPane.showConfirmDialog(null, panel, "Nuova Prestazione", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 
 		if (result == JOptionPane.OK_OPTION) {
 			try {
-				int idPrestazione = Integer.parseInt(idPrestazioneInput.getText().trim());
 				String tipologia = (String) tipologiaInput.getSelectedItem();
-				String esito = esitoInput.getText().trim();
-				String idTurno = idTurnoInput.getText().trim();
-				String cfPaziente = cfPazienteInput.getText().trim();
-				String matricola = matricolaInput.getText().trim();
-				String idAgenda = idAgendaInput.getText().trim();
+				String esito = (String) esitoInput.getSelectedItem();
+				String idTurno;
+				if (isMedico) {
+					idTurno = (String) ((JComboBox<?>) turnoInput).getSelectedItem();
+				} else {
+					idTurno = ((JTextField) turnoInput).getText().trim();
+				}
+				String cfPaziente = "";
+				int selectedPatientIndex = cfPazienteInput.getSelectedIndex();
+				if (selectedPatientIndex != -1) {
+					cfPaziente = pazientiCf.get(selectedPatientIndex);
+				}
+				String matricolaFinale = matricolaInput.getText().trim();
+				String idAgendaFinale = idAgendaInput.getText().trim();
 
-				boolean successo = prestazioneDAO.aggiungiPrestazione(idPrestazione, tipologia, esito, idTurno, cfPaziente, matricola, idAgenda);
+				if (isMedico && (idTurno == null || idTurno.equals("Nessun turno odierno trovato"))) {
+					JOptionPane.showMessageDialog(null, "Devi selezionare un turno valido (odierno).", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+					return false;
+				}
+
+				if (cfPaziente.isEmpty()) {
+					JOptionPane.showMessageDialog(null, "È necessario selezionare un paziente.", ERRORE_TITLE, JOptionPane.WARNING_MESSAGE);
+					return false;
+				}
+
+				// 4. Salvataggio della prestazione collegata
+				boolean successo = prestazioneDAO.aggiungiPrestazione(tipologia, esito, idTurno, cfPaziente, matricolaFinale, idAgendaFinale);
 				if (successo) {
 					JOptionPane.showMessageDialog(null, "Prestazione aggiunta con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
 					return true;
@@ -1151,10 +1245,33 @@ public class Controller {
 					JOptionPane.showMessageDialog(null, ERRORE_AGGIUNTA_DATI, ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
 				}
 			} catch (NumberFormatException ex) {
-				JOptionPane.showMessageDialog(null, "ID Prestazione, ID Turno e ID Agenda devono essere numeri validi.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(null, "Errore nella conversione dell'ID turno in intero.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
 			}
 		}
 		return false;
+	}
+
+	// HELPER: Metodo per prelevare i turni di oggi per il JComboBox
+	private String[] ottieniTurniOggiPerMedico(String matricola) {
+		java.util.List<String> turniOggi = new java.util.ArrayList<>();
+		java.util.List<ArrayList<String>> turni = turnoDAO.getTurniByMedico(matricola);
+		String today = java.time.LocalDate.now().toString(); // Formato YYYY-MM-DD
+		
+		if (turni != null) {
+			for (ArrayList<String> t : turni) {
+				if (t.size() > 2) {
+					String dataTurno = t.get(2);
+					if (dataTurno.startsWith(today)) {
+						turniOggi.add(t.get(0)); // Aggiunge l'ID del turno
+					}
+				}
+			}
+		}
+		
+		if (turniOggi.isEmpty()) {
+			return new String[]{"Nessun turno odierno trovato"};
+		}
+		return turniOggi.toArray(new String[0]);
 	}
 
 	public void apriSchermataPrestazioni(JFrame frameDaChiudere) {
@@ -1163,12 +1280,87 @@ public class Controller {
 		
 		prestazioniFrame.addNuovaPrestazioneListener(e -> {
 			if (gestisciCreazioneNuovaPrestazione()) {
-				prestazioniFrame.aggiornaTabella(formattaDatiPrestazioni(prestazioneDAO.getAllPrestazioni()));
+				caricaDatiPrestazioni(prestazioniFrame);
 			}
 		});
 
-		prestazioniFrame.aggiornaTabella(formattaDatiPrestazioni(prestazioneDAO.getAllPrestazioni()));
+		// Aggiunta logica di ricerca e reset
+		prestazioniFrame.addCercaListener(e -> gestisciRicercaPrestazioni(prestazioniFrame));
+		prestazioniFrame.addResetListener(e -> {
+			prestazioniFrame.resetCampiRicerca();
+			caricaDatiPrestazioni(prestazioniFrame);
+		});
+
+		caricaDatiPrestazioni(prestazioniFrame);
 		mostraFinestraSecondaria(prestazioniFrame, frameDaChiudere);
+	}
+
+	private void caricaDatiPrestazioni(gui.Prestazioni prestazioniFrame) {
+		List<ArrayList<String>> prestazioni;
+		if (utenteLoggato instanceof Medico) {
+			prestazioni = prestazioneDAO.getPrestazioniByMedico(utenteLoggato.getMatricola());
+		} else {
+			prestazioni = prestazioneDAO.getAllPrestazioni();
+		}
+		prestazioniFrame.aggiornaTabella(formattaDatiPrestazioni(prestazioni));
+	}
+
+	public void gestisciRicercaPrestazioni(gui.Prestazioni prestazioniFrame) {
+		String idRicerca = prestazioniFrame.getCodPrestazione();
+		String nomeCognomeRicerca = prestazioniFrame.getNomeCognome();
+		String dataRicerca = prestazioniFrame.getData();
+
+		List<ArrayList<String>> prestazioni;
+		if (utenteLoggato instanceof Medico) {
+			prestazioni = prestazioneDAO.getPrestazioniByMedico(utenteLoggato.getMatricola());
+		} else {
+			prestazioni = prestazioneDAO.getAllPrestazioni();
+		}
+
+		List<ArrayList<String>> risultati = new ArrayList<>();
+		for (ArrayList<String> p : prestazioni) {
+			boolean matchId = true;
+			boolean matchNome = true;
+			boolean matchData = true;
+
+			if (idRicerca != null && !idRicerca.trim().isEmpty()) {
+				matchId = p.get(0).equals(idRicerca.trim());
+			}
+
+			// La GUI Prestazioni usa un JSpinner, che ha sempre un valore.
+			// A differenza di un JTextField con placeholder, qui il filtro per data è sempre attivo.
+			// Rimuoviamo il check sul placeholder "AAAA-MM-GG".
+			if (dataRicerca != null && !dataRicerca.trim().isEmpty()) {
+				String dataTurno = p.size() > 3 && p.get(3) != null ? p.get(3) : "";
+				matchData = dataTurno.startsWith(dataRicerca.trim());
+			}
+
+			if (nomeCognomeRicerca != null && !nomeCognomeRicerca.trim().isEmpty()) {
+				String cf = p.size() > 4 ? p.get(4) : "";
+				List<String> paziente = pazienteDAO.getPazienteByCf(cf);
+				if (paziente != null && !paziente.isEmpty()) {
+					String nome = paziente.size() > 1 ? paziente.get(1).toLowerCase() : "";
+					String cognome = paziente.size() > 2 ? paziente.get(2).toLowerCase() : "";
+					String searchStr = nomeCognomeRicerca.trim().toLowerCase();
+					
+					matchNome = (nome + " " + cognome).contains(searchStr) || 
+								(cognome + " " + nome).contains(searchStr) || 
+								cf.toLowerCase().contains(searchStr);
+				} else {
+					matchNome = false;
+				}
+			}
+
+			if (matchId && matchNome && matchData) {
+				risultati.add(p);
+			}
+		}
+
+		prestazioniFrame.aggiornaTabella(formattaDatiPrestazioni(risultati));
+		
+		if (risultati.isEmpty()) {
+			JOptionPane.showMessageDialog(prestazioniFrame, "Nessuna prestazione trovata con i criteri specificati.", INFO_TITLE, JOptionPane.INFORMATION_MESSAGE);
+		}
 	}
 
 	public void avviaSchermataMedico(String nomeUtente) {
@@ -1365,8 +1557,16 @@ public class Controller {
 		turniFrame.addModificaTurnoListener(e -> {
 			String[] datiSelezionati = turniFrame.getDatiTurnoSelezionato();
 			if (datiSelezionati != null) {
+				String matricolaTurno = datiSelezionati[1]; // datiSelezionati[1] contiene la matricola
+
+				// Controllo per impedire ai medici di modificare i turni dei colleghi
+				if (utenteLoggato instanceof Medico && !utenteLoggato.getMatricola().equals(matricolaTurno)) {
+					JOptionPane.showMessageDialog(turniFrame, "Non sei autorizzato a modificare i turni di altri colleghi.", "Accesso Negato", JOptionPane.ERROR_MESSAGE);
+					return;
+				}
+
 				// datiSelezionati[0] = data, [1] = matricola, [2] = orario
-				if (gestisciModificaTurno(datiSelezionati[1], datiSelezionati[0], datiSelezionati[2])) {
+				if (gestisciModificaTurno(matricolaTurno, datiSelezionati[0], datiSelezionati[2])) {
 					caricaDatiTurni(turniFrame); // Ricarica i dati se la modifica ha successo
 				}
 			} else {
@@ -1609,17 +1809,29 @@ public class Controller {
 
 	private Object[][] formattaDatiPrestazioni(List<ArrayList<String>> prestazioniDb) {
 		if (prestazioniDb == null) return new Object[0][0];
-		Object[][] dati = new Object[prestazioniDb.size()][7];
+		Object[][] dati = new Object[prestazioniDb.size()][6];
 		for (int i = 0; i < prestazioniDb.size(); i++) {
 			List<String> p = prestazioniDb.get(i);
 			try {
 				dati[i][0] = p.size() > 0 ? p.get(0) : "-"; // ID Prestaz.
 				dati[i][1] = p.size() > 1 ? p.get(1) : "-"; // Tipologia
 				dati[i][2] = p.size() > 2 ? p.get(2) : "-"; // Esito
-				dati[i][3] = p.size() > 3 ? p.get(3) : "-"; // ID Turno
+				
+				String dataTurno = p.size() > 3 && p.get(3) != null ? p.get(3) : "-";
+				String turnoFormattato = "-";
+				if (!dataTurno.equals("-") && !dataTurno.trim().isEmpty()) {
+					try {
+						String soloData = dataTurno.contains(" ") ? dataTurno.split(" ")[0] : dataTurno;
+						java.time.LocalDate date = java.time.LocalDate.parse(soloData);
+						java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd");
+						turnoFormattato = date.format(formatter);
+					} catch (Exception ex) {
+						turnoFormattato = dataTurno;
+					}
+				}
+				dati[i][3] = turnoFormattato; // Data Prestazione
 				dati[i][4] = p.size() > 4 ? p.get(4) : "-"; // CF Paziente
 				dati[i][5] = p.size() > 5 ? p.get(5) : "-"; // Matricola Medico
-				dati[i][6] = p.size() > 6 ? p.get(6) : "-"; // ID Agenda
 			} catch (Exception e) {
 				final int riga = i;
 				LOGGER.warning(() -> "Errore nella formattazione dei dati prestazioni alla riga " + riga + ": " + e.getMessage());
@@ -1781,14 +1993,17 @@ public class Controller {
 
     private void caricaDatiTurni(gui.Turni turniFrame) {
         List<ArrayList<String>> turni = new ArrayList<>();
-        if (utenteLoggato instanceof Amministratore) {
-            List<ArrayList<String>> medici = medicoDAO.getAllMedici();
+        List<ArrayList<String>> medici = medicoDAO.getAllMedici();
+        if (medici != null) {
             for (ArrayList<String> medico : medici) {
-                String matricola = medico.get(4);
-                turni.addAll(turnoDAO.getTurniByMedico(matricola));
+                if (medico.size() > 4) {
+                    String matricola = medico.get(4);
+                    List<ArrayList<String>> turniMedico = turnoDAO.getTurniByMedico(matricola);
+                    if (turniMedico != null) {
+                        turni.addAll(turniMedico);
+                    }
+                }
             }
-        } else if (utenteLoggato instanceof Medico) {
-            turni = turnoDAO.getTurniByMedico(utenteLoggato.getMatricola());
         }
         turniFrame.aggiornaTabella(formattaDatiTurni(turni));
     }

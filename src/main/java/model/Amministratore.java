@@ -7,23 +7,9 @@ import java.util.Scanner;
 
 public class Amministratore extends Utente {
     //Richiamo classi
-    protected String nome;
-    protected String cognome;
 
     public Amministratore(String matricola, String nome, String cognome, String login, String ruolo) {
-        super(matricola, login, ruolo);
-        this.nome = nome;
-        this.cognome = cognome;
-    }
-
-
-
-    public String getNome(){
-        return this.nome;
-    }
-
-    public String getCognome(){
-        return this.cognome;
+        super(matricola, nome, cognome, login, ruolo);
     }
 
     public void anagraficaPaziente(){

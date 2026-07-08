@@ -36,6 +36,16 @@ public class SchermataAmministratore extends JFrame {
             utenteLoggatoLabel.setText(" " + nomeUtente);
             utenteLoggatoLabel.setForeground(Color.WHITE);
             utenteLoggatoLabel.setFont(new Font("Arial", Font.BOLD, 14));
+            // Aggiungo l'effetto hover anche per l'amministratore per coerenza grafica
+            utenteLoggatoLabel.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+            utenteLoggatoLabel.addMouseListener(new java.awt.event.MouseAdapter() {
+                public void mouseEntered(java.awt.event.MouseEvent evt) {
+                    utenteLoggatoLabel.setForeground(new Color(173, 216, 230)); // Azzurro chiaro
+                }
+                public void mouseExited(java.awt.event.MouseEvent evt) {
+                    utenteLoggatoLabel.setForeground(Color.WHITE);
+                }
+            });
         }
 
         // --- STILE MENU LATERALE ---
@@ -100,6 +110,16 @@ public class SchermataAmministratore extends JFrame {
 
     public void addNewEventListener(ActionListener listener) {
         this.newEventButton.addActionListener(listener);
+    }
+
+    public void addProfiloListener(MouseAdapter listener) {
+        if (utenteLoggatoLabel != null) utenteLoggatoLabel.addMouseListener(listener);
+    }
+
+    public void updateUtenteLoggatoLabel(String nomeUtente) {
+        if (utenteLoggatoLabel != null) {
+            utenteLoggatoLabel.setText(" " + nomeUtente);
+        }
     }
 
     public void aggiornaAgenda(Object[][] dati) {

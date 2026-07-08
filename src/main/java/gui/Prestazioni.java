@@ -25,7 +25,7 @@ public class Prestazioni extends JFrame {
     private JTextField codiceField;
 
     private static final String[] COLONNE = {
-            "ID Prestazione", "Tipologia", "Esito", "Data Prestazione", "CF Paziente", "Matricola Medico"
+            "ID Prestazione", "Tipo Prestazione", "Esito", "Data Prestazione", "CF Paziente", "Reparto Erogante"
     };
 
     private Object[][] datiPrestazioni = new Object[0][0];
@@ -86,13 +86,12 @@ public class Prestazioni extends JFrame {
         dataSpinner.setEditor(new JSpinner.DateEditor(dataSpinner, "yyyy-MM-dd"));
 
         tipologiaList.setListData(new String[]{
-                "Chirurgia Generale", "Radiologia Interventistica", "Diagnostica Avanzata",
-                "Chirurgia Robotica", "Procedure Endoscopiche", "Radioterapia", "Cardiologia", "Oncologia"
+                "Risonanza Magnetica", "Tomografia Computerizzata (TAC)", "Ecografia",
+                "Elettrocardiogramma (ECG)", "Endoscopia", "Radiografia"
         });
 
         repartoList.setListData(new String[]{
-                "Chirurgia Robotica", "Neuroradiologia", "Blocco Operatorio",
-                "Chirurgia Toracica", "Anatomia Patologica", "Laboratorio Analisi", "Radiologia Interventistica"
+                "Cardiologia", "Ortopedia", "Chirurgia Generale"
         });
 
         DefaultTableModel model = new DefaultTableModel(COLONNE, 0) {

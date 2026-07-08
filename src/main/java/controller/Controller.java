@@ -524,16 +524,18 @@ public class Controller {
 		String nomePaziente = (paziente != null && paziente.size() > 2) ? paziente.get(1) + " " + paziente.get(2) : cfPaziente;
 
 		List<ArrayList<String>> tuttiLetti = lettoDAO.getAllLetti();
-		java.util.Map<String, List<String>> lettiDisponibiliPerReparto = new java.util.HashMap<>();
+		java.util.Map<String, java.util.Map<String, List<String>>> repartiStanzeLetti = new java.util.HashMap<>();
 		java.util.Set<String> repartiDisponibili = new java.util.TreeSet<>();
 
 		if (tuttiLetti != null) {
 			for (List<String> letto : tuttiLetti) {
-				String idLetto = letto.get(0);
-				String reparto = letto.get(1);
+				String idLetto = letto.size() > 0 ? letto.get(0) : "";
+				String reparto = letto.size() > 1 ? letto.get(1) : "";
+				String stanza = letto.size() > 3 ? letto.get(3) : "Sconosciuta";
+
 				if (checkDisponibilitaLetto(idLetto, reparto)) {
 					repartiDisponibili.add(reparto);
-					lettiDisponibiliPerReparto.computeIfAbsent(reparto, k -> new ArrayList<>()).add(idLetto);
+					repartiStanzeLetti.computeIfAbsent(reparto, k -> new java.util.TreeMap<>()).computeIfAbsent(stanza, k -> new ArrayList<>()).add(idLetto);
 				}
 			}
 		}
@@ -544,14 +546,30 @@ public class Controller {
 		}
 
 		JComboBox<String> repartiComboBox = new JComboBox<>(repartiDisponibili.toArray(new String[0]));
+		JComboBox<String> stanzeComboBox = new JComboBox<>();
 		JComboBox<String> lettiComboBox = new JComboBox<>();
 		JTextField motivoInput = new JTextField();
 
 		repartiComboBox.addActionListener(e -> {
 			String repartoSelezionato = (String) repartiComboBox.getSelectedItem();
+			stanzeComboBox.removeAllItems();
 			lettiComboBox.removeAllItems();
 			if (repartoSelezionato != null) {
-				List<String> letti = lettiDisponibiliPerReparto.get(repartoSelezionato);
+				java.util.Map<String, List<String>> stanze = repartiStanzeLetti.get(repartoSelezionato);
+				if (stanze != null) {
+					for (String stanza : stanze.keySet()) {
+						stanzeComboBox.addItem(stanza);
+					}
+				}
+			}
+		});
+
+		stanzeComboBox.addActionListener(e -> {
+			String repartoSelezionato = (String) repartiComboBox.getSelectedItem();
+			String stanzaSelezionata = (String) stanzeComboBox.getSelectedItem();
+			lettiComboBox.removeAllItems();
+			if (repartoSelezionato != null && stanzaSelezionata != null) {
+				List<String> letti = repartiStanzeLetti.get(repartoSelezionato).get(stanzaSelezionata);
 				if (letti != null) {
 					for (String letto : letti) {
 						lettiComboBox.addItem(letto);
@@ -564,9 +582,10 @@ public class Controller {
 			repartiComboBox.setSelectedIndex(0);
 		}
 
-		JPanel panel = new JPanel(new GridLayout(4, 2, 10, 10));
+		JPanel panel = new JPanel(new GridLayout(5, 2, 10, 10));
 		panel.add(new JLabel("Paziente:")); panel.add(new JLabel(nomePaziente + " (" + cfPaziente + ")"));
 		panel.add(new JLabel("Reparto:")); panel.add(repartiComboBox);
+		panel.add(new JLabel("Stanza:")); panel.add(stanzeComboBox);
 		panel.add(new JLabel("ID Letto:")); panel.add(lettiComboBox);
 		panel.add(new JLabel("Motivo:")); panel.add(motivoInput);
 
@@ -705,7 +724,9 @@ public class Controller {
 		JTextField matricolaInput = new JTextField();
 		JTextField iscrizioneInput = new JTextField(); // YYYY-MM-DD
 		JTextField specializzazioneInput = new JTextField();
-		JTextField repartoInput = new JTextField();
+		JComboBox<String> repartoInput = new JComboBox<>(new String[]{
+				"Nessuno", "Cardiologia", "Ortopedia", "Chirurgia Generale"
+		});
 
 		JPanel panel = new JPanel(new GridLayout(8, 2, 10, 10));
 		panel.add(new JLabel(LABEL_NOME)); panel.add(nomeInput);
@@ -727,7 +748,7 @@ public class Controller {
 			String matricola = matricolaInput.getText().trim();
 			String iscrizioneAlbo = iscrizioneInput.getText().trim();
 			String specializzazione = specializzazioneInput.getText().trim();
-			String reparto = repartoInput.getText().trim();
+			String reparto = (String) repartoInput.getSelectedItem();
 
 			try {
 				boolean successo = aggiungiMedico(nome, cognome, matricola, login, password, iscrizioneAlbo, specializzazione, reparto);
@@ -872,16 +893,18 @@ public class Controller {
 
 		// 2. Ottieni reparti e letti disponibili
 		List<ArrayList<String>> tuttiLetti = lettoDAO.getAllLetti();
-		java.util.Map<String, List<String>> lettiDisponibiliPerReparto = new java.util.HashMap<>();
+		java.util.Map<String, java.util.Map<String, List<String>>> repartiStanzeLetti = new java.util.HashMap<>();
 		java.util.Set<String> repartiDisponibili = new java.util.TreeSet<>(); // TreeSet per ordine alfabetico
 
 		if (tuttiLetti != null) {
 			for (List<String> letto : tuttiLetti) {
-				String idLetto = letto.get(0);
-				String reparto = letto.get(1);
+				String idLetto = letto.size() > 0 ? letto.get(0) : "";
+				String reparto = letto.size() > 1 ? letto.get(1) : "";
+				String stanza = letto.size() > 3 ? letto.get(3) : "Sconosciuta";
+
 				if (checkDisponibilitaLetto(idLetto, reparto)) {
 					repartiDisponibili.add(reparto);
-					lettiDisponibiliPerReparto.computeIfAbsent(reparto, k -> new ArrayList<>()).add(idLetto);
+					repartiStanzeLetti.computeIfAbsent(reparto, k -> new java.util.TreeMap<>()).computeIfAbsent(stanza, k -> new ArrayList<>()).add(idLetto);
 				}
 			}
 		}
@@ -894,15 +917,32 @@ public class Controller {
 		// 3. Prepara i componenti della GUI
 		JComboBox<String> pazientiComboBox = new JComboBox<>(pazientiDisponibiliNomi.toArray(new String[0]));
 		JComboBox<String> repartiComboBox = new JComboBox<>(repartiDisponibili.toArray(new String[0]));
+		JComboBox<String> stanzeComboBox = new JComboBox<>();
 		JComboBox<String> lettiComboBox = new JComboBox<>();
 		JTextField motivoInput = new JTextField();
 
-		// Logica per aggiornare i letti quando cambia il reparto
+		// Logica per aggiornare le stanze quando cambia il reparto
 		repartiComboBox.addActionListener(e -> {
 			String repartoSelezionato = (String) repartiComboBox.getSelectedItem();
+			stanzeComboBox.removeAllItems();
 			lettiComboBox.removeAllItems();
 			if (repartoSelezionato != null) {
-				List<String> letti = lettiDisponibiliPerReparto.get(repartoSelezionato);
+				java.util.Map<String, List<String>> stanze = repartiStanzeLetti.get(repartoSelezionato);
+				if (stanze != null) {
+					for (String stanza : stanze.keySet()) {
+						stanzeComboBox.addItem(stanza);
+					}
+				}
+			}
+		});
+
+		// Logica per aggiornare i letti quando cambia la stanza
+		stanzeComboBox.addActionListener(e -> {
+			String repartoSelezionato = (String) repartiComboBox.getSelectedItem();
+			String stanzaSelezionata = (String) stanzeComboBox.getSelectedItem();
+			lettiComboBox.removeAllItems();
+			if (repartoSelezionato != null && stanzaSelezionata != null) {
+				List<String> letti = repartiStanzeLetti.get(repartoSelezionato).get(stanzaSelezionata);
 				if (letti != null) {
 					for (String letto : letti) {
 						lettiComboBox.addItem(letto);
@@ -911,15 +951,16 @@ public class Controller {
 			}
 		});
 
-		// Popola i letti per il primo reparto selezionato di default
+		// Popola le stanze e i letti per il primo reparto selezionato di default
 		if (repartiComboBox.getItemCount() > 0) {
 			repartiComboBox.setSelectedIndex(0);
 		}
 
 		// 4. Mostra il dialogo
-		JPanel panel = new JPanel(new GridLayout(4, 2, 10, 10));
+		JPanel panel = new JPanel(new GridLayout(5, 2, 10, 10));
 		panel.add(new JLabel("Paziente:")); panel.add(pazientiComboBox);
 		panel.add(new JLabel("Reparto:")); panel.add(repartiComboBox);
+		panel.add(new JLabel("Stanza:")); panel.add(stanzeComboBox);
 		panel.add(new JLabel("ID Letto:")); panel.add(lettiComboBox);
 		panel.add(new JLabel("Motivo:")); panel.add(motivoInput);
 
@@ -1050,6 +1091,17 @@ public class Controller {
         });
 
         aggiornaAgendaGUI(adminFrame);
+
+		// Listener per il click sul nome in alto (Modifica Profilo Amministratore)
+		adminFrame.addProfiloListener(new java.awt.event.MouseAdapter() {
+			@Override
+			public void mouseClicked(java.awt.event.MouseEvent e) {
+				if (gestisciModificaProfiloAmministratore()) {
+					// Aggiorna l'interfaccia con il nuovo nome se modificato
+					adminFrame.updateUtenteLoggatoLabel("Dott. " + utenteLoggato.getNome() + " " + utenteLoggato.getCognome());
+				}
+			}
+		});
 		
 		// Gestione del tasto esci
 		adminFrame.addEsciListener(e -> {
@@ -1075,8 +1127,22 @@ public class Controller {
             }
         });
 
-        pazientiFrame.aggiornaTabella(formattaDatiPazienti(getAllPazienti()));
 		mostraFinestraSecondaria(pazientiFrame, frameDaChiudere);
+
+		// Utilizzo di SwingWorker per non bloccare la GUI durante il caricamento dati
+		pazientiFrame.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
+		SwingWorker<List<ArrayList<String>>, Void> worker = new SwingWorker<List<ArrayList<String>>, Void>() {
+			@Override
+			protected List<ArrayList<String>> doInBackground() throws Exception {
+				return formattaDatiPazienti(getAllPazienti()); // Query in background
+			}
+			@Override
+			protected void done() {
+				try { pazientiFrame.aggiornaTabella(get()); } catch (Exception e) { LOGGER.warning("Errore caricamento pazienti"); }
+				pazientiFrame.setCursor(java.awt.Cursor.getDefaultCursor());
+			}
+		};
+		worker.execute();
 	}
 
 	/**
@@ -1149,10 +1215,12 @@ public class Controller {
 			}
 		}
 
-		JComboBox<String> tipologiaInput = new JComboBox<>(new String[]{
-				"Chirurgia Generale", "Radiologia Interventistica", "Diagnostica Avanzata",
-				"Chirurgia Robotica", "Procedure Endoscopiche", "Radioterapia", "Cardiologia", "Oncologia"
+		JComboBox<String> tipoProceduraInput = new JComboBox<>(new String[]{
+				"Risonanza Magnetica", "Tomografia Computerizzata (TAC)", "Ecografia",
+				"Elettrocardiogramma (ECG)", "Endoscopia", "Radiografia"
 		});
+		// Rende il menù a tendina "scrivibile", permettendo l'inserimento libero di un esame personalizzato
+		tipoProceduraInput.setEditable(true); 
 
 		JComboBox<String> esitoInput = new JComboBox<>(new String[]{
 				"Erogata", "Non erogata"
@@ -1196,7 +1264,7 @@ public class Controller {
 		idAgendaInput.setEditable(!isMedico);
 
 		JPanel panel = new JPanel(new GridLayout(isMedico ? 4 : 6, 2, 10, 10));
-		panel.add(new JLabel("Tipologia:")); panel.add(tipologiaInput);
+		panel.add(new JLabel("Tipo Esame/Prestazione:")); panel.add(tipoProceduraInput);
 		panel.add(new JLabel("Esito Prestazione:")); panel.add(esitoInput);
 		panel.add(new JLabel("ID Turno (Oggi):")); panel.add(turnoInput);
 		panel.add(new JLabel("CF Paziente:")); panel.add(cfPazienteInput);
@@ -1210,7 +1278,13 @@ public class Controller {
 
 		if (result == JOptionPane.OK_OPTION) {
 			try {
-				String tipologia = (String) tipologiaInput.getSelectedItem();
+				String tipologiaPrestazione = (String) tipoProceduraInput.getSelectedItem();
+				
+				if (tipologiaPrestazione == null || tipologiaPrestazione.trim().isEmpty()) {
+					JOptionPane.showMessageDialog(null, "Inserisci o seleziona un tipo di esame.", ERRORE_TITLE, JOptionPane.WARNING_MESSAGE);
+					return false;
+				}
+				
 				String esito = (String) esitoInput.getSelectedItem();
 				String idTurno;
 				if (isMedico) {
@@ -1237,7 +1311,7 @@ public class Controller {
 				}
 
 				// 4. Salvataggio della prestazione collegata
-				boolean successo = prestazioneDAO.aggiungiPrestazione(tipologia, esito, idTurno, cfPaziente, matricolaFinale, idAgendaFinale);
+				boolean successo = prestazioneDAO.aggiungiPrestazione(tipologiaPrestazione, esito, idTurno, cfPaziente, matricolaFinale, idAgendaFinale);
 				if (successo) {
 					JOptionPane.showMessageDialog(null, "Prestazione aggiunta con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
 					return true;
@@ -1384,6 +1458,17 @@ public class Controller {
 
         aggiornaAgendaGUI(medicoHome);
 		
+		// Listener per il click sul nome in alto (Modifica Profilo)
+		medicoHome.addProfiloListener(new java.awt.event.MouseAdapter() {
+			@Override
+			public void mouseClicked(java.awt.event.MouseEvent e) {
+				if (gestisciModificaProfiloPersonale()) {
+					// Aggiorna l'interfaccia con il nuovo nome se modificato
+					medicoHome.updateUtenteLoggatoLabel("Dott. " + utenteLoggato.getNome() + " " + utenteLoggato.getCognome());
+				}
+			}
+		});
+
 		medicoHome.addEsciListener(e -> {
 			int conferma = JOptionPane.showConfirmDialog(null, MSG_CONFERMA_USCITA, TITLE_CONFERMA_USCITA, JOptionPane.YES_NO_OPTION);
 			if (conferma == JOptionPane.YES_OPTION) {
@@ -1475,8 +1560,22 @@ public class Controller {
 			}
 		});
 
-		mediciFrame.aggiornaTabella(formattaDatiMedici(getAllMedici()));
 		mostraFinestraSecondaria(mediciFrame, frameDaChiudere);
+
+		// Utilizzo di SwingWorker per non bloccare la GUI a causa delle Query N+1
+		mediciFrame.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
+		SwingWorker<Object[][], Void> worker = new SwingWorker<Object[][], Void>() {
+			@Override
+			protected Object[][] doInBackground() throws Exception {
+				return formattaDatiMedici(getAllMedici()); // Lavoro pensante delegato al thread secondario
+			}
+			@Override
+			protected void done() {
+				try { mediciFrame.aggiornaTabella(get()); } catch (Exception e) { LOGGER.warning("Errore caricamento medici"); }
+				mediciFrame.setCursor(java.awt.Cursor.getDefaultCursor());
+			}
+		};
+		worker.execute();
 	}
 
 	public void apriSchermataDimissioni(JFrame frameDaChiudere) {
@@ -1629,6 +1728,95 @@ public class Controller {
         return false;
 	}
 
+	public boolean gestisciModificaProfiloPersonale() {
+		String matricola = utenteLoggato.getMatricola();
+		List<String> datiMedico = medicoDAO.getMedicoByMatricola(matricola);
+		if (datiMedico == null || datiMedico.isEmpty()) {
+			JOptionPane.showMessageDialog(null, "Impossibile trovare i dati per il tuo profilo.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+			return false;
+		}
+
+		// Pre-popola i campi con i dati esistenti, bloccando quelli non modificabili dall'utente
+		JTextField nomeInput = new JTextField(datiMedico.get(0));
+		JTextField cognomeInput = new JTextField(datiMedico.get(1));
+		JTextField loginInput = new JTextField(datiMedico.get(2));
+		loginInput.setEditable(false); // Login assegnato
+		JTextField iscrizioneInput = new JTextField(datiMedico.get(5));
+		JTextField specializzazioneInput = new JTextField(datiMedico.get(6));
+		JComboBox<String> repartoInput = new JComboBox<>(new String[]{
+				"Nessuno", "Cardiologia", "Ortopedia", "Chirurgia Generale"
+		});
+		repartoInput.setSelectedItem(datiMedico.get(7));
+		// repartoInput.setEnabled(false); // Rimosso blocco per permettere al medico di modificare il proprio reparto
+
+		JPanel panel = new JPanel(new GridLayout(7, 2, 10, 10));
+		panel.add(new JLabel("Matricola:")); panel.add(new JLabel(" " + matricola)); // Non modificabile
+		panel.add(new JLabel("Username (Login):")); panel.add(loginInput);
+		panel.add(new JLabel(LABEL_NOME)); panel.add(nomeInput);
+		panel.add(new JLabel(LABEL_COGNOME)); panel.add(cognomeInput);
+		panel.add(new JLabel("Data Iscrizione Albo (AAAA-MM-GG):")); panel.add(iscrizioneInput);
+		panel.add(new JLabel("Specializzazione:")); panel.add(specializzazioneInput);
+		panel.add(new JLabel("Reparto Assegnato:")); panel.add(repartoInput);
+
+		int result = JOptionPane.showConfirmDialog(null, panel, "Il Mio Profilo", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+		if (result == JOptionPane.OK_OPTION) {
+			try {
+				boolean successo = aggiornaMedico(nomeInput.getText().trim(), cognomeInput.getText().trim(), matricola, iscrizioneInput.getText().trim(), specializzazioneInput.getText().trim(), (String) repartoInput.getSelectedItem());
+				if (successo) {
+					JOptionPane.showMessageDialog(null, "Profilo aggiornato con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
+					this.utenteLoggato = new Medico(matricola, nomeInput.getText().trim(), cognomeInput.getText().trim(), loginInput.getText().trim(), "medico");
+					return true;
+				} else {
+					JOptionPane.showMessageDialog(null, "Errore durante l'aggiornamento. Controlla la validità dei dati.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+				}
+			} catch (IllegalArgumentException ex) {
+				JOptionPane.showMessageDialog(null, "Formato data non valido. Assicurati di usare AAAA-MM-GG.", "Errore di Formato", JOptionPane.ERROR_MESSAGE);
+			}
+		}
+		return false;
+	}
+
+	public boolean gestisciModificaProfiloAmministratore() {
+		String matricola = utenteLoggato.getMatricola();
+		
+		JTextField nomeInput = new JTextField(utenteLoggato.getNome());
+		JTextField cognomeInput = new JTextField(utenteLoggato.getCognome());
+		JTextField loginInput = new JTextField(utenteLoggato.getLogin());
+		loginInput.setEditable(false); // Login non modificabile
+
+		JPanel panel = new JPanel(new GridLayout(4, 2, 10, 10));
+		panel.add(new JLabel("Matricola:")); panel.add(new JLabel(" " + matricola));
+		panel.add(new JLabel("Username (Login):")); panel.add(loginInput);
+		panel.add(new JLabel(LABEL_NOME)); panel.add(nomeInput);
+		panel.add(new JLabel(LABEL_COGNOME)); panel.add(cognomeInput);
+
+		int result = JOptionPane.showConfirmDialog(null, panel, "Il Mio Profilo (Amministratore)", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+		if (result == JOptionPane.OK_OPTION) {
+			try {
+				String nuovoNome = nomeInput.getText().trim();
+				String nuovoCognome = cognomeInput.getText().trim();
+
+				// TODO: Sostituire `successo = true` con la vera chiamata di aggiornamento al DB, per es:
+				// boolean successo = amministratoreDAO.aggiornaAmministratore(matricola, nuovoNome, nuovoCognome);
+				boolean successo = true; 
+
+				if (successo) {
+					JOptionPane.showMessageDialog(null, "Profilo aggiornato con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
+					// Aggiorna localmente l'utente loggato per riflettere le modifiche nell'app
+					this.utenteLoggato = new Amministratore(matricola, nuovoNome, nuovoCognome, loginInput.getText().trim(), "amministratore");
+					return true;
+				} else {
+					JOptionPane.showMessageDialog(null, "Errore durante l'aggiornamento. Controlla la validità dei dati.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+				}
+			} catch (Exception ex) {
+				JOptionPane.showMessageDialog(null, "Si è verificato un errore inaspettato.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+			}
+		}
+		return false;
+	}
+
 	public boolean gestisciModificaMedico(String matricola) {
 		List<String> datiMedico = medicoDAO.getMedicoByMatricola(matricola);
 		if (datiMedico == null || datiMedico.isEmpty()) {
@@ -1641,7 +1829,10 @@ public class Controller {
 		JTextField cognomeInput = new JTextField(datiMedico.get(1));
 		JTextField iscrizioneInput = new JTextField(datiMedico.get(5));
 		JTextField specializzazioneInput = new JTextField(datiMedico.get(6));
-		JTextField repartoInput = new JTextField(datiMedico.get(7));
+		JComboBox<String> repartoInput = new JComboBox<>(new String[]{
+				"Nessuno", "Cardiologia", "Ortopedia", "Chirurgia Generale"
+		});
+		repartoInput.setSelectedItem(datiMedico.get(7));
 
 		JPanel panel = new JPanel(new GridLayout(6, 2, 10, 10));
 		panel.add(new JLabel("Matricola:"));
@@ -1659,7 +1850,7 @@ public class Controller {
 			String cognome = cognomeInput.getText().trim();
 			String iscrizioneAlbo = iscrizioneInput.getText().trim();
 			String specializzazione = specializzazioneInput.getText().trim();
-			String reparto = repartoInput.getText().trim();
+			String reparto = (String) repartoInput.getSelectedItem();
 
 			try {
 				boolean successo = aggiornaMedico(nome, cognome, matricola, iscrizioneAlbo, specializzazione, reparto);
@@ -1813,8 +2004,9 @@ public class Controller {
 		for (int i = 0; i < prestazioniDb.size(); i++) {
 			List<String> p = prestazioniDb.get(i);
 			try {
+				// DAO returns: 0:id, 1:tipologia_prestazione, 2:esito, 3:data, 4:cf, 5:matricola
 				dati[i][0] = p.size() > 0 ? p.get(0) : "-"; // ID Prestaz.
-				dati[i][1] = p.size() > 1 ? p.get(1) : "-"; // Tipologia
+				dati[i][1] = p.size() > 1 ? p.get(1) : "-"; // Tipo Prestazione
 				dati[i][2] = p.size() > 2 ? p.get(2) : "-"; // Esito
 				
 				String dataTurno = p.size() > 3 && p.get(3) != null ? p.get(3) : "-";
@@ -1831,7 +2023,16 @@ public class Controller {
 				}
 				dati[i][3] = turnoFormattato; // Data Prestazione
 				dati[i][4] = p.size() > 4 ? p.get(4) : "-"; // CF Paziente
-				dati[i][5] = p.size() > 5 ? p.get(5) : "-"; // Matricola Medico
+
+				String matricola = p.size() > 5 && p.get(5) != null ? p.get(5) : "";
+				String repartoErogante = "-";
+				if (!matricola.trim().isEmpty()) {
+					List<String> medico = medicoDAO.getMedicoByMatricola(matricola);
+					if (medico != null && medico.size() > 7 && medico.get(7) != null && !medico.get(7).trim().isEmpty()) {
+						repartoErogante = medico.get(7);
+					}
+				}
+				dati[i][5] = repartoErogante; // Reparto Erogante
 			} catch (Exception e) {
 				final int riga = i;
 				LOGGER.warning(() -> "Errore nella formattazione dei dati prestazioni alla riga " + riga + ": " + e.getMessage());

@@ -20,6 +20,7 @@ public class RicoveroPostgresDao implements RicoveroDAO {
     private static final String GET_RICOVERO_ATTIVO_QUERY = "SELECT id_ricovero, cf, id_letto, reparto, data_inizio, motivazione FROM ricovero WHERE cf = ? AND data_fine IS NULL ORDER BY data_inizio DESC LIMIT 1";
     private static final String GET_ALL_RICOVERI_ATTIVI_QUERY = "SELECT id_ricovero, cf, id_letto, reparto, data_inizio, motivazione FROM ricovero WHERE data_fine IS NULL";
     private static final String IS_LETTO_ATTUALMENTE_OCCUPATO_QUERY = "SELECT 1 FROM ricovero WHERE id_letto = ? AND reparto = ? AND data_fine IS NULL LIMIT 1";
+    private static final String GET_STORICO_RICOVERI_QUERY = "SELECT id_ricovero, cf, id_letto, reparto, data_inizio, data_fine, motivazione, prognosi, esito FROM ricovero WHERE cf = ? ORDER BY data_inizio DESC";
 
     // Costanti per i nomi delle colonne per evitare duplicazioni e code smells
     private static final String COL_ID_RICOVERO = "id_ricovero";
@@ -89,7 +90,31 @@ public class RicoveroPostgresDao implements RicoveroDAO {
 
     @Override
     public ArrayList<ArrayList<String>> getStoricoRicoveri(String cfPaziente) {
-        return new ArrayList<>(); // Implementazione selettiva se richiesta per ulteriori feature
+        ArrayList<ArrayList<String>> storico = new ArrayList<>();
+        try (Connection conn = ConnessioneDatabase.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(GET_STORICO_RICOVERI_QUERY)) {
+            stmt.setString(1, cfPaziente);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    ArrayList<String> ricovero = new ArrayList<>();
+                    ricovero.add(String.valueOf(rs.getInt(COL_ID_RICOVERO)));
+                    ricovero.add(rs.getString(COL_CF));
+                    ricovero.add(rs.getString(COL_ID_LETTO));
+                    ricovero.add(rs.getString(COL_REPARTO));
+                    java.sql.Timestamp dataInizio = rs.getTimestamp(COL_DATA_INIZIO);
+                    ricovero.add(dataInizio != null ? dataInizio.toString() : "");
+                    java.sql.Timestamp dataFine = rs.getTimestamp("data_fine");
+                    ricovero.add(dataFine != null ? dataFine.toString() : "In corso");
+                    ricovero.add(rs.getString(COL_MOTIVAZIONE));
+                    ricovero.add(rs.getString("prognosi"));
+                    ricovero.add(rs.getString("esito"));
+                    storico.add(ricovero);
+                }
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Errore durante il recupero dello storico ricoveri", e);
+        }
+        return storico;
     }
 
     @Override

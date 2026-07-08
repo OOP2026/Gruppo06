@@ -527,13 +527,22 @@ public class Controller {
 		java.util.Map<String, java.util.Map<String, List<String>>> repartiStanzeLetti = new java.util.HashMap<>();
 		java.util.Set<String> repartiDisponibili = new java.util.TreeSet<>();
 
+		// Ottimizzazione: mappa in memoria i letti già occupati per evitare query N+1
+		java.util.Set<String> lettiOccupati = new java.util.HashSet<>();
+		List<ArrayList<String>> ricoveriAttivi = ricoveroDAO.getAllRicoveriAttivi();
+		if (ricoveriAttivi != null) {
+			for (List<String> ricovero : ricoveriAttivi) {
+				if (ricovero.size() > 3) lettiOccupati.add(ricovero.get(2) + "_" + ricovero.get(3));
+			}
+		}
+
 		if (tuttiLetti != null) {
 			for (List<String> letto : tuttiLetti) {
 				String idLetto = letto.size() > 0 ? letto.get(0) : "";
 				String reparto = letto.size() > 1 ? letto.get(1) : "";
 				String stanza = letto.size() > 3 ? letto.get(3) : "Sconosciuta";
 
-				if (checkDisponibilitaLetto(idLetto, reparto)) {
+				if (!lettiOccupati.contains(idLetto + "_" + reparto)) {
 					repartiDisponibili.add(reparto);
 					repartiStanzeLetti.computeIfAbsent(reparto, k -> new java.util.TreeMap<>()).computeIfAbsent(stanza, k -> new ArrayList<>()).add(idLetto);
 				}
@@ -866,10 +875,12 @@ public class Controller {
 		// Logica per ottenere i pazienti disponibili (non ancora ricoverati)
 		// 1. Ottieni i pazienti disponibili (non ancora ricoverati)
 		java.util.Set<String> pazientiRicoverati = new java.util.HashSet<>();
+		java.util.Set<String> lettiOccupati = new java.util.HashSet<>();
 		List<ArrayList<String>> ricoveriAttivi = ricoveroDAO.getAllRicoveriAttivi();
 		if (ricoveriAttivi != null) {
 			for (List<String> ricovero : ricoveriAttivi) {
 				if (ricovero.size() > 1) pazientiRicoverati.add(ricovero.get(1));
+				if (ricovero.size() > 3) lettiOccupati.add(ricovero.get(2) + "_" + ricovero.get(3));
 			}
 		}
 
@@ -902,7 +913,7 @@ public class Controller {
 				String reparto = letto.size() > 1 ? letto.get(1) : "";
 				String stanza = letto.size() > 3 ? letto.get(3) : "Sconosciuta";
 
-				if (checkDisponibilitaLetto(idLetto, reparto)) {
+				if (!lettiOccupati.contains(idLetto + "_" + reparto)) {
 					repartiDisponibili.add(reparto);
 					repartiStanzeLetti.computeIfAbsent(reparto, k -> new java.util.TreeMap<>()).computeIfAbsent(stanza, k -> new ArrayList<>()).add(idLetto);
 				}
@@ -1127,6 +1138,13 @@ public class Controller {
             }
         });
 
+        pazientiFrame.addStoricoPazienteListener(e -> {
+            String cfSelezionato = pazientiFrame.getCfPazienteSelezionato();
+            if (cfSelezionato != null) {
+                gestisciStoricoPaziente(cfSelezionato);
+            }
+        });
+
 		mostraFinestraSecondaria(pazientiFrame, frameDaChiudere);
 
 		// Utilizzo di SwingWorker per non bloccare la GUI durante il caricamento dati
@@ -1143,6 +1161,37 @@ public class Controller {
 			}
 		};
 		worker.execute();
+	}
+
+	public void gestisciStoricoPaziente(String cfPaziente) {
+		List<ArrayList<String>> storico = ricoveroDAO.getStoricoRicoveri(cfPaziente);
+		if (storico == null || storico.isEmpty()) {
+			JOptionPane.showMessageDialog(null, "Nessun ricovero trovato per il paziente selezionato.", "Storico Paziente", JOptionPane.INFORMATION_MESSAGE);
+			return;
+		}
+
+		String[] colonne = {"ID", "Reparto", "Letto", "Data Inizio", "Data Fine", "Motivazione", "Esito"};
+		Object[][] dati = new Object[storico.size()][7];
+		for (int i = 0; i < storico.size(); i++) {
+			List<String> r = storico.get(i);
+			dati[i][0] = r.size() > 0 ? r.get(0) : "";
+			dati[i][1] = r.size() > 3 ? r.get(3) : "";
+			dati[i][2] = r.size() > 2 ? r.get(2) : "";
+			dati[i][3] = r.size() > 4 ? r.get(4) : "";
+			dati[i][4] = r.size() > 5 ? r.get(5) : "In corso";
+			dati[i][5] = r.size() > 6 ? r.get(6) : "";
+			dati[i][6] = r.size() > 8 && r.get(8) != null ? r.get(8) : ""; // Evita null sull'esito
+		}
+
+		JTable table = new JTable(dati, colonne) {
+			@Override
+			public boolean isCellEditable(int row, int column) { return false; }
+		};
+		gui.Login.setupTableStyle(table); // Applica il tuo stile standard
+		JScrollPane scrollPane = new JScrollPane(table);
+		scrollPane.setPreferredSize(new Dimension(800, 300));
+
+		JOptionPane.showMessageDialog(null, scrollPane, "Storico Ricoveri - Paziente: " + cfPaziente, JOptionPane.PLAIN_MESSAGE);
 	}
 
 	/**
@@ -1187,11 +1236,23 @@ public class Controller {
 			}
 		});
 
-		// 3. Carica i dati iniziali nella tabella quando la schermata si apre
-		ricaricaEAggiornaTabellaLetti(lettiFrame);
-
 		// 4. Mostra la finestra
 		mostraFinestraSecondaria(lettiFrame, frameDaChiudere);
+
+		// Utilizzo di SwingWorker per caricare i dati in background
+		lettiFrame.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
+		SwingWorker<Object[][], Void> worker = new SwingWorker<Object[][], Void>() {
+			@Override
+			protected Object[][] doInBackground() throws Exception {
+				return preparaDatiLettiPerTabella(lettoDAO.getAllLetti());
+			}
+			@Override
+			protected void done() {
+				try { lettiFrame.aggiornaTabella(get()); } catch (Exception e) { LOGGER.warning("Errore caricamento letti"); }
+				lettiFrame.setCursor(java.awt.Cursor.getDefaultCursor());
+			}
+		};
+		worker.execute();
 	}
 
 	public boolean gestisciCreazioneNuovaPrestazione() {
@@ -1365,8 +1426,28 @@ public class Controller {
 			caricaDatiPrestazioni(prestazioniFrame);
 		});
 
-		caricaDatiPrestazioni(prestazioniFrame);
 		mostraFinestraSecondaria(prestazioniFrame, frameDaChiudere);
+
+		// Utilizzo di SwingWorker per non bloccare la GUI durante il caricamento dati
+		prestazioniFrame.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
+		SwingWorker<Object[][], Void> worker = new SwingWorker<Object[][], Void>() {
+			@Override
+			protected Object[][] doInBackground() throws Exception {
+				List<ArrayList<String>> prestazioni;
+				if (utenteLoggato instanceof Medico) {
+					prestazioni = prestazioneDAO.getPrestazioniByMedico(utenteLoggato.getMatricola());
+				} else {
+					prestazioni = prestazioneDAO.getAllPrestazioni();
+				}
+				return formattaDatiPrestazioni(prestazioni);
+			}
+			@Override
+			protected void done() {
+				try { prestazioniFrame.aggiornaTabella(get()); } catch (Exception e) { LOGGER.warning("Errore caricamento prestazioni"); }
+				prestazioniFrame.setCursor(java.awt.Cursor.getDefaultCursor());
+			}
+		};
+		worker.execute();
 	}
 
 	private void caricaDatiPrestazioni(gui.Prestazioni prestazioniFrame) {
@@ -1613,8 +1694,22 @@ public class Controller {
 			}
 		});
 
-		dimissioniFrame.aggiornaTabella(formattaDatiDimissioni(ricercaDimissioni()));
 		mostraFinestraSecondaria(dimissioniFrame, frameDaChiudere);
+
+		// Utilizzo di SwingWorker per caricare i dati in background
+		dimissioniFrame.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
+		SwingWorker<Object[][], Void> worker = new SwingWorker<Object[][], Void>() {
+			@Override
+			protected Object[][] doInBackground() throws Exception {
+				return formattaDatiDimissioni(ricercaDimissioni());
+			}
+			@Override
+			protected void done() {
+				try { dimissioniFrame.aggiornaTabella(get()); } catch (Exception e) { LOGGER.warning("Errore caricamento dimissioni"); }
+				dimissioniFrame.setCursor(java.awt.Cursor.getDefaultCursor());
+			}
+		};
+		worker.execute();
 	}
 
 	public void apriSchermataRicoveri(JFrame frameDaChiudere) {
@@ -1623,7 +1718,7 @@ public class Controller {
 
         ricoveroFrame.addNuovoRicoveroListener(e -> {
             if (gestisciCreazioneNuovoRicovero()) {
-                caricaDatiRicoveri(ricoveroFrame);
+                caricaDatiRicoveriAsync(ricoveroFrame);
             }
         });
 
@@ -1631,15 +1726,23 @@ public class Controller {
 			String[] selezionato = ricoveroFrame.getRicoveroSelezionato();
 			if (selezionato != null) {
 				if (gestisciDimissioneDaRicovero(selezionato[1])) {
-					caricaDatiRicoveri(ricoveroFrame); // Ricarica la tabella dopo la dimissione
+					caricaDatiRicoveriAsync(ricoveroFrame); // Ricarica la tabella dopo la dimissione
 				}
 			} else {
 				JOptionPane.showMessageDialog(ricoveroFrame, "Per favore, seleziona un ricovero dalla tabella prima di cliccare su Gestisci Ricovero.", "Nessun Ricovero Selezionato", JOptionPane.WARNING_MESSAGE);
 			}
 		});
 
-		caricaDatiRicoveri(ricoveroFrame);
+		ricoveroFrame.addCercaListener(e -> gestisciRicercaRicoveri(ricoveroFrame));
+		ricoveroFrame.addResetListener(e -> {
+			ricoveroFrame.resetCampiRicerca();
+			caricaDatiRicoveriAsync(ricoveroFrame);
+		});
+
 		mostraFinestraSecondaria(ricoveroFrame, frameDaChiudere);
+
+		// Caricamento iniziale asincrono
+		caricaDatiRicoveriAsync(ricoveroFrame);
 	}
 
 	public void apriSchermataTurni(JFrame frameDaChiudere) {
@@ -1673,8 +1776,32 @@ public class Controller {
 			}
 		});
 
-		caricaDatiTurni(turniFrame);
 		mostraFinestraSecondaria(turniFrame, frameDaChiudere);
+
+		// Utilizzo di SwingWorker per caricare i dati in background
+		turniFrame.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
+		SwingWorker<Object[][], Void> worker = new SwingWorker<Object[][], Void>() {
+			@Override
+			protected Object[][] doInBackground() throws Exception {
+				List<ArrayList<String>> turni = new ArrayList<>();
+				List<ArrayList<String>> medici = medicoDAO.getAllMedici();
+				if (medici != null) {
+					for (ArrayList<String> medico : medici) {
+						if (medico.size() > 4) {
+							List<ArrayList<String>> turniMedico = turnoDAO.getTurniByMedico(medico.get(4));
+							if (turniMedico != null) turni.addAll(turniMedico);
+						}
+					}
+				}
+				return formattaDatiTurni(turni);
+			}
+			@Override
+			protected void done() {
+				try { turniFrame.aggiornaTabella(get()); } catch (Exception e) { LOGGER.warning("Errore caricamento turni"); }
+				turniFrame.setCursor(java.awt.Cursor.getDefaultCursor());
+			}
+		};
+		worker.execute();
 	}
 
 	public boolean gestisciNuovoEvento() {
@@ -1910,22 +2037,27 @@ public class Controller {
 		if (pazientiDb == null) return new ArrayList<>();
 		
 		// Creiamo una mappa dei ricoveri attivi per associare velocemente il CF all'ID del Letto
-		java.util.Map<String, String> pazientiRicoverati = new java.util.HashMap<>();
+		java.util.Map<String, String[]> pazientiRicoverati = new java.util.HashMap<>();
 		List<ArrayList<String>> ricoveriAttivi = ricoveroDAO.getAllRicoveriAttivi();
 		if (ricoveriAttivi != null) {
 			for (List<String> ricovero : ricoveriAttivi) {
-				if (ricovero.size() > 2) {
-					pazientiRicoverati.put(ricovero.get(1), ricovero.get(2)); // Mappa CF -> ID Letto
+				if (ricovero.size() > 3) {
+					pazientiRicoverati.put(ricovero.get(1), new String[]{ricovero.get(2), ricovero.get(3)}); // Mappa CF -> [ID Letto, Reparto]
 				}
 			}
 		}
 
 		for (ArrayList<String> p : pazientiDb) {
 			String cf = p.get(0);
-			String idLetto = pazientiRicoverati.getOrDefault(cf, "");
-			// Il DAO ci fornisce 7 attributi grezzi. Aggiungiamo l'id_letto come 8° elemento (indice 7) per farlo leggere alla GUI.
-			if (p.size() == 7) p.add(idLetto);
-			else if (p.size() > 7) p.set(7, idLetto);
+			String[] infoRicovero = pazientiRicoverati.get(cf);
+			String idLetto = infoRicovero != null ? infoRicovero[0] : "";
+			String reparto = infoRicovero != null ? infoRicovero[1] : "";
+			// Il DAO ci fornisce 7 attributi grezzi. Aggiungiamo l'id_letto come 8° elemento (indice 7) e reparto come 9° (indice 8).
+			if (p.size() == 7) { p.add(idLetto); p.add(reparto); }
+			else if (p.size() > 7) { 
+                p.set(7, idLetto); 
+                if (p.size() > 8) p.set(8, reparto); else p.add(reparto); 
+            }
 		}
 		return pazientiDb;
 	}
@@ -2209,12 +2341,74 @@ public class Controller {
         turniFrame.aggiornaTabella(formattaDatiTurni(turni));
     }
 
-    private void caricaDatiRicoveri(gui.Ricovero ricoveroFrame) {
-        // La logica precedente era inefficiente e nascondeva il problema di ricoveri multipli per un singolo paziente.
-        // Questa nuova logica è più corretta ed efficiente: chiede al DB tutti i ricoveri attivi in una sola volta.
-        List<ArrayList<String>> ricoveriAttivi = ricoveroDAO.getAllRicoveriAttivi();
-        ricoveroFrame.aggiornaTabella(formattaDatiRicoveri(ricoveriAttivi));
-    }
+	private void gestisciRicercaRicoveri(gui.Ricovero ricoveroFrame) {
+		String nome = ricoveroFrame.getNome();
+		String cf = ricoveroFrame.getCodiceFiscale();
+		String id = ricoveroFrame.getIdPaziente();
+		String reparto = ricoveroFrame.getRepartoSelezionato();
+
+		ricoveroFrame.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
+		SwingWorker<Object[][], Void> worker = new SwingWorker<Object[][], Void>() {
+			@Override
+			protected Object[][] doInBackground() throws Exception {
+				List<ArrayList<String>> ricoveriAttivi = ricoveroDAO.getAllRicoveriAttivi();
+				List<ArrayList<String>> risultatiFiltrati = new ArrayList<>();
+
+				for (ArrayList<String> ricovero : ricoveriAttivi) {
+					String idRicovero = ricovero.get(0);
+					String cfPaziente = ricovero.get(1);
+					String repartoRicovero = ricovero.get(3);
+
+					List<String> paziente = pazienteDAO.getPazienteByCf(cfPaziente);
+					String nomePaziente = "";
+					if (paziente != null && !paziente.isEmpty()) {
+						nomePaziente = (paziente.get(1) + " " + paziente.get(2)).toLowerCase();
+					}
+
+					boolean match = true;
+					if (match && !isNullOrEmpty(nome) && !nomePaziente.contains(nome.toLowerCase())) match = false;
+					if (match && !isNullOrEmpty(cf) && !cfPaziente.toLowerCase().contains(cf.toLowerCase())) match = false;
+					if (match && !isNullOrEmpty(id) && !idRicovero.equals(id)) match = false;
+					if (match && !isNullOrEmpty(reparto) && !repartoRicovero.equalsIgnoreCase(reparto)) match = false;
+
+					if (match) risultatiFiltrati.add(ricovero);
+				}
+				return formattaDatiRicoveri(risultatiFiltrati);
+			}
+
+			@Override
+			protected void done() {
+				try {
+					Object[][] dati = get();
+					ricoveroFrame.aggiornaTabella(dati);
+					if (dati.length == 0) {
+						JOptionPane.showMessageDialog(ricoveroFrame, "Nessun ricovero trovato con i criteri specificati.", INFO_TITLE, JOptionPane.INFORMATION_MESSAGE);
+					}
+				} catch (Exception e) {
+					LOGGER.warning("Errore durante la ricerca dei ricoveri: " + e.getMessage());
+				} finally {
+					ricoveroFrame.setCursor(java.awt.Cursor.getDefaultCursor());
+				}
+			}
+		};
+		worker.execute();
+	}
+
+    private void caricaDatiRicoveriAsync(gui.Ricovero ricoveroFrame) {
+		ricoveroFrame.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
+		SwingWorker<Object[][], Void> worker = new SwingWorker<Object[][], Void>() {
+			@Override
+			protected Object[][] doInBackground() throws Exception {
+				return formattaDatiRicoveri(ricoveroDAO.getAllRicoveriAttivi());
+			}
+			@Override
+			protected void done() {
+				try { ricoveroFrame.aggiornaTabella(get()); } catch (Exception e) { LOGGER.warning("Errore caricamento ricoveri"); }
+				finally { ricoveroFrame.setCursor(java.awt.Cursor.getDefaultCursor()); }
+			}
+		};
+		worker.execute();
+	}
 
     private void aggiornaAgendaGUI(JFrame frame) {
         if (utenteLoggato == null) return;

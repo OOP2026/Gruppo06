@@ -23,14 +23,14 @@ public class Pazienti extends JFrame {
     private JButton storicoPazienteButton;
     private JButton assegnaLettoButton;
     private JTextField residenzaField;
-    private JSpinner dataSpinner;
+    private JTextField dataField;
     private JTextField ricercaprognosiField;
     private JRadioButton femminaRadioButton;
     private JRadioButton maschioRadioButton;
 
     private static final String[] COLONNE = {
-            "ID Paziente", "Nome e Cognome", "Codice Fiscale",
-            "Sesso", "Residenza", "Stato Ricovero"
+            "ID Paziente", "Nome e Cognome", "Codice Fiscale", "Data Nascita", "Diagnosi",
+            "Sesso", "Residenza", "Stato Ricovero", "Reparto"
     };
 
     private TableRowSorter<DefaultTableModel> sorter;
@@ -65,12 +65,6 @@ public class Pazienti extends JFrame {
                     "Pediatria", "Terapia Intensiva", "Pronto Soccorso"
             });
         }
-
-        if (dataSpinner != null) {
-            SpinnerDateModel dateModel = new SpinnerDateModel(new Date(), null, null, Calendar.DAY_OF_MONTH);
-            dataSpinner.setModel(dateModel);
-            dataSpinner.setEditor(new JSpinner.DateEditor(dataSpinner, "dd/MM/yyyy"));
-        }
     }
 
     private void setupStyles() {
@@ -97,6 +91,12 @@ public class Pazienti extends JFrame {
         }
     }
 
+    public void addStoricoPazienteListener(java.awt.event.ActionListener listener) {
+        if (storicoPazienteButton != null) {
+            storicoPazienteButton.addActionListener(listener);
+        }
+    }
+
     public String getCfPazienteSelezionato() {
         int rigaSelezionata = pazientiTable.getSelectedRow();
         if (rigaSelezionata == -1) {
@@ -115,13 +115,16 @@ public class Pazienti extends JFrame {
         for (java.util.ArrayList<String> p : datiPazienti) {
             String cf = p.get(0);
             String nomeCognome = p.get(1) + " " + p.get(2);
-            String sesso = p.get(4);
-            String residenza = p.get(5);
+            String dataNascita = p.size() > 3 ? p.get(3) : "";
+            String sesso = p.size() > 4 ? p.get(4) : "";
+            String residenza = p.size() > 5 ? p.get(5) : "";
+            String diagnosi = p.size() > 6 ? p.get(6) : "";
 
             // Indice 7: Stato ricovero (es. ID del letto). Se non presente o vuoto, il paziente non è ricoverato.
             String statoRicovero = (p.size() > 7 && p.get(7) != null && !p.get(7).isEmpty()) ? "Ricoverato - Letto " + p.get(7) : "Non ricoverato";
+            String reparto = (p.size() > 8 && p.get(8) != null && !p.get(8).isEmpty()) ? p.get(8) : "Nessuno";
 
-            model.addRow(new Object[]{cf, nomeCognome, cf, sesso, residenza, statoRicovero});
+            model.addRow(new Object[]{cf, nomeCognome, cf, dataNascita, diagnosi, sesso, residenza, statoRicovero, reparto});
         }
     }
 
@@ -135,13 +138,33 @@ public class Pazienti extends JFrame {
         if (codiceField != null && !codiceField.getText().trim().isEmpty()) {
             filters.add(RowFilter.regexFilter("(?i)" + codiceField.getText().trim(), 2)); // Colonna CF
         }
+        if (dataField != null && !dataField.getText().trim().isEmpty()) {
+            String text = dataField.getText().trim();
+            // Applica un filtro che matcha l'inizio della stringa (es. "2024", "2024-05", "2024-05-15")
+            filters.add(RowFilter.regexFilter("^" + text, 3)); // Colonna Data Nascita
+        }
+        if (ricercaprognosiField != null && !ricercaprognosiField.getText().trim().isEmpty()) {
+            filters.add(RowFilter.regexFilter("(?i)" + ricercaprognosiField.getText().trim(), 4)); // Colonna Diagnosi
+        }
         if (residenzaField != null && !residenzaField.getText().trim().isEmpty()) {
-            filters.add(RowFilter.regexFilter("(?i)" + residenzaField.getText().trim(), 4)); // Colonna Residenza
+            filters.add(RowFilter.regexFilter("(?i)" + residenzaField.getText().trim(), 6)); // Colonna Residenza
         }
         if (maschioRadioButton != null && maschioRadioButton.isSelected()) {
-            filters.add(RowFilter.regexFilter("(?i)^M$", 3)); // Colonna Sesso
+            filters.add(RowFilter.regexFilter("(?i)^M$", 5)); // Colonna Sesso
         } else if (femminaRadioButton != null && femminaRadioButton.isSelected()) {
-            filters.add(RowFilter.regexFilter("(?i)^F$", 3)); // Colonna Sesso
+            filters.add(RowFilter.regexFilter("(?i)^F$", 5)); // Colonna Sesso
+        }
+        if (tipologiaList != null && !tipologiaList.isSelectionEmpty()) {
+            List<String> repartiScelti = tipologiaList.getSelectedValuesList();
+            if (!repartiScelti.isEmpty()) {
+                StringBuilder regex = new StringBuilder("(?i)(");
+                for (int i = 0; i < repartiScelti.size(); i++) {
+                    regex.append(repartiScelti.get(i));
+                    if (i < repartiScelti.size() - 1) regex.append("|");
+                }
+                regex.append(")");
+                filters.add(RowFilter.regexFilter(regex.toString(), 8)); // Colonna Reparto
+            }
         }
 
         if (filters.isEmpty()) {
@@ -155,8 +178,11 @@ public class Pazienti extends JFrame {
         if (nomeField != null) nomeField.setText("");
         if (codiceField != null) codiceField.setText("");
         if (residenzaField != null) residenzaField.setText("");
+        if (ricercaprognosiField != null) ricercaprognosiField.setText("");
         if (maschioRadioButton != null) maschioRadioButton.setSelected(false);
         if (femminaRadioButton != null) femminaRadioButton.setSelected(false);
+        if (tipologiaList != null) tipologiaList.clearSelection();
+        if (dataField != null) dataField.setText("");
         if (sorter != null) sorter.setRowFilter(null);
     }
 

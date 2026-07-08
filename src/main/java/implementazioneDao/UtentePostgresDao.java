@@ -14,12 +14,15 @@ import java.util.logging.Logger;
 public class UtentePostgresDao implements UtenteDAO{
 
         private static final Logger LOGGER = Logger.getLogger(UtentePostgresDao.class.getName());
+        
+        private static final String CHECK_LOGIN_ESISTENTE_QUERY = "SELECT 1 FROM utente WHERE login = ?";
+        private static final String AGGIUNGI_UTENTE_QUERY = "INSERT INTO utente (matricola, login, password, nome, cognome, ruolo) VALUES (?, ?, ?, ?, ?, ?)";
+        private static final String GET_UTENTE_BY_LOGIN_AND_PASSWORD_QUERY = "SELECT nome, cognome, ruolo, login, password, matricola FROM utente WHERE login = ? AND password = ?";
 
         @Override
         public boolean checkLoginEsistente(String login) {
-        String query = "SELECT 1 FROM amministratore WHERE login = ?";
-            try (Connection conn = ConnessioneDatabase.getConnection();
-                 PreparedStatement stmt = conn.prepareStatement(query)) {
+        try (Connection conn = ConnessioneDatabase.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(CHECK_LOGIN_ESISTENTE_QUERY)) {
 
                 stmt.setString(1, login);
                 ResultSet rs = stmt.executeQuery();
@@ -33,14 +36,14 @@ public class UtentePostgresDao implements UtenteDAO{
 
     @Override
     public boolean aggiungiUtente(String matricola, String login, String password, String nome, String cognome, String ruolo) {
-        String query = "INSERT INTO amministratore (matricola, login, password, nome, cognome) VALUES (?, ?, ?, ?, ?)";
         try (Connection conn = ConnessioneDatabase.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
+             PreparedStatement stmt = conn.prepareStatement(AGGIUNGI_UTENTE_QUERY)) {
             stmt.setString(1, matricola);
             stmt.setString(2, login);
             stmt.setString(3, password);
             stmt.setString(4, nome);
             stmt.setString(5, cognome);
+            stmt.setString(6, ruolo);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Errore durante l'inserimento dell'utente nel DB", e);
@@ -51,9 +54,8 @@ public class UtentePostgresDao implements UtenteDAO{
 
     @Override
         public ArrayList<String> getUtenteByLoginAndPassword(String login, String password) {
-        String query = "SELECT nome, cognome, login, password, matricola FROM amministratore WHERE login = ? AND password = ?";
-            try (Connection conn = ConnessioneDatabase.getConnection();
-                 PreparedStatement stmt = conn.prepareStatement(query)) {
+        try (Connection conn = ConnessioneDatabase.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(GET_UTENTE_BY_LOGIN_AND_PASSWORD_QUERY)) {
 
                 stmt.setString(1, login);
                 stmt.setString(2, password);
@@ -61,12 +63,13 @@ public class UtentePostgresDao implements UtenteDAO{
 
                 if (rs.next()) {
                     ArrayList<String> datiUtente = new ArrayList<>();
-                    // L'ordine è importante per il Controller: nome, cognome, login, password, matricola
+                    // L'ordine è importante per il Controller: nome, cognome, ruolo, login, password, matricola
                     String nome = rs.getString("nome");
                     String cognome = rs.getString("cognome");
 
-                datiUtente.add(nome);
-                datiUtente.add(cognome);
+                    datiUtente.add(nome);
+                    datiUtente.add(cognome);
+                    datiUtente.add(rs.getString("ruolo"));
                     datiUtente.add(rs.getString("login"));
                     datiUtente.add(rs.getString("password"));
                     datiUtente.add(rs.getString("matricola"));

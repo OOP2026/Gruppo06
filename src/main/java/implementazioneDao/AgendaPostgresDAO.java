@@ -19,6 +19,14 @@ public class AgendaPostgresDAO implements AgendaDAO {
     private static final String UPDATE_EVENTO_QUERY = "UPDATE agenda SET titolo = ?, descrizione = ?, data_ora_inizio = ?, data_ora_fine = ? WHERE id_agenda = ?";
     private static final String DELETE_EVENTO_QUERY = "DELETE FROM agenda WHERE id_agenda = ?";
 
+    // Costanti per i nomi delle colonne
+    private static final String COL_ID_AGENDA = "id_agenda";
+    private static final String COL_MATRICOLA_MEDICO = "matricola_medico";
+    private static final String COL_TITOLO = "titolo";
+    private static final String COL_DESCRIZIONE = "descrizione";
+    private static final String COL_DATA_ORA_INIZIO = "data_ora_inizio";
+    private static final String COL_DATA_ORA_FINE = "data_ora_fine";
+
 
     @Override
     public ArrayList<Agenda> getEventiByMedico(String matricolaMedico) {
@@ -32,12 +40,12 @@ public class AgendaPostgresDAO implements AgendaDAO {
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     eventi.add(new Agenda(
-                            rs.getInt("id_agenda"),
-                            rs.getString("matricola_medico"),
-                            rs.getString("titolo"),
-                            rs.getString("descrizione"),
-                            rs.getTimestamp("data_ora_inizio"),
-                            rs.getTimestamp("data_ora_fine")
+                            rs.getInt(COL_ID_AGENDA),
+                            rs.getString(COL_MATRICOLA_MEDICO),
+                            rs.getString(COL_TITOLO),
+                            rs.getString(COL_DESCRIZIONE),
+                            rs.getTimestamp(COL_DATA_ORA_INIZIO),
+                            rs.getTimestamp(COL_DATA_ORA_FINE)
                     ));
                 }
             }

@@ -25,7 +25,8 @@ public class Controller {
 	private LettoDAO lettoDAO;
 	private RicoveroDAO ricoveroDAO;
 	private AgendaDAO agendaDAO;
-	private UtenteDAO utenteDAO;
+	private DimissioniDAO dimissioniDAO;
+	private AmministratoreDAO amministratoreDAO;
 
 	private Utente utenteLoggato;
 	private JFrame finestraAttiva = null;
@@ -60,7 +61,8 @@ public class Controller {
 		lettoDAO = new LettoPostgresDao();
 		ricoveroDAO = new RicoveroPostgresDao();
 		agendaDAO = new AgendaPostgresDAO();
-		utenteDAO = new UtentePostgresDao();
+		dimissioniDAO = new DimissioniPostgresDao();
+		amministratoreDAO = new AmministratorePostgresDao();
 
 		// Test di connessione al database all'avvio
 		try (java.sql.Connection conn = database_connection.ConnessioneDatabase.getConnection()) {
@@ -89,20 +91,24 @@ public class Controller {
 	 * @return the boolean
 	 */
 	public boolean registrazione(String login, String password, String nome, String cognome, String pin, boolean isAdmin) {
-		if (utenteDAO.checkLoginEsistente(login)) {
-			LOGGER.warning("Tentativo di registrazione con login già esistente: " + login);
-			return false;
-		}
-
 		// La logica di generazione della matricola dovrebbe essere più robusta
 		String matricola = (isAdmin ? "A" : "M") + (int)(Math.random() * 1000);
-		String ruolo = isAdmin ? "amministratore" : "medico";
 
-		// Per ora, la registrazione aggiunge un utente generico.
-		// La differenziazione in Medico/Amministratore avviene al login.
-		// In un'evoluzione, si potrebbe creare direttamente l'entità Medico/Admin qui.
-		LOGGER.info("Tentativo di registrazione nuovo utente con matricola: " + matricola);
-		return utenteDAO.aggiungiUtente(matricola, login, password, nome, cognome, ruolo);
+		if (isAdmin) {
+			if (amministratoreDAO.checkLoginEsistente(login)) {
+				LOGGER.warning("Tentativo di registrazione con login già esistente: " + login);
+				return false;
+			}
+			LOGGER.info("Tentativo di registrazione nuovo amministratore con matricola: " + matricola);
+			return amministratoreDAO.aggiungiAmministratore(matricola, login, password, nome, cognome, pin);
+		} else {
+			if (medicoDAO.checkLoginEsistente(login)) {
+				LOGGER.warning("Tentativo di registrazione con login già esistente: " + login);
+				return false;
+			}
+			LOGGER.info("Tentativo di registrazione nuovo medico con matricola: " + matricola);
+			return medicoDAO.aggiungiMedico(nome, cognome, matricola, login, password, null, null, null);
+		}
 	}
 
 	/**
@@ -115,26 +121,29 @@ public class Controller {
 	 */
 	//Metodo di riconoscimento e futura impostazione schermata
 	public boolean whoIsAsking(String login, String password, String pin) {
-		ArrayList<String> datiUtente = utenteDAO.getUtenteByLoginAndPassword(login, password);
-
-		if (datiUtente != null && !datiUtente.isEmpty()) {
-			String nome = datiUtente.get(0);
-			String cognome = datiUtente.get(1);
-			String matricola = datiUtente.get(4);
-			
-			// Determina il ruolo runtime: se c'è un PIN inserito, è Amministratore. Altrimenti Medico.
-			String ruolo = (pin != null && !pin.trim().isEmpty()) ? "amministratore" : "medico";
-
-			if ("amministratore".equalsIgnoreCase(ruolo)) {
-				this.utenteLoggato = new Amministratore(matricola, nome, cognome, login, ruolo);
-				LOGGER.info("Accesso Amministratore confermato per " + login);
-				return true;
-			} else if ("medico".equalsIgnoreCase(ruolo)) {
-				this.utenteLoggato = new Medico(matricola, nome, cognome, login, ruolo);
-				LOGGER.info("Accesso Medico confermato per " + login);
-				return true;
-			}
+		// Prova a fare il login come amministratore
+		ArrayList<String> datiAmministratore = amministratoreDAO.getAmministratoreByLoginAndPassword(login, password);
+		if (datiAmministratore != null && !datiAmministratore.isEmpty()) {
+			String nome = datiAmministratore.get(0);
+			String cognome = datiAmministratore.get(1);
+			String matricola = datiAmministratore.get(4);
+			this.utenteLoggato = new Amministratore(matricola, nome, cognome, login, "amministratore");
+			LOGGER.info("Accesso Amministratore confermato per " + login);
+			return true;
 		}
+
+		// Se fallisce, prova a fare il login come medico
+		ArrayList<String> datiMedico = medicoDAO.getMedicoByLoginAndPassword(login, password);
+		if (datiMedico != null && !datiMedico.isEmpty()) {
+			String nome = datiMedico.get(0);
+			String cognome = datiMedico.get(1);
+			String matricola = datiMedico.get(4);
+			this.utenteLoggato = new Medico(matricola, nome, cognome, login, "medico");
+			LOGGER.info("Accesso Medico confermato per " + login);
+			return true;
+		}
+
+
 		LOGGER.warning("Accesso negato, utente non trovato");
 		return false;
 	}
@@ -472,7 +481,7 @@ public class Controller {
 		// Questo metodo dovrebbe recuperare i dettagli completi della dimissione dal DAO
 		// Per ora, usiamo i dati già presenti e li mostriamo in un dialogo.
 		// In futuro, potresti voler recuperare più informazioni.
-		ArrayList<String> ricoveroChiuso = ricoveroDAO.getUltimoRicoveroChiuso(cfPaziente); // Ipotizzando esista questo metodo nel DAO
+		ArrayList<String> ricoveroChiuso = dimissioniDAO.getUltimoRicoveroChiuso(cfPaziente); // Ipotizzando esista questo metodo nel DAO
 
 		String messaggio = "Dettagli Dimissione per Paziente CF: " + cfPaziente + "\n\n";
 		messaggio += "Questa è una funzionalità dimostrativa.\nI dettagli completi verrebbero recuperati dal database.\n\n";
@@ -496,7 +505,7 @@ public class Controller {
 		String dataFine = setDataOraInizio();
 		String prognosi = calcolaPrognosi(giorniPrognosi);
 
-		boolean successo = ricoveroDAO.aggiornaRicoveroDimissione(idRicovero, dataFine, prognosi, esito);
+		boolean successo = dimissioniDAO.creaDimissione(idRicovero, dataFine, prognosi, esito);
 		if (successo) {
 			lettoDAO.aggiornaStatoLetto(idLetto, reparto, false); // Libera il letto
 			LOGGER.info("Paziente dimesso e letto liberato.");
@@ -505,7 +514,7 @@ public class Controller {
 	}
 
 	public List<ArrayList<String>> ricercaDimissioni() {
-		return ricoveroDAO.getAllDimissioni();
+		return dimissioniDAO.getAllDimissioni();
 	}
 
 	public boolean checkDisponibilitaLetto(String idLetto, String reparto) {
@@ -707,21 +716,96 @@ public class Controller {
 	}
 
 	public boolean gestisciCreazioneNuovoRicovero() {
-		JTextField cfInput = new JTextField();
-		JTextField lettoInput = new JTextField();
-		JTextField repartoInput = new JTextField();
+		// Logica per ottenere i pazienti disponibili (non ancora ricoverati)
+		// 1. Ottieni i pazienti disponibili (non ancora ricoverati)
+		java.util.Set<String> pazientiRicoverati = new java.util.HashSet<>();
+		List<ArrayList<String>> ricoveriAttivi = ricoveroDAO.getAllRicoveriAttivi();
+		if (ricoveriAttivi != null) {
+			for (List<String> ricovero : ricoveriAttivi) {
+				if (ricovero.size() > 1) pazientiRicoverati.add(ricovero.get(1));
+			}
+		}
+
+		List<ArrayList<String>> tuttiPazienti = pazienteDAO.getAllPazienti();
+		List<String> pazientiDisponibiliNomi = new ArrayList<>();
+		List<String> pazientiDisponibiliCf = new ArrayList<>();
+		if (tuttiPazienti != null) {
+			for (List<String> datiPaziente : tuttiPazienti) {
+				String cf = datiPaziente.get(0);
+				if (!pazientiRicoverati.contains(cf)) {
+					pazientiDisponibiliNomi.add(datiPaziente.get(2) + " " + datiPaziente.get(1) + " (" + cf + ")");
+					pazientiDisponibiliCf.add(cf);
+				}
+			}
+		}
+
+		if (pazientiDisponibiliNomi.isEmpty()) {
+			JOptionPane.showMessageDialog(null, "Non ci sono pazienti disponibili per un nuovo ricovero.", "Nessun Paziente", JOptionPane.INFORMATION_MESSAGE);
+			return false;
+		}
+
+		// 2. Ottieni reparti e letti disponibili
+		List<ArrayList<String>> tuttiLetti = lettoDAO.getAllLetti();
+		java.util.Map<String, List<String>> lettiDisponibiliPerReparto = new java.util.HashMap<>();
+		java.util.Set<String> repartiDisponibili = new java.util.TreeSet<>(); // TreeSet per ordine alfabetico
+
+		if (tuttiLetti != null) {
+			for (List<String> letto : tuttiLetti) {
+				String idLetto = letto.get(0);
+				String reparto = letto.get(1);
+				if (checkDisponibilitaLetto(idLetto, reparto)) {
+					repartiDisponibili.add(reparto);
+					lettiDisponibiliPerReparto.computeIfAbsent(reparto, k -> new ArrayList<>()).add(idLetto);
+				}
+			}
+		}
+
+		if (repartiDisponibili.isEmpty()) {
+			JOptionPane.showMessageDialog(null, "Non ci sono letti disponibili in nessun reparto.", "Nessun Letto Disponibile", JOptionPane.INFORMATION_MESSAGE);
+			return false;
+		}
+
+		// 3. Prepara i componenti della GUI
+		JComboBox<String> pazientiComboBox = new JComboBox<>(pazientiDisponibiliNomi.toArray(new String[0]));
+		JComboBox<String> repartiComboBox = new JComboBox<>(repartiDisponibili.toArray(new String[0]));
+		JComboBox<String> lettiComboBox = new JComboBox<>();
 		JTextField motivoInput = new JTextField();
 
+		// Logica per aggiornare i letti quando cambia il reparto
+		repartiComboBox.addActionListener(e -> {
+			String repartoSelezionato = (String) repartiComboBox.getSelectedItem();
+			lettiComboBox.removeAllItems();
+			if (repartoSelezionato != null) {
+				List<String> letti = lettiDisponibiliPerReparto.get(repartoSelezionato);
+				if (letti != null) {
+					for (String letto : letti) {
+						lettiComboBox.addItem(letto);
+					}
+				}
+			}
+		});
+
+		// Popola i letti per il primo reparto selezionato di default
+		if (repartiComboBox.getItemCount() > 0) {
+			repartiComboBox.setSelectedIndex(0);
+		}
+
+		// 4. Mostra il dialogo
 		JPanel panel = new JPanel(new GridLayout(4, 2, 10, 10));
-		panel.add(new JLabel("CF Paziente:")); panel.add(cfInput);
-		panel.add(new JLabel("ID Letto:")); panel.add(lettoInput);
-		panel.add(new JLabel("Reparto:")); panel.add(repartoInput);
+		panel.add(new JLabel("Paziente:")); panel.add(pazientiComboBox);
+		panel.add(new JLabel("Reparto:")); panel.add(repartiComboBox);
+		panel.add(new JLabel("ID Letto:")); panel.add(lettiComboBox);
 		panel.add(new JLabel("Motivo:")); panel.add(motivoInput);
 
 		int result = JOptionPane.showConfirmDialog(null, panel, "Registra Nuovo Ricovero", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 
-		if (result == JOptionPane.OK_OPTION) {
-			boolean successo = registraRicovero(cfInput.getText().trim(), lettoInput.getText().trim(), repartoInput.getText().trim(), motivoInput.getText().trim());
+		if (result == JOptionPane.OK_OPTION && pazientiComboBox.getSelectedIndex() != -1 && lettiComboBox.getSelectedIndex() != -1) {
+			String cfSelezionato = pazientiDisponibiliCf.get(pazientiComboBox.getSelectedIndex());
+			String repartoSelezionato = (String) repartiComboBox.getSelectedItem();
+			String lettoSelezionato = (String) lettiComboBox.getSelectedItem();
+			String motivo = motivoInput.getText().trim();
+
+			boolean successo = registraRicovero(cfSelezionato, lettoSelezionato, repartoSelezionato, motivo);
 			if (successo) {
 				JOptionPane.showMessageDialog(null, "Ricovero aggiunto con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
 				return true;
@@ -869,11 +953,11 @@ public class Controller {
 
         pazientiFrame.addNuovoPazienteListener(e -> {
             if (gestisciCreazioneNuovoPaziente()) {
-                pazientiFrame.aggiornaTabella(getAllPazienti());
+                pazientiFrame.aggiornaTabella(formattaDatiPazienti(getAllPazienti()));
             }
         });
 
-        pazientiFrame.aggiornaTabella(getAllPazienti());
+        pazientiFrame.aggiornaTabella(formattaDatiPazienti(getAllPazienti()));
 		mostraFinestraSecondaria(pazientiFrame, frameDaChiudere);
 	}
 
@@ -973,9 +1057,37 @@ public class Controller {
 
         mediciFrame.addNuovoMedicoListener(e -> {
             if (gestisciCreazioneNuovoMedico()) {
-                mediciFrame.aggiornaTabella(formattaDatiMedici(getAllMedici()));
+                mediciFrame.aggiornaTabella(formattaDatiMedici(medicoDAO.getAllMedici()));
             }
         });
+
+		// Collegamento per il pulsante "Aggiorna Medico"
+		mediciFrame.addModificaMedicoListener(e -> {
+			String[] datiSelezionati = mediciFrame.getDatiMedicoSelezionato();
+			if (datiSelezionati != null && datiSelezionati.length > 0) {
+				String matricola = datiSelezionati[0]; // La matricola è il primo elemento
+				if (gestisciModificaMedico(matricola)) {
+					// Ricarica la tabella per mostrare i dati aggiornati
+					mediciFrame.aggiornaTabella(formattaDatiMedici(medicoDAO.getAllMedici()));
+				}
+			} else {
+				JOptionPane.showMessageDialog(mediciFrame, "Per favore, seleziona un medico dalla tabella prima di cliccare su 'Aggiorna Medico'.", "Nessun Medico Selezionato", JOptionPane.WARNING_MESSAGE);
+			}
+		});
+
+		mediciFrame.addAssenzaListener(e -> {
+			String[] datiSelezionati = mediciFrame.getDatiMedicoSelezionato();
+			if (datiSelezionati != null && datiSelezionati.length > 0) {
+				String matricola = datiSelezionati[0];
+				if (gestisciCreazioneNuovaAssenza(matricola)) {
+					// Non è necessario aggiornare la tabella dei medici dopo aver aggiunto un'assenza,
+					// ma potresti voler dare un feedback all'utente.
+					// Per ora, il feedback è nel metodo di gestione.
+				}
+			} else {
+				JOptionPane.showMessageDialog(mediciFrame, "Per favore, seleziona un medico dalla tabella prima di gestire un'assenza.", "Nessun Medico Selezionato", JOptionPane.WARNING_MESSAGE);
+			}
+		});
 
 		mediciFrame.aggiornaTabella(formattaDatiMedici(getAllMedici()));
 		mostraFinestraSecondaria(mediciFrame, frameDaChiudere);
@@ -1119,9 +1231,96 @@ public class Controller {
         return false;
 	}
 
+	public boolean gestisciModificaMedico(String matricola) {
+		List<String> datiMedico = medicoDAO.getMedicoByMatricola(matricola);
+		if (datiMedico == null || datiMedico.isEmpty()) {
+			JOptionPane.showMessageDialog(null, "Impossibile trovare i dati per il medico con matricola " + matricola, ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+			return false;
+		}
+
+		// Pre-popola i campi con i dati esistenti
+		JTextField nomeInput = new JTextField(datiMedico.get(0));
+		JTextField cognomeInput = new JTextField(datiMedico.get(1));
+		JTextField iscrizioneInput = new JTextField(datiMedico.get(5));
+		JTextField specializzazioneInput = new JTextField(datiMedico.get(6));
+		JTextField repartoInput = new JTextField(datiMedico.get(7));
+
+		JPanel panel = new JPanel(new GridLayout(6, 2, 10, 10));
+		panel.add(new JLabel("Matricola:"));
+		panel.add(new JLabel(matricola)); // Non editabile
+		panel.add(new JLabel(LABEL_NOME)); panel.add(nomeInput);
+		panel.add(new JLabel(LABEL_COGNOME)); panel.add(cognomeInput);
+		panel.add(new JLabel("Data Iscrizione Albo (AAAA-MM-GG):")); panel.add(iscrizioneInput);
+		panel.add(new JLabel("Specializzazione:")); panel.add(specializzazioneInput);
+		panel.add(new JLabel("Reparto:")); panel.add(repartoInput);
+
+		int result = JOptionPane.showConfirmDialog(null, panel, "Modifica Dati Medico", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+		if (result == JOptionPane.OK_OPTION) {
+			String nome = nomeInput.getText().trim();
+			String cognome = cognomeInput.getText().trim();
+			String iscrizioneAlbo = iscrizioneInput.getText().trim();
+			String specializzazione = specializzazioneInput.getText().trim();
+			String reparto = repartoInput.getText().trim();
+
+			boolean successo = aggiornaMedico(nome, cognome, matricola, iscrizioneAlbo, specializzazione, reparto);
+
+			if (successo) {
+				JOptionPane.showMessageDialog(null, "Dati del medico aggiornati con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
+				return true;
+			} else {
+				JOptionPane.showMessageDialog(null, "Errore durante l'aggiornamento. Controlla la validità dei dati.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+			}
+		}
+		return false;
+	}
+
+	public boolean gestisciCreazioneNuovaAssenza(String matricola) {
+		JTextField dataInizioInput = new JTextField(DEFAULT_DATE);
+		JTextField dataFineInput = new JTextField(DEFAULT_DATE);
+		JTextField motivazioneInput = new JTextField();
+		JCheckBox approvataCheckbox = new JCheckBox("Approvata", true);
+
+		JPanel panel = new JPanel(new GridLayout(5, 2, 10, 10));
+		panel.add(new JLabel(LABEL_MATRICOLA_MEDICO));
+		panel.add(new JLabel(matricola));
+		panel.add(new JLabel("Data Inizio (AAAA-MM-GG):")); panel.add(dataInizioInput);
+		panel.add(new JLabel("Data Fine (AAAA-MM-GG):")); panel.add(dataFineInput);
+		panel.add(new JLabel("Motivazione:")); panel.add(motivazioneInput);
+		panel.add(new JLabel("")); panel.add(approvataCheckbox);
+
+		int result = JOptionPane.showConfirmDialog(null, panel, "Registra Nuova Assenza", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+		if (result == JOptionPane.OK_OPTION) {
+			String dataInizio = dataInizioInput.getText().trim();
+			String dataFine = dataFineInput.getText().trim();
+			String motivazione = motivazioneInput.getText().trim();
+			boolean approvata = approvataCheckbox.isSelected();
+
+			boolean successo = aggiungiAssenza(matricola, dataInizio, dataFine, motivazione, approvata);
+
+			if (successo) {
+				JOptionPane.showMessageDialog(null, "Assenza aggiunta con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
+				return true;
+			} else {
+				JOptionPane.showMessageDialog(null, ERRORE_AGGIUNTA_DATI, ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+			}
+		}
+		return false;
+	}
+
+	private List<ArrayList<String>> formattaDatiPazienti(List<ArrayList<String>> pazientiDb) {
+		// La GUI Pazienti ora accetta direttamente la lista dal DAO.
+		// La logica per determinare lo stato "Ricoverato" o "Non ricoverato"
+		// dovrebbe essere gestita all'interno della GUI stessa per mantenere
+		// il controller più pulito.
+		// Per ora, restituiamo i dati come sono.
+		return pazientiDb != null ? pazientiDb : new ArrayList<>();
+	}
+
 	private Object[][] formattaDatiMedici(List<ArrayList<String>> mediciDb) {
 		if (mediciDb == null) return new Object[0][0];
-		Object[][] dati = new Object[mediciDb.size()][6];
+		Object[][] dati = new Object[mediciDb.size()][5];
 		for (int i = 0; i < mediciDb.size(); i++) {
 			List<String> m = mediciDb.get(i);
 			try {
@@ -1130,7 +1329,6 @@ public class Controller {
 				dati[i][2] = m.size() > 6 ? m.get(6) : "-"; // Specializzazione
 				dati[i][3] = m.size() > 7 ? m.get(7) : "-"; // Reparto Assegnato
 				dati[i][4] = "Attivo"; // Stato
-				dati[i][5] = "-"; // Note
 			} catch (Exception e) {
 				final int riga = i;
 				LOGGER.warning(() -> "Errore nella formattazione dei dati medici alla riga " + riga + ": " + e.getMessage());
@@ -1353,7 +1551,7 @@ public class Controller {
 	public void avvia() {
 		// Avvio diretto della schermata amministratore per saltare il login durante lo sviluppo
 		this.utenteLoggato = new model.Amministratore("A001", "Admin", "Test", "admin", "amministratore");
-		avviaSchermataAmministratore("Dott. Admin Test");
+		avviaSchermataAmministratore("Admin Test");
 		// Per ripristinare il normale flusso di avvio, decommenta la riga seguente e commenta le due sopra.
 		// avviaSchermataLogin();
 	}

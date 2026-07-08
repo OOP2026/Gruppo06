@@ -8,6 +8,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class PazientePostgresDao implements PazienteDAO {
 
@@ -18,6 +20,8 @@ public class PazientePostgresDao implements PazienteDAO {
     private static final String GET_ALL_PAZIENTI_QUERY = "SELECT " + COLUMNS + " FROM paziente ORDER BY cognome, nome";
     private static final String AGGIORNA_PAZIENTE_QUERY = "UPDATE paziente SET nome = ?, cognome = ?, data_nascita = ?, sesso = ?, residenza = ?, diagnosi = ? WHERE cf = ?";
     private static final String ELIMINA_PAZIENTE_QUERY = "DELETE FROM paziente WHERE cf = ?";
+
+    private static final Logger LOGGER = Logger.getLogger(PazientePostgresDao.class.getName());
 
     @Override
     public boolean aggiungiPaziente(String cf, String nome, String cognome, String dataNascita, String sesso, String residenza, String diagnosi) {
@@ -34,8 +38,9 @@ public class PazientePostgresDao implements PazienteDAO {
             
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            throw new RuntimeException("Errore durante l'aggiunta del paziente nel database", e);
+            LOGGER.log(Level.SEVERE, "Errore durante l'aggiunta del paziente nel database", e);
         }
+        return false;
     }
 
     @Override
@@ -59,7 +64,7 @@ public class PazientePostgresDao implements PazienteDAO {
                 }
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Errore nel recupero del paziente dal database", e);
+            LOGGER.log(Level.SEVERE, "Errore nel recupero del paziente dal database", e);
         }
         return new ArrayList<>();
     }
@@ -84,7 +89,7 @@ public class PazientePostgresDao implements PazienteDAO {
                 paziente.add(datiPaziente);
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Errore nel recupero di tutti i pazienti dal database", e);
+            LOGGER.log(Level.SEVERE, "Errore nel recupero di tutti i pazienti dal database", e);
         }
         return paziente;
     }
@@ -104,8 +109,9 @@ public class PazientePostgresDao implements PazienteDAO {
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            throw new RuntimeException("Errore durante l'aggiornamento del paziente nel database", e);
+            LOGGER.log(Level.SEVERE, "Errore durante l'aggiornamento del paziente nel database", e);
         }
+        return false;
     }
 
     @Override
@@ -115,7 +121,8 @@ public class PazientePostgresDao implements PazienteDAO {
             stmt.setString(1, cf);
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            throw new RuntimeException("Errore durante l'eliminazione del paziente dal database", e);
+            LOGGER.log(Level.SEVERE, "Errore durante l'eliminazione del paziente dal database", e);
         }
+        return false;
     }
 }

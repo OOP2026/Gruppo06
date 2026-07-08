@@ -16,12 +16,24 @@ import java.util.logging.Logger;
 public class TurnoLavoroPostgresDao implements Turno_LavoroDAO {
 
     private static final Logger LOGGER = Logger.getLogger(TurnoLavoroPostgresDao.class.getName());
+    
+    private static final String AGGIUNGI_TURNO_QUERY = "INSERT INTO turno_lavorativo (data_turno, ora_inizio, ora_fine, matricola_medico, id_agenda) VALUES (?, ?, ?, ?, ?)";
+    private static final String GET_TURNO_QUERY = "SELECT * FROM turno_lavorativo WHERE matricola_medico = ? AND data_turno = ? AND ora_inizio = ?";
+    private static final String GET_TURNI_BY_MEDICO_QUERY = "SELECT * FROM  turno_lavorativo WHERE matricola_medico = ? ORDER BY data_turno ASC, ora_inizio ASC";
+    private static final String AGGIORNA_TURNO_QUERY = "UPDATE  turno_lavorativo SET ora_inizio = ?, ora_fine = ? WHERE matricola_medico = ? AND data_turno = ? AND ora_inizio = ?";
+    private static final String ELIMINA_TURNO_QUERY = "DELETE FROM  turno_lavorativo WHERE matricola_medico = ? AND data_turno = ? AND ora_inizio = ?";
+
+    // Costanti per i nomi delle colonne
+    private static final String COL_ID_TURNO = "id_turno";
+    private static final String COL_MATRICOLA_MEDICO = "matricola_medico";
+    private static final String COL_DATA_TURNO = "data_turno";
+    private static final String COL_ORA_INIZIO = "ora_inizio";
+    private static final String COL_ORA_FINE = "ora_fine";
 
     @Override
     public boolean aggiungiTurno(String matricola, String data, String inizioTurno, String fineTurno, String idAgenda) {
-        String query = "INSERT INTO turno_lavorativo (data_turno, ora_inizio, ora_fine, matricola_medico, id_agenda) VALUES (?, ?, ?, ?, ?)";
         try (Connection conn = ConnessioneDatabase.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
+             PreparedStatement stmt = conn.prepareStatement(AGGIUNGI_TURNO_QUERY)) {
 
             stmt.setObject(1, LocalDate.parse(data));
             stmt.setObject(2, LocalTime.parse(inizioTurno));
@@ -38,9 +50,8 @@ public class TurnoLavoroPostgresDao implements Turno_LavoroDAO {
 
     @Override
     public ArrayList<String> getTurno(String matricola, String data, String inizioTurno) {
-        String query = "SELECT * FROM turno_lavorativo WHERE matricola_medico = ? AND data_turno = ? AND ora_inizio = ?";
         try (Connection conn = ConnessioneDatabase.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
+             PreparedStatement stmt = conn.prepareStatement(GET_TURNO_QUERY)) {
 
             stmt.setString(1, matricola);
             stmt.setObject(2, LocalDate.parse(data));
@@ -48,16 +59,16 @@ public class TurnoLavoroPostgresDao implements Turno_LavoroDAO {
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
                 ArrayList<String> turno = new ArrayList<>();
-                turno.add(rs.getString("id_turno"));
-                turno.add(rs.getString("matricola_medico"));
+                turno.add(rs.getString(COL_ID_TURNO));
+                turno.add(rs.getString(COL_MATRICOLA_MEDICO));
 
-                LocalDate dataDb = rs.getObject("data_turno", LocalDate.class);
+                LocalDate dataDb = rs.getObject(COL_DATA_TURNO, LocalDate.class);
                 turno.add(dataDb != null ? dataDb.toString() : "");
 
-                LocalTime inizioDb = rs.getObject("ora_inizio", LocalTime.class);
+                LocalTime inizioDb = rs.getObject(COL_ORA_INIZIO, LocalTime.class);
                 turno.add(inizioDb != null ? inizioDb.toString() : "");
 
-                LocalTime fineDb = rs.getObject("ora_fine", LocalTime.class);
+                LocalTime fineDb = rs.getObject(COL_ORA_FINE, LocalTime.class);
                 turno.add(fineDb != null ? fineDb.toString() : "");
 
                 return turno;
@@ -71,24 +82,23 @@ public class TurnoLavoroPostgresDao implements Turno_LavoroDAO {
     @Override
     public ArrayList<ArrayList<String>> getTurniByMedico(String matricola) {
         ArrayList<ArrayList<String>> turni = new ArrayList<>();
-        String query = "SELECT * FROM  turno_lavorativo WHERE matricola_medico = ? ORDER BY data_turno ASC, ora_inizio ASC";
         try (Connection conn = ConnessioneDatabase.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
+             PreparedStatement stmt = conn.prepareStatement(GET_TURNI_BY_MEDICO_QUERY)) {
 
             stmt.setString(1, matricola);
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
                 ArrayList<String> turno = new ArrayList<>();
-                turno.add(rs.getString("id_turno"));
-                turno.add(rs.getString("matricola_medico"));
+                turno.add(rs.getString(COL_ID_TURNO));
+                turno.add(rs.getString(COL_MATRICOLA_MEDICO));
 
-                LocalDate dataDb = rs.getObject("data_turno", LocalDate.class);
+                LocalDate dataDb = rs.getObject(COL_DATA_TURNO, LocalDate.class);
                 turno.add(dataDb != null ? dataDb.toString() : "");
 
-                LocalTime inizioDb = rs.getObject("ora_inizio", LocalTime.class);
+                LocalTime inizioDb = rs.getObject(COL_ORA_INIZIO, LocalTime.class);
                 turno.add(inizioDb != null ? inizioDb.toString() : "");
 
-                LocalTime fineDb = rs.getObject("ora_fine", LocalTime.class);
+                LocalTime fineDb = rs.getObject(COL_ORA_FINE, LocalTime.class);
                 turno.add(fineDb != null ? fineDb.toString() : "");
 
                 turni.add(turno);
@@ -101,9 +111,8 @@ public class TurnoLavoroPostgresDao implements Turno_LavoroDAO {
 
     @Override
     public boolean aggiornaTurno(String matricola, String data, String vecchioInizio, String nuovoInizio, String nuovaFine) {
-        String query = "UPDATE  turno_lavorativo SET ora_inizio = ?, ora_fine = ? WHERE matricola_medico = ? AND data_turno = ? AND ora_inizio = ?";
         try (Connection conn = ConnessioneDatabase.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
+             PreparedStatement stmt = conn.prepareStatement(AGGIORNA_TURNO_QUERY)) {
             stmt.setObject(1, LocalTime.parse(nuovoInizio));
             stmt.setObject(2, LocalTime.parse(nuovaFine));
             stmt.setString(3, matricola);
@@ -118,9 +127,8 @@ public class TurnoLavoroPostgresDao implements Turno_LavoroDAO {
 
     @Override
     public boolean eliminaTurno(String matricola, String data, String inizioTurno) {
-        String query = "DELETE FROM  turno_lavorativo WHERE matricola_medico = ? AND data_turno = ? AND ora_inizio = ?";
         try (Connection conn = ConnessioneDatabase.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
+             PreparedStatement stmt = conn.prepareStatement(ELIMINA_TURNO_QUERY)) {
             stmt.setString(1, matricola);
             stmt.setObject(2, LocalDate.parse(data));
             stmt.setObject(3, LocalTime.parse(inizioTurno));

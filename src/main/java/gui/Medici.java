@@ -3,8 +3,6 @@ package gui;
 import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -17,11 +15,13 @@ public class Medici extends JFrame {
     private JButton resetButton;
     private JButton cercaButton;
     private JTable mediciTable;
-    private JButton refreshList;
-    private JButton newMedico;
+    private JButton newmedicoButton;
 
     private JList<String> specializzazioneList;
     private JList<String> repartoList;
+    private JButton assenzaButton;
+    private JButton modificamedicoButton;
+    
     //Selezione colori GUI
     private static final Color AZZURRO_HOME = new Color(70, 132, 197);
     private static final Color SELECTION_BG = new Color(187, 222, 247);
@@ -51,7 +51,24 @@ public class Medici extends JFrame {
     }
 
     public void addNuovoMedicoListener(java.awt.event.ActionListener listener) {
-        if (newMedico != null) newMedico.addActionListener(listener);
+        if (newmedicoButton != null) newmedicoButton.addActionListener(listener);
+    }
+
+    public void addModificaMedicoListener(java.awt.event.ActionListener listener) {
+        if (modificamedicoButton != null) modificamedicoButton.addActionListener(listener);
+    }
+
+    public void addAssenzaListener(java.awt.event.ActionListener listener) {
+        if (assenzaButton != null) assenzaButton.addActionListener(listener);
+    }
+
+    public String[] getDatiMedicoSelezionato() {
+        int selectedRow = mediciTable.getSelectedRow();
+        if (selectedRow == -1) {
+            return null; // Nessuna riga selezionata
+        }
+        // La matricola è nella prima colonna (indice 0)
+        return new String[]{(String) mediciTable.getValueAt(selectedRow, 0)};
     }
     //Inserimento parametri list e definizione modelli Table
     private void initComponents() {
@@ -84,8 +101,9 @@ public class Medici extends JFrame {
         Login.setupTableStyle(mediciTable);
         if(cercaButton != null) Login.applicaStilePulsantiCentrali(cercaButton);
         if(resetButton != null) Login.applicaStilePulsantiCentrali(resetButton);
-        if(refreshList != null) Login.applicaStilePulsantiCentrali(refreshList);
-        if(newMedico != null) Login.applicaStilePulsantiCentrali(newMedico);
+        if(modificamedicoButton != null) Login.applicaStilePulsantiCentrali(modificamedicoButton);
+        if(newmedicoButton != null) Login.applicaStilePulsantiCentrali(newmedicoButton);
+        if(assenzaButton != null) Login.applicaStilePulsantiCentrali(assenzaButton);
     }
 
     private void setupListeners() { //Setup Listener e operazioni di filtraggio su Matricola

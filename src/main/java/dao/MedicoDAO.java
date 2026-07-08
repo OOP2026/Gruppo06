@@ -10,4 +10,6 @@ public interface MedicoDAO {
     
     boolean aggiornaMedico(String nome, String cognome, String matricola, String iscrizioneAlbo, String specializzazione, String reparto);
     boolean eliminaMedico(String matricola);
+    ArrayList<String> getMedicoByLoginAndPassword(String login, String password);
+    boolean checkLoginEsistente(String login);
 }

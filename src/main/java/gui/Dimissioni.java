@@ -25,7 +25,7 @@ public class Dimissioni extends JFrame {
     private JTextField nomeCognomeField;
 
     private static final String[] COLONNE = {
-            "ID Paziente", "Paziente", "Codice Fiscale",
+            "ID Ricovero", "Paziente", "Codice Fiscale",
             "Reparto Dimissione", "Tipo Dimissione", "Data Dimissione"
     };
 
@@ -89,6 +89,14 @@ public class Dimissioni extends JFrame {
         if (selectedRow != -1) {
             // La colonna 2 contiene il Codice Fiscale
             return (String) pazientiTable.getValueAt(selectedRow, 2);
+        }
+        return null;
+    }
+
+    public String getIdRicoveroSelezionato() {
+        int selectedRow = pazientiTable.getSelectedRow();
+        if (selectedRow != -1) {
+            return (String) pazientiTable.getValueAt(selectedRow, 0);
         }
         return null;
     }

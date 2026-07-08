@@ -18,6 +18,7 @@ public class DimissioniPostgresDao implements DimissioniDAO {
     private static final String CREA_DIMISSIONE_QUERY = "UPDATE ricovero SET data_fine = ?, prognosi = ?, esito = ? WHERE id_ricovero = ?";
     private static final String GET_ALL_DIMISSIONI_QUERY = "SELECT id_ricovero, cf, id_letto, reparto, data_inizio, data_fine, motivazione, prognosi, esito FROM ricovero WHERE data_fine IS NOT NULL ORDER BY data_fine DESC";
     private static final String GET_ULTIMO_RICOVERO_CHIUSO_QUERY = "SELECT id_ricovero, cf, id_letto, reparto, data_inizio, data_fine, motivazione, prognosi, esito FROM ricovero WHERE cf = ? AND data_fine IS NOT NULL ORDER BY data_fine DESC LIMIT 1";
+    private static final String ELIMINA_DIMISSIONE_QUERY = "DELETE FROM ricovero WHERE id_ricovero = ?";
 
     // Costanti per i nomi delle colonne
     private static final String COL_ID_RICOVERO = "id_ricovero";
@@ -94,5 +95,17 @@ public class DimissioniPostgresDao implements DimissioniDAO {
             LOGGER.log(Level.SEVERE, "Errore durante il recupero dell'ultimo ricovero chiuso per il paziente " + cfPaziente, e);
         }
         return new ArrayList<>();
+    }
+
+    @Override
+    public boolean eliminaDimissione(String idRicovero) {
+        try (Connection conn = ConnessioneDatabase.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(ELIMINA_DIMISSIONE_QUERY)) {
+            stmt.setInt(1, Integer.parseInt(idRicovero));
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException | NumberFormatException e) {
+            LOGGER.log(Level.SEVERE, "Errore durante l'eliminazione della dimissione", e);
+        }
+        return false;
     }
 }

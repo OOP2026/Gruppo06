@@ -18,6 +18,7 @@ public class AgendaPostgresDAO implements AgendaDAO {
     private static final String ADD_EVENTO_QUERY = "INSERT INTO agenda (id_agenda, titolo, matricola_medico, descrizione, data_ora_inizio, data_ora_fine) VALUES (?, ?, ?, ?, ?, ?)";
     private static final String UPDATE_EVENTO_QUERY = "UPDATE agenda SET titolo = ?, descrizione = ?, data_ora_inizio = ?, data_ora_fine = ? WHERE id_agenda = ?";
     private static final String DELETE_EVENTO_QUERY = "DELETE FROM agenda WHERE id_agenda = ?";
+    private static final String CREA_AGENDA_QUERY = "INSERT INTO agenda (matricola_medico, titolo, descrizione) VALUES (?, 'Agenda Principale', 'Agenda creata automaticamente')";
 
     // Costanti per i nomi delle colonne
     private static final String COL_ID_AGENDA = "id_agenda";
@@ -99,6 +100,18 @@ public class AgendaPostgresDAO implements AgendaDAO {
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Errore durante l'eliminazione dell'evento dal database", e);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean creaAgendaPerMedico(String matricolaMedico) {
+        try (Connection conn = ConnessioneDatabase.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(CREA_AGENDA_QUERY)) {
+            stmt.setString(1, matricolaMedico);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Errore durante la creazione automatica dell'agenda per il medico", e);
             return false;
         }
     }

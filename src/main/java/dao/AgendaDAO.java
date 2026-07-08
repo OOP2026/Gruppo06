@@ -13,4 +13,10 @@ public interface AgendaDAO {
     boolean updateEvento(Agenda evento);
 
     boolean deleteEvento(int idEvento);
+
+    /**
+     * Crea un'agenda di base collegata al nuovo medico registrato.
+     * @param matricolaMedico La matricola del medico.
+     */
+    boolean creaAgendaPerMedico(String matricolaMedico);
 }

@@ -27,6 +27,7 @@ public class Controller {
 	private AgendaDAO agendaDAO;
 	private DimissioniDAO dimissioniDAO;
 	private AmministratoreDAO amministratoreDAO;
+	private PrestazioneDAO prestazioneDAO;
 
 	private Utente utenteLoggato;
 	private JFrame finestraAttiva = null;
@@ -43,7 +44,7 @@ public class Controller {
 	private static final String LABEL_DATA = "Data (AAAA-MM-GG):";
 	private static final String LABEL_ORA_INIZIO = "Ora Inizio (HH:MM:SS):";
 	private static final String LABEL_ORA_FINE = "Ora Fine (HH:MM:SS):";
-	private static final String DEFAULT_DATE = "2026-05-21";
+	private static final String DEFAULT_DATE = java.time.LocalDate.now().toString();
 	private static final String INFO_TITLE = "Informazione";
 
 	private static final Logger LOGGER = Logger.getLogger(Controller.class.getName());
@@ -63,6 +64,7 @@ public class Controller {
 		agendaDAO = new AgendaPostgresDAO();
 		dimissioniDAO = new DimissioniPostgresDao();
 		amministratoreDAO = new AmministratorePostgresDao();
+		prestazioneDAO = new PrestazionePostgresDao();
 
 		// Test di connessione al database all'avvio
 		try (java.sql.Connection conn = database_connection.ConnessioneDatabase.getConnection()) {
@@ -107,7 +109,11 @@ public class Controller {
 				return false;
 			}
 			LOGGER.info("Tentativo di registrazione nuovo medico con matricola: " + matricola);
-			return medicoDAO.aggiungiMedico(nome, cognome, matricola, login, password, null, null, null);
+			boolean successo = medicoDAO.aggiungiMedico(nome, cognome, matricola, login, password, null, null, null);
+			if (successo) {
+				agendaDAO.creaAgendaPerMedico(matricola);
+			}
+			return successo;
 		}
 	}
 
@@ -180,7 +186,11 @@ public class Controller {
 			LOGGER.warning(() -> "Errore: Impossibile aggiungere. Esiste già un medico con matricola " + matricola);
 			return false;
 		}
-		return medicoDAO.aggiungiMedico(nome, cognome, matricola, login, password, iscrizioneAlbo, specializzazione, reparto);
+		boolean successo = medicoDAO.aggiungiMedico(nome, cognome, matricola, login, password, iscrizioneAlbo, specializzazione, reparto);
+		if (successo) {
+			agendaDAO.creaAgendaPerMedico(matricola);
+		}
+		return successo;
 	}
 
 	public List<String> getMedicoByMatricola(String matricola) {
@@ -478,14 +488,104 @@ public class Controller {
 	 * @param cfPaziente Il CF del paziente di cui mostrare i dettagli della dimissione.
 	 */
 	public void mostraDettagliDimissione(String cfPaziente) {
-		// Questo metodo dovrebbe recuperare i dettagli completi della dimissione dal DAO
-		// Per ora, usiamo i dati già presenti e li mostriamo in un dialogo.
-		// In futuro, potresti voler recuperare più informazioni.
-		ArrayList<String> ricoveroChiuso = dimissioniDAO.getUltimoRicoveroChiuso(cfPaziente); // Ipotizzando esista questo metodo nel DAO
+		ArrayList<String> ricoveroChiuso = dimissioniDAO.getUltimoRicoveroChiuso(cfPaziente);
 
-		String messaggio = "Dettagli Dimissione per Paziente CF: " + cfPaziente + "\n\n";
-		messaggio += "Questa è una funzionalità dimostrativa.\nI dettagli completi verrebbero recuperati dal database.\n\n";
-		JOptionPane.showMessageDialog(null, messaggio, "Dettaglio Dimissione", JOptionPane.INFORMATION_MESSAGE);
+		if (ricoveroChiuso == null || ricoveroChiuso.isEmpty()) {
+			JOptionPane.showMessageDialog(null, "Nessun dettaglio dimissione trovato per il paziente " + cfPaziente, ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+
+		String motivoRicovero = ricoveroChiuso.size() > 6 ? ricoveroChiuso.get(6) : "-";
+		String prognosi = ricoveroChiuso.size() > 7 ? ricoveroChiuso.get(7) : "-";
+		String esito = ricoveroChiuso.size() > 8 ? ricoveroChiuso.get(8) : "-";
+
+		String messaggio = "Dettagli Dimissione per Paziente CF: " + cfPaziente + "\n\n" +
+						   "Motivo Ricovero Originale: " + motivoRicovero + "\n" +
+						   "Motivo Dimissione (Esito): " + esito + "\n" +
+						   "Giorni di Prognosi Previsti: " + prognosi + "\n";
+
+		Object[] options = {"Chiudi", "Ricovera Nuovamente"};
+		int choice = JOptionPane.showOptionDialog(null, messaggio, "Dettaglio Dimissione",
+				JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, options[0]);
+
+		if (choice == 1) { // Ricovera Nuovamente
+			// Controllo se il paziente è già ricoverato
+			List<String> ricoveroAttivo = ricoveroDAO.getRicoveroAttivo(cfPaziente);
+			if (ricoveroAttivo != null && !ricoveroAttivo.isEmpty()) {
+				JOptionPane.showMessageDialog(null, "Il paziente risulta già attualmente ricoverato.", "Impossibile Ricoverare", JOptionPane.WARNING_MESSAGE);
+			} else {
+				gestisciNuovoRicoveroDaDimissione(cfPaziente);
+			}
+		}
+	}
+
+	public boolean gestisciNuovoRicoveroDaDimissione(String cfPaziente) {
+		List<String> paziente = pazienteDAO.getPazienteByCf(cfPaziente);
+		String nomePaziente = (paziente != null && paziente.size() > 2) ? paziente.get(1) + " " + paziente.get(2) : cfPaziente;
+
+		List<ArrayList<String>> tuttiLetti = lettoDAO.getAllLetti();
+		java.util.Map<String, List<String>> lettiDisponibiliPerReparto = new java.util.HashMap<>();
+		java.util.Set<String> repartiDisponibili = new java.util.TreeSet<>();
+
+		if (tuttiLetti != null) {
+			for (List<String> letto : tuttiLetti) {
+				String idLetto = letto.get(0);
+				String reparto = letto.get(1);
+				if (checkDisponibilitaLetto(idLetto, reparto)) {
+					repartiDisponibili.add(reparto);
+					lettiDisponibiliPerReparto.computeIfAbsent(reparto, k -> new ArrayList<>()).add(idLetto);
+				}
+			}
+		}
+
+		if (repartiDisponibili.isEmpty()) {
+			JOptionPane.showMessageDialog(null, "Non ci sono letti disponibili in nessun reparto.", "Nessun Letto Disponibile", JOptionPane.INFORMATION_MESSAGE);
+			return false;
+		}
+
+		JComboBox<String> repartiComboBox = new JComboBox<>(repartiDisponibili.toArray(new String[0]));
+		JComboBox<String> lettiComboBox = new JComboBox<>();
+		JTextField motivoInput = new JTextField();
+
+		repartiComboBox.addActionListener(e -> {
+			String repartoSelezionato = (String) repartiComboBox.getSelectedItem();
+			lettiComboBox.removeAllItems();
+			if (repartoSelezionato != null) {
+				List<String> letti = lettiDisponibiliPerReparto.get(repartoSelezionato);
+				if (letti != null) {
+					for (String letto : letti) {
+						lettiComboBox.addItem(letto);
+					}
+				}
+			}
+		});
+
+		if (repartiComboBox.getItemCount() > 0) {
+			repartiComboBox.setSelectedIndex(0);
+		}
+
+		JPanel panel = new JPanel(new GridLayout(4, 2, 10, 10));
+		panel.add(new JLabel("Paziente:")); panel.add(new JLabel(nomePaziente + " (" + cfPaziente + ")"));
+		panel.add(new JLabel("Reparto:")); panel.add(repartiComboBox);
+		panel.add(new JLabel("ID Letto:")); panel.add(lettiComboBox);
+		panel.add(new JLabel("Motivo:")); panel.add(motivoInput);
+
+		int result = JOptionPane.showConfirmDialog(null, panel, "Registra Nuovo Ricovero", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+		if (result == JOptionPane.OK_OPTION && lettiComboBox.getSelectedIndex() != -1) {
+			String repartoSelezionato = (String) repartiComboBox.getSelectedItem();
+			String lettoSelezionato = (String) lettiComboBox.getSelectedItem();
+			String motivo = motivoInput.getText().trim();
+
+			boolean successo = registraRicovero(cfPaziente, lettoSelezionato, repartoSelezionato, motivo);
+			if (successo) {
+				JOptionPane.showMessageDialog(null, "Ricovero aggiunto con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
+				return true;
+			} else {
+				JOptionPane.showMessageDialog(null, "Errore durante l'aggiunta. Controlla disponibilità letto e CF.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+			}
+		}
+		return false;
 	}
 
 	public String calcolaPrognosi(int giorniPrognosi) {
@@ -625,13 +725,17 @@ public class Controller {
 			String specializzazione = specializzazioneInput.getText().trim();
 			String reparto = repartoInput.getText().trim();
 
-			boolean successo = aggiungiMedico(nome, cognome, matricola, login, password, iscrizioneAlbo, specializzazione, reparto);
+			try {
+				boolean successo = aggiungiMedico(nome, cognome, matricola, login, password, iscrizioneAlbo, specializzazione, reparto);
 
-			if (successo) {
-				JOptionPane.showMessageDialog(null, "Medico aggiunto con successo al database!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
-				return true;
-			} else {
-				JOptionPane.showMessageDialog(null, ERRORE_AGGIUNTA_DATI, ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+				if (successo) {
+					JOptionPane.showMessageDialog(null, "Medico aggiunto con successo al database!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
+					return true;
+				} else {
+					JOptionPane.showMessageDialog(null, ERRORE_AGGIUNTA_DATI, ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+				}
+			} catch (IllegalArgumentException ex) {
+				JOptionPane.showMessageDialog(null, "Formato data non valido. Assicurati di usare AAAA-MM-GG per la Data Iscrizione Albo.", "Errore di Formato", JOptionPane.ERROR_MESSAGE);
 			}
 		}
         return false;
@@ -816,30 +920,22 @@ public class Controller {
         return false;
 	}
 
-	public boolean gestisciArchiviaDimissione() {
-		JTextField cfInput = new JTextField();
-		JTextField esitoInput = new JTextField();
-		JTextField prognosiInput = new JTextField("0");
+	public boolean gestisciArchiviaDimissione(String idRicovero) {
+		int result = JOptionPane.showConfirmDialog(
+			null,
+			"Sei sicuro di voler archiviare (eliminare) la dimissione selezionata?",
+			"Conferma Archiviazione",
+			JOptionPane.YES_NO_OPTION
+		);
 
-		JPanel panel = new JPanel(new GridLayout(3, 2, 10, 10));
-		panel.add(new JLabel("CF Paziente (Ricoverato):")); panel.add(cfInput);
-		panel.add(new JLabel("Esito:")); panel.add(esitoInput);
-		panel.add(new JLabel("Giorni Prognosi:")); panel.add(prognosiInput);
-
-		int result = JOptionPane.showConfirmDialog(null, panel, "Archivia Dimissione", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-
-		if (result == JOptionPane.OK_OPTION) {
-            try {
-			    boolean successo = dimissioni(cfInput.getText().trim(), esitoInput.getText().trim(), Integer.parseInt(prognosiInput.getText().trim()));
-			    if (successo) {
-				    JOptionPane.showMessageDialog(null, "Dimissione registrata con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
-				    return true;
-			    } else {
-				    JOptionPane.showMessageDialog(null, "Errore durante l'archiviazione. Il paziente è ricoverato?", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
-			    }
-            } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(null, "Inserisci un numero valido per la prognosi.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
-            }
+		if (result == JOptionPane.YES_OPTION) {
+			boolean successo = dimissioniDAO.eliminaDimissione(idRicovero);
+			if (successo) {
+				JOptionPane.showMessageDialog(null, "Dimissione archiviata (eliminata) con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
+				return true;
+			} else {
+				JOptionPane.showMessageDialog(null, "Errore durante l'archiviazione della dimissione.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+			}
 		}
         return false;
 	}
@@ -849,7 +945,7 @@ public class Controller {
 		JTextField prognosiInput = new JTextField("0");
 
 		JPanel panel = new JPanel(new GridLayout(2, 2, 10, 10));
-		panel.add(new JLabel("Esito:")); panel.add(esitoInput);
+		panel.add(new JLabel("Motivo Dimissione (Esito):")); panel.add(esitoInput);
 		panel.add(new JLabel("Giorni Prognosi:")); panel.add(prognosiInput);
 
 		int result = JOptionPane.showConfirmDialog(null, panel, "Dimetti Paziente " + cfPaziente, JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
@@ -1010,10 +1106,64 @@ public class Controller {
 		mostraFinestraSecondaria(lettiFrame, frameDaChiudere);
 	}
 
+	public boolean gestisciCreazioneNuovaPrestazione() {
+		JTextField idPrestazioneInput = new JTextField();
+		JComboBox<String> tipologiaInput = new JComboBox<>(new String[]{
+				"Chirurgia Generale", "Radiologia Interventistica", "Diagnostica Avanzata",
+				"Chirurgia Robotica", "Procedure Endoscopiche", "Radioterapia", "Cardiologia", "Oncologia"
+		});
+		JTextField esitoInput = new JTextField();
+		JTextField idTurnoInput = new JTextField();
+		JTextField cfPazienteInput = new JTextField();
+		JTextField matricolaInput = new JTextField();
+		JTextField idAgendaInput = new JTextField();
+
+		JPanel panel = new JPanel(new GridLayout(7, 2, 10, 10));
+		panel.add(new JLabel("ID Prestazione:")); panel.add(idPrestazioneInput);
+		panel.add(new JLabel("Tipologia:")); panel.add(tipologiaInput);
+		panel.add(new JLabel("Esito Prestazione:")); panel.add(esitoInput);
+		panel.add(new JLabel("ID Turno:")); panel.add(idTurnoInput);
+		panel.add(new JLabel("CF Paziente:")); panel.add(cfPazienteInput);
+		panel.add(new JLabel("Matricola Medico:")); panel.add(matricolaInput);
+		panel.add(new JLabel("ID Agenda:")); panel.add(idAgendaInput);
+
+		int result = JOptionPane.showConfirmDialog(null, panel, "Nuova Prestazione", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+		if (result == JOptionPane.OK_OPTION) {
+			try {
+				int idPrestazione = Integer.parseInt(idPrestazioneInput.getText().trim());
+				String tipologia = (String) tipologiaInput.getSelectedItem();
+				String esito = esitoInput.getText().trim();
+				String idTurno = idTurnoInput.getText().trim();
+				String cfPaziente = cfPazienteInput.getText().trim();
+				String matricola = matricolaInput.getText().trim();
+				String idAgenda = idAgendaInput.getText().trim();
+
+				boolean successo = prestazioneDAO.aggiungiPrestazione(idPrestazione, tipologia, esito, idTurno, cfPaziente, matricola, idAgenda);
+				if (successo) {
+					JOptionPane.showMessageDialog(null, "Prestazione aggiunta con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
+					return true;
+				} else {
+					JOptionPane.showMessageDialog(null, ERRORE_AGGIUNTA_DATI, ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+				}
+			} catch (NumberFormatException ex) {
+				JOptionPane.showMessageDialog(null, "ID Prestazione, ID Turno e ID Agenda devono essere numeri validi.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+			}
+		}
+		return false;
+	}
+
 	public void apriSchermataPrestazioni(JFrame frameDaChiudere) {
 		gui.Prestazioni prestazioniFrame = new gui.Prestazioni();
 		impostaSchermata(prestazioniFrame, prestazioniFrame.mainPanel, "Ricerca Prestazioni Mediche", WindowConstants.DISPOSE_ON_CLOSE);
-		prestazioniFrame.aggiornaTabella(new Object[0][0]);
+		
+		prestazioniFrame.addNuovaPrestazioneListener(e -> {
+			if (gestisciCreazioneNuovaPrestazione()) {
+				prestazioniFrame.aggiornaTabella(formattaDatiPrestazioni(prestazioneDAO.getAllPrestazioni()));
+			}
+		});
+
+		prestazioniFrame.aggiornaTabella(formattaDatiPrestazioni(prestazioneDAO.getAllPrestazioni()));
 		mostraFinestraSecondaria(prestazioniFrame, frameDaChiudere);
 	}
 
@@ -1079,10 +1229,50 @@ public class Controller {
 			String[] datiSelezionati = mediciFrame.getDatiMedicoSelezionato();
 			if (datiSelezionati != null && datiSelezionati.length > 0) {
 				String matricola = datiSelezionati[0];
-				if (gestisciCreazioneNuovaAssenza(matricola)) {
-					// Non è necessario aggiornare la tabella dei medici dopo aver aggiunto un'assenza,
-					// ma potresti voler dare un feedback all'utente.
-					// Per ora, il feedback è nel metodo di gestione.
+				List<ArrayList<String>> assenze = assenzaDAO.getAssenzeByMedico(matricola);
+				List<String> assenzaCorrente = null;
+				java.time.LocalDate oggi = java.time.LocalDate.now();
+				for(List<String> a : assenze) {
+					if ("true".equalsIgnoreCase(a.get(4))) {
+						try {
+							java.time.LocalDate dataInizio = java.time.LocalDate.parse(a.get(1));
+							java.time.LocalDate dataFine = java.time.LocalDate.parse(a.get(2));
+							if (!oggi.isBefore(dataInizio) && !oggi.isAfter(dataFine)) {
+								assenzaCorrente = a;
+								break;
+							}
+						} catch(Exception ex) {}
+					}
+				}
+				
+				if (assenzaCorrente != null) {
+					String messaggio = "Il medico è attualmente assente.\n" +
+									   "Data Inizio: " + assenzaCorrente.get(1) + "\n" +
+									   "Data Fine: " + assenzaCorrente.get(2) + "\n" +
+									   "Motivazione: " + assenzaCorrente.get(3);
+					Object[] options = {"Chiudi", "Revoca Assenza", "Aggiungi Nuova Assenza"};
+					int choice = JOptionPane.showOptionDialog(mediciFrame, messaggio, "Dettagli Assenza Approvata",
+							JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, options[0]);
+					
+					if (choice == 1) { // Revoca Assenza
+						int conferma = JOptionPane.showConfirmDialog(mediciFrame, "Sei sicuro di voler revocare questa assenza?", "Conferma Revoca", JOptionPane.YES_NO_OPTION);
+						if (conferma == JOptionPane.YES_OPTION) {
+							if (eliminaAssenza(matricola, assenzaCorrente.get(1))) {
+								JOptionPane.showMessageDialog(mediciFrame, "Assenza revocata con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
+								mediciFrame.aggiornaTabella(formattaDatiMedici(medicoDAO.getAllMedici()));
+							} else {
+								JOptionPane.showMessageDialog(mediciFrame, "Errore durante la revoca dell'assenza.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+							}
+						}
+					} else if (choice == 2) { // Aggiungi Nuova Assenza
+						if (gestisciCreazioneNuovaAssenza(matricola)) {
+							mediciFrame.aggiornaTabella(formattaDatiMedici(medicoDAO.getAllMedici()));
+						}
+					}
+				} else {
+					if (gestisciCreazioneNuovaAssenza(matricola)) {
+						mediciFrame.aggiornaTabella(formattaDatiMedici(medicoDAO.getAllMedici()));
+					}
 				}
 			} else {
 				JOptionPane.showMessageDialog(mediciFrame, "Per favore, seleziona un medico dalla tabella prima di gestire un'assenza.", "Nessun Medico Selezionato", JOptionPane.WARNING_MESSAGE);
@@ -1099,8 +1289,13 @@ public class Controller {
 	
 		// Logica per il pulsante "Archivia Dimissione"
         dimissioniFrame.addArchiviaDimissioneListener(e -> {
-            if (gestisciArchiviaDimissione()) {
-                dimissioniFrame.aggiornaTabella(formattaDatiDimissioni(ricercaDimissioni()));
+            String idSelezionato = dimissioniFrame.getIdRicoveroSelezionato();
+            if (idSelezionato != null) {
+                if (gestisciArchiviaDimissione(idSelezionato)) {
+                    dimissioniFrame.aggiornaTabella(formattaDatiDimissioni(ricercaDimissioni()));
+                }
+            } else {
+                JOptionPane.showMessageDialog(dimissioniFrame, "Seleziona una dimissione dalla tabella per archiviarla.", INFO_TITLE, JOptionPane.WARNING_MESSAGE);
             }
         });
 
@@ -1263,13 +1458,17 @@ public class Controller {
 			String specializzazione = specializzazioneInput.getText().trim();
 			String reparto = repartoInput.getText().trim();
 
-			boolean successo = aggiornaMedico(nome, cognome, matricola, iscrizioneAlbo, specializzazione, reparto);
+			try {
+				boolean successo = aggiornaMedico(nome, cognome, matricola, iscrizioneAlbo, specializzazione, reparto);
 
-			if (successo) {
-				JOptionPane.showMessageDialog(null, "Dati del medico aggiornati con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
-				return true;
-			} else {
-				JOptionPane.showMessageDialog(null, "Errore durante l'aggiornamento. Controlla la validità dei dati.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+				if (successo) {
+					JOptionPane.showMessageDialog(null, "Dati del medico aggiornati con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
+					return true;
+				} else {
+					JOptionPane.showMessageDialog(null, "Errore durante l'aggiornamento. Controlla la validità dei dati.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+				}
+			} catch (IllegalArgumentException ex) {
+				JOptionPane.showMessageDialog(null, "Formato data non valido. Assicurati di usare AAAA-MM-GG per la Data Iscrizione Albo.", "Errore di Formato", JOptionPane.ERROR_MESSAGE);
 			}
 		}
 		return false;
@@ -1297,38 +1496,79 @@ public class Controller {
 			String motivazione = motivazioneInput.getText().trim();
 			boolean approvata = approvataCheckbox.isSelected();
 
-			boolean successo = aggiungiAssenza(matricola, dataInizio, dataFine, motivazione, approvata);
+			try {
+				boolean successo = aggiungiAssenza(matricola, dataInizio, dataFine, motivazione, approvata);
 
-			if (successo) {
-				JOptionPane.showMessageDialog(null, "Assenza aggiunta con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
-				return true;
-			} else {
-				JOptionPane.showMessageDialog(null, ERRORE_AGGIUNTA_DATI, ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+				if (successo) {
+					JOptionPane.showMessageDialog(null, "Assenza aggiunta con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
+					return true;
+				} else {
+					JOptionPane.showMessageDialog(null, ERRORE_AGGIUNTA_DATI, ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+				}
+			} catch (IllegalArgumentException ex) {
+				JOptionPane.showMessageDialog(null, "Formato data non valido. Assicurati di usare AAAA-MM-GG.", "Errore di Formato", JOptionPane.ERROR_MESSAGE);
 			}
 		}
 		return false;
 	}
 
 	private List<ArrayList<String>> formattaDatiPazienti(List<ArrayList<String>> pazientiDb) {
-		// La GUI Pazienti ora accetta direttamente la lista dal DAO.
-		// La logica per determinare lo stato "Ricoverato" o "Non ricoverato"
-		// dovrebbe essere gestita all'interno della GUI stessa per mantenere
-		// il controller più pulito.
-		// Per ora, restituiamo i dati come sono.
-		return pazientiDb != null ? pazientiDb : new ArrayList<>();
+		if (pazientiDb == null) return new ArrayList<>();
+		
+		// Creiamo una mappa dei ricoveri attivi per associare velocemente il CF all'ID del Letto
+		java.util.Map<String, String> pazientiRicoverati = new java.util.HashMap<>();
+		List<ArrayList<String>> ricoveriAttivi = ricoveroDAO.getAllRicoveriAttivi();
+		if (ricoveriAttivi != null) {
+			for (List<String> ricovero : ricoveriAttivi) {
+				if (ricovero.size() > 2) {
+					pazientiRicoverati.put(ricovero.get(1), ricovero.get(2)); // Mappa CF -> ID Letto
+				}
+			}
+		}
+
+		for (ArrayList<String> p : pazientiDb) {
+			String cf = p.get(0);
+			String idLetto = pazientiRicoverati.getOrDefault(cf, "");
+			// Il DAO ci fornisce 7 attributi grezzi. Aggiungiamo l'id_letto come 8° elemento (indice 7) per farlo leggere alla GUI.
+			if (p.size() == 7) p.add(idLetto);
+			else if (p.size() > 7) p.set(7, idLetto);
+		}
+		return pazientiDb;
 	}
 
 	private Object[][] formattaDatiMedici(List<ArrayList<String>> mediciDb) {
 		if (mediciDb == null) return new Object[0][0];
-		Object[][] dati = new Object[mediciDb.size()][5];
+		Object[][] dati = new Object[mediciDb.size()][6];
+		java.time.LocalDate oggi = java.time.LocalDate.now();
 		for (int i = 0; i < mediciDb.size(); i++) {
 			List<String> m = mediciDb.get(i);
 			try {
-				dati[i][0] = m.size() > 4 ? m.get(4) : "-"; // Matricola
+				String matricola = m.size() > 4 ? m.get(4) : "-";
+				dati[i][0] = matricola;
 				dati[i][1] = (m.size() > 1 ? m.get(1) : "") + " " + (!m.isEmpty() ? m.get(0) : ""); // Cognome Nome
 				dati[i][2] = m.size() > 6 ? m.get(6) : "-"; // Specializzazione
 				dati[i][3] = m.size() > 7 ? m.get(7) : "-"; // Reparto Assegnato
-				dati[i][4] = "Attivo"; // Stato
+				
+				String stato = "Attivo";
+				if (!"-".equals(matricola)) {
+					List<ArrayList<String>> assenze = assenzaDAO.getAssenzeByMedico(matricola);
+					for (List<String> assenza : assenze) {
+						if ("true".equalsIgnoreCase(assenza.get(4))) { // Approvata
+							try {
+								java.time.LocalDate dataInizio = java.time.LocalDate.parse(assenza.get(1));
+								java.time.LocalDate dataFine = java.time.LocalDate.parse(assenza.get(2));
+								if (!oggi.isBefore(dataInizio) && !oggi.isAfter(dataFine)) {
+									stato = "Assente";
+									break;
+								}
+							} catch (Exception ex) {
+								LOGGER.warning("Errore parsing date assenza: " + ex.getMessage());
+							}
+						}
+					}
+				}
+				dati[i][4] = stato; // Stato
+				dati[i][5] = "-"; // Note/Contatto
 			} catch (Exception e) {
 				final int riga = i;
 				LOGGER.warning(() -> "Errore nella formattazione dei dati medici alla riga " + riga + ": " + e.getMessage());
@@ -1343,15 +1583,43 @@ public class Controller {
 		for (int i = 0; i < dimDb.size(); i++) {
 			List<String> d = dimDb.get(i);
 			try {
-				dati[i][0] = !d.isEmpty() ? d.get(0) : "-"; // ID Paziente / CF
-				dati[i][1] = d.size() > 1 ? d.get(1) : "-"; // Paziente
-				dati[i][2] = d.size() > 2 ? d.get(2) : "-"; // CF
+				String cf = d.size() > 1 ? d.get(1) : "-";
+				List<String> paziente = pazienteDAO.getPazienteByCf(cf);
+				String nomePaziente = "Sconosciuto";
+				if (paziente != null && !paziente.isEmpty()) {
+					nomePaziente = (paziente.size() > 1 ? paziente.get(1) : "") + " " + (paziente.size() > 2 ? paziente.get(2) : "");
+				}
+				
+				dati[i][0] = d.get(0); // ID Ricovero
+				dati[i][1] = nomePaziente.trim(); // Paziente
+				dati[i][2] = cf; // CF
 				dati[i][3] = d.size() > 3 ? d.get(3) : "-"; // Reparto
-				dati[i][4] = d.size() > 4 ? d.get(4) : "-"; // Tipo (Esito)
+				dati[i][4] = d.size() > 8 ? d.get(8) : "-"; // Tipo (Esito)
 				dati[i][5] = d.size() > 5 ? d.get(5) : "-"; // Data
 			} catch (Exception e) {
 				final int riga = i;
 				LOGGER.warning(() -> "Errore nella formattazione dei dati dimissioni alla riga " + riga + ": " + e.getMessage());
+			}
+		}
+		return dati;
+	}
+
+	private Object[][] formattaDatiPrestazioni(List<ArrayList<String>> prestazioniDb) {
+		if (prestazioniDb == null) return new Object[0][0];
+		Object[][] dati = new Object[prestazioniDb.size()][7];
+		for (int i = 0; i < prestazioniDb.size(); i++) {
+			List<String> p = prestazioniDb.get(i);
+			try {
+				dati[i][0] = p.size() > 0 ? p.get(0) : "-"; // ID Prestaz.
+				dati[i][1] = p.size() > 1 ? p.get(1) : "-"; // Tipologia
+				dati[i][2] = p.size() > 2 ? p.get(2) : "-"; // Esito
+				dati[i][3] = p.size() > 3 ? p.get(3) : "-"; // ID Turno
+				dati[i][4] = p.size() > 4 ? p.get(4) : "-"; // CF Paziente
+				dati[i][5] = p.size() > 5 ? p.get(5) : "-"; // Matricola Medico
+				dati[i][6] = p.size() > 6 ? p.get(6) : "-"; // ID Agenda
+			} catch (Exception e) {
+				final int riga = i;
+				LOGGER.warning(() -> "Errore nella formattazione dei dati prestazioni alla riga " + riga + ": " + e.getMessage());
 			}
 		}
 		return dati;
@@ -1549,11 +1817,7 @@ public class Controller {
 	}
 
 	public void avvia() {
-		// Avvio diretto della schermata amministratore per saltare il login durante lo sviluppo
-		this.utenteLoggato = new model.Amministratore("A001", "Admin", "Test", "admin", "amministratore");
-		avviaSchermataAmministratore("Admin Test");
-		// Per ripristinare il normale flusso di avvio, decommenta la riga seguente e commenta le due sopra.
-		// avviaSchermataLogin();
+		avviaSchermataRegistrazione();
 	}
 
 	private void avviaSchermataLogin() {
@@ -1623,7 +1887,7 @@ public class Controller {
 			}
 
 			if (isAdmin && pin.isEmpty()) {
-				regView.showMessage("Errore PIN", "Inserisci il PIN per registrarti come Amministratore.", JOptionPane.WARNING_MESSAGE);
+				regView.showMessage("Errore PIN", "Scegli un PIN personale per registrarti come Amministratore.", JOptionPane.WARNING_MESSAGE);
 				return;
 			}
 

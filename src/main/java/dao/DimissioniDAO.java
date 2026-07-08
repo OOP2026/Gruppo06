@@ -25,4 +25,11 @@ public interface DimissioniDAO {
     ArrayList<ArrayList<String>> getAllDimissioni();
 
     ArrayList<String> getUltimoRicoveroChiuso(String cfPaziente);
+
+    /**
+     * Elimina una dimissione (record di ricovero chiuso).
+     * @param idRicovero L'ID del ricovero da eliminare.
+     * @return true se l'operazione ha successo, false altrimenti.
+     */
+    boolean eliminaDimissione(String idRicovero);
 }

@@ -74,7 +74,7 @@ public class Medici extends JFrame {
     private void initComponents() {
         SpinnerDateModel dateModel = new SpinnerDateModel(new Date(), null, null, Calendar.DAY_OF_MONTH);
         dataSpinner.setModel(dateModel);
-        dataSpinner.setEditor(new JSpinner.DateEditor(dataSpinner, "dd/MM/yyyy"));
+        dataSpinner.setEditor(new JSpinner.DateEditor(dataSpinner, "yyyy-MM-dd"));
 
         specializzazioneList.setListData(new String[]{
                 "Chirurgia Generale", "Cardiologia", "Neurologia",

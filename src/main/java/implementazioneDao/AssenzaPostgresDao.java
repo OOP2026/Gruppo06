@@ -15,11 +15,11 @@ public class AssenzaPostgresDao implements AssenzaDAO {
 
     private static final Logger LOGGER = Logger.getLogger(AssenzaPostgresDao.class.getName());
     
-    private static final String AGGIUNGI_ASSENZA_QUERY = "INSERT INTO assenze (matricola, data_inizio, data_fine, motivazione, approvazione) VALUES (?, ?, ?, ?, ?)";
-    private static final String GET_ASSENZA_QUERY = "SELECT * FROM assenze WHERE matricola = ? AND data_inizio = ?";
-    private static final String GET_ASSENZE_BY_MEDICO_QUERY = "SELECT * FROM assenze WHERE matricola = ? ORDER BY data_inizio ASC";
-    private static final String AGGIORNA_ASSENZA_QUERY = "UPDATE assenze SET data_fine = ?, motivazione = ?, approvazione = ? WHERE matricola = ? AND data_inizio = ?";
-    private static final String ELIMINA_ASSENZA_QUERY = "DELETE FROM assenze WHERE matricola = ? AND data_inizio = ?";
+    private static final String AGGIUNGI_ASSENZA_QUERY = "INSERT INTO assenza (matricola, data_inizio, data_fine, motivazione, approvazione) VALUES (?, ?, ?, ?, ?)";
+    private static final String GET_ASSENZA_QUERY = "SELECT * FROM assenza WHERE matricola = ? AND data_inizio = ?";
+    private static final String GET_ASSENZE_BY_MEDICO_QUERY = "SELECT * FROM assenza WHERE matricola = ? ORDER BY data_inizio ASC";
+    private static final String AGGIORNA_ASSENZA_QUERY = "UPDATE assenza SET data_fine = ?, motivazione = ?, approvazione = ? WHERE matricola = ? AND data_inizio = ?";
+    private static final String ELIMINA_ASSENZA_QUERY = "DELETE FROM assenza WHERE matricola = ? AND data_inizio = ?";
 
     // Costanti per i nomi delle colonne
     private static final String COL_MATRICOLA = "matricola";

@@ -24,8 +24,7 @@ public class Prestazioni extends JFrame {
     private JTextField codiceField;
 
     private static final String[] COLONNE = {
-            "ID Prestaz.", "Codice", "Nome Prestazione",
-            "Tipo", "Reparto Erog.", "Note/Dettagli"
+            "ID Prestazione", "Tipologia", "Esito", "ID Turno", "CF Paziente", "Matricola Medico", "ID Agenda"
     };
 
     private Object[][] datiPrestazioni = new Object[0][0];

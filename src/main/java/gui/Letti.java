@@ -18,6 +18,8 @@ public class Letti extends JFrame {
     private JTable lettiTable; // Questa è la tabella che mostra i letti
     private JButton assegnaPazienteButton;
     private JButton storicoLettiButton;
+    private JTextField stanzaField;
+    private JTextField pazienteField;
 
     private static final String[] COLONNE = {
             "Numero Letto", "Stanza", "Nome Paziente", "Codice Fiscale", "Reparto", "Stato"
@@ -94,9 +96,19 @@ public class Letti extends JFrame {
         return repartoList.getSelectedValue();
     }
 
+    public String getStanza() {
+        return stanzaField.getText();
+    }
+
+    public String getPaziente() {
+        return pazienteField.getText();
+    }
+
     public void resetCampiRicerca() {
         tuttiRadioButton.setSelected(true);
         repartoList.clearSelection();
+        stanzaField.setText("");
+        pazienteField.setText("");
     }
 
     /**

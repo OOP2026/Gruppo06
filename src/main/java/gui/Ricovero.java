@@ -8,13 +8,15 @@ import java.awt.event.MouseEvent;
 import java.util.Calendar;
 import java.awt.event.ActionListener;
 import java.util.Date;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Ricovero extends JFrame {
 
     public JPanel mainPanel;
     private JTextField nomeField;
     private JTextField codiceField;
-    private JTextField idField;
+    private JTextField stanzaField;
     private JList<String> repartoList;
     private JSpinner dataSpinner;
     private JSpinner oraSpinner;
@@ -26,9 +28,10 @@ public class Ricovero extends JFrame {
     private JButton nuovoRicoveroButton;
     private JButton gestisciRicoveroButton;
 
+    private List<String> idRicoveriNascosti = new ArrayList<>();
 
     private static final String[] COLONNE = {
-            "ID Ricovero", "Paziente", "Codice Fiscale", 
+            "Paziente", "Stanza", "Codice Fiscale", 
             "Motivazione Ricovero", "Reparto di Ricovero", "Data e Ora Ingresso"
     };
 
@@ -38,11 +41,17 @@ public class Ricovero extends JFrame {
     }
 
     public void aggiornaTabella(Object[][] dati) {
+        idRicoveriNascosti.clear();
         DefaultTableModel model = (DefaultTableModel) ricoveriTable.getModel();
         model.setRowCount(0); // Pulisce la tabella
         if (dati != null) {
             for (Object[] riga : dati) {
-                model.addRow(riga);
+                if (riga != null && riga.length > 0) {
+                    idRicoveriNascosti.add((String) riga[0]); // Salva l'ID in memoria
+                    Object[] rigaVisibile = new Object[riga.length - 1];
+                    System.arraycopy(riga, 1, rigaVisibile, 0, riga.length - 1);
+                    model.addRow(rigaVisibile);
+                }
             }
         }
     }
@@ -73,8 +82,8 @@ public class Ricovero extends JFrame {
         return codiceField.getText();
     }
 
-    public String getIdPaziente() {
-        return idField.getText();
+    public String getStanza() {
+        return stanzaField.getText();
     }
 
     public String getRepartoSelezionato() {
@@ -84,7 +93,7 @@ public class Ricovero extends JFrame {
     public void resetCampiRicerca() {
         nomeField.setText("");
         codiceField.setText("");
-        idField.setText("");
+        stanzaField.setText("");
         repartoList.clearSelection();
         dataSpinner.setValue(new Date());
         oraSpinner.setValue(new Date());
@@ -95,7 +104,11 @@ public class Ricovero extends JFrame {
         if (rigaSelezionata == -1) {
             return null;
         }
-        String idRicovero = (String) ricoveriTable.getValueAt(rigaSelezionata, 0);
+        int modelRow = ricoveriTable.convertRowIndexToModel(rigaSelezionata);
+        String idRicovero = null;
+        if (modelRow >= 0 && modelRow < idRicoveriNascosti.size()) {
+            idRicovero = idRicoveriNascosti.get(modelRow);
+        }
         String cf = (String) ricoveriTable.getValueAt(rigaSelezionata, 2);
         return new String[]{idRicovero, cf};
     }
@@ -109,7 +122,7 @@ public class Ricovero extends JFrame {
         oraSpinner.setModel(timeModel);
         oraSpinner.setEditor(new JSpinner.DateEditor(oraSpinner, "HH:mm"));
 
-        repartoList.setListData(new String[]{"Cardiologia", "Chirurgia Generale", "Ortopedia", "Terapia Intensiva", "Pediatria", "Neurologia"});
+        repartoList.setListData(new String[]{"Chirurgia generale", "Ortopedia", "Cardiologia"});
 
         DefaultTableModel model = new DefaultTableModel(new Object[0][0], COLONNE) {
             @Override

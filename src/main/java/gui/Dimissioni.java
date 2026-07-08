@@ -147,8 +147,7 @@ public class Dimissioni extends JFrame {
 
         // Popola la lista dei reparti
         repartoList.setListData(new String[]{
-                "Chirurgia Generale", "Bariatria", "Radiologia Interventistica",
-                "Cardiologia", "Terapia Intensiva"
+                "Chirurgia generale", "Ortopedia", "Cardiologia"
         });
 
         // Popola la lista dei tipi di dimissione

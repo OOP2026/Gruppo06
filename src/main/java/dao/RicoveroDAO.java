@@ -12,4 +12,7 @@ public interface RicoveroDAO {
     ArrayList<String> getUltimoRicoveroChiuso(String cfPaziente);
     List<ArrayList<String>> getAllRicoveriAttivi();
     boolean isLettoAttualmenteOccupato(String idLetto, String reparto);
+
+    // Recupera lo storico dei ricoveri per un letto e reparto specifici
+    List<ArrayList<String>> getStoricoRicoveriByLetto(String idLetto, String reparto);
 }

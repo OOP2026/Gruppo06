@@ -361,7 +361,7 @@ public class Controller {
 		return now.format(formatter);
 	}
 
-	public boolean registraRicovero(String cfPaziente, String idLetto, String reparto, String motivo) {
+	public boolean registraRicovero(String cfPaziente, String idLetto, String reparto, String motivo, String dataInizio) {
 		if (isNullOrEmpty(cfPaziente) || isNullOrEmpty(idLetto) || isNullOrEmpty(reparto)) {
 			LOGGER.warning("Errore: CF Paziente, ID Letto o Reparto mancanti.");
 			return false;
@@ -372,7 +372,6 @@ public class Controller {
 			return false;
 		}
 
-		String dataInizio = setDataOraInizio();
 		boolean successo = ricoveroDAO.aggiungiRicovero(cfPaziente, idLetto, reparto, dataInizio, motivo);
 		
 		if (successo) {
@@ -447,12 +446,31 @@ public class Controller {
 		// 4. Ottieni il CF del paziente scelto e chiedi il motivo
 		int indiceScelto = pazientiDisponibili.indexOf(pazienteScelto);
 		String cfScelto = cfPazientiDisponibili.get(indiceScelto);
-		String motivo = JOptionPane.showInputDialog(null, "Inserisci il motivo del ricovero per " + pazienteScelto + ":", "Motivo Ricovero", JOptionPane.PLAIN_MESSAGE);
 
-		if (motivo == null) return false; // L'utente ha annullato
+		java.util.Date now = new java.util.Date();
+		JSpinner dataSpinner = new JSpinner(new SpinnerDateModel(now, null, null, java.util.Calendar.DAY_OF_MONTH));
+		dataSpinner.setEditor(new JSpinner.DateEditor(dataSpinner, "yyyy-MM-dd"));
+		JSpinner oraSpinner = new JSpinner(new SpinnerDateModel(now, null, null, java.util.Calendar.HOUR_OF_DAY));
+		oraSpinner.setEditor(new JSpinner.DateEditor(oraSpinner, "HH:mm:ss"));
+		JTextField motivoInput = new JTextField();
+
+		JPanel panel = new JPanel(new GridLayout(3, 2, 10, 10));
+		panel.add(new JLabel("Data Ingresso:")); panel.add(dataSpinner);
+		panel.add(new JLabel("Ora Ingresso:")); panel.add(oraSpinner);
+		panel.add(new JLabel("Motivo Ricovero per " + pazienteScelto + ":")); panel.add(motivoInput);
+
+		int res = JOptionPane.showConfirmDialog(null, panel, "Dettagli Ricovero", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+		if (res != JOptionPane.OK_OPTION) return false;
+
+		String motivo = motivoInput.getText().trim();
+		java.util.Date dataSelezionata = (java.util.Date) dataSpinner.getValue();
+		java.util.Date oraSelezionata = (java.util.Date) oraSpinner.getValue();
+		java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat("yyyy-MM-dd");
+		java.text.SimpleDateFormat timeFormat = new java.text.SimpleDateFormat("HH:mm:ss");
+		String dataInizio = dateFormat.format(dataSelezionata) + " " + timeFormat.format(oraSelezionata);
 
 		// 5. Registra il ricovero usando il metodo esistente
-		boolean successo = registraRicovero(cfScelto, idLetto, reparto, motivo);
+		boolean successo = registraRicovero(cfScelto, idLetto, reparto, motivo, dataInizio);
 		if (!successo) {
 			// Se la registrazione fallisce, mostra un messaggio di errore specifico.
 			JOptionPane.showMessageDialog(null, "Impossibile completare l'assegnazione. Errore durante la registrazione del ricovero nel database.", "Errore di Registrazione", JOptionPane.ERROR_MESSAGE);
@@ -563,6 +581,11 @@ public class Controller {
 		JComboBox<String> stanzeComboBox = new JComboBox<>();
 		JComboBox<String> lettiComboBox = new JComboBox<>();
 		JTextField motivoInput = new JTextField();
+		java.util.Date now = new java.util.Date();
+		JSpinner dataSpinner = new JSpinner(new SpinnerDateModel(now, null, null, java.util.Calendar.DAY_OF_MONTH));
+		dataSpinner.setEditor(new JSpinner.DateEditor(dataSpinner, "yyyy-MM-dd"));
+		JSpinner oraSpinner = new JSpinner(new SpinnerDateModel(now, null, null, java.util.Calendar.HOUR_OF_DAY));
+		oraSpinner.setEditor(new JSpinner.DateEditor(oraSpinner, "HH:mm:ss"));
 
 		repartiComboBox.addActionListener(e -> {
 			String repartoSelezionato = (String) repartiComboBox.getSelectedItem();
@@ -596,11 +619,13 @@ public class Controller {
 			repartiComboBox.setSelectedIndex(0);
 		}
 
-		JPanel panel = new JPanel(new GridLayout(5, 2, 10, 10));
+		JPanel panel = new JPanel(new GridLayout(7, 2, 10, 10));
 		panel.add(new JLabel("Paziente:")); panel.add(new JLabel(nomePaziente + " (" + cfPaziente + ")"));
 		panel.add(new JLabel("Reparto:")); panel.add(repartiComboBox);
 		panel.add(new JLabel("Stanza:")); panel.add(stanzeComboBox);
 		panel.add(new JLabel("ID Letto:")); panel.add(lettiComboBox);
+		panel.add(new JLabel("Data Ingresso:")); panel.add(dataSpinner);
+		panel.add(new JLabel("Ora Ingresso:")); panel.add(oraSpinner);
 		panel.add(new JLabel("Motivo:")); panel.add(motivoInput);
 
 		int result = JOptionPane.showConfirmDialog(null, panel, "Registra Nuovo Ricovero", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
@@ -609,8 +634,13 @@ public class Controller {
 			String repartoSelezionato = (String) repartiComboBox.getSelectedItem();
 			String lettoSelezionato = (String) lettiComboBox.getSelectedItem();
 			String motivo = motivoInput.getText().trim();
+			java.util.Date dataSelezionata = (java.util.Date) dataSpinner.getValue();
+			java.util.Date oraSelezionata = (java.util.Date) oraSpinner.getValue();
+			java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat("yyyy-MM-dd");
+			java.text.SimpleDateFormat timeFormat = new java.text.SimpleDateFormat("HH:mm:ss");
+			String dataInizio = dateFormat.format(dataSelezionata) + " " + timeFormat.format(oraSelezionata);
 
-			boolean successo = registraRicovero(cfPaziente, lettoSelezionato, repartoSelezionato, motivo);
+			boolean successo = registraRicovero(cfPaziente, lettoSelezionato, repartoSelezionato, motivo, dataInizio);
 			if (successo) {
 				JOptionPane.showMessageDialog(null, "Ricovero aggiunto con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
 				return true;
@@ -739,7 +769,7 @@ public class Controller {
 		JTextField iscrizioneInput = new JTextField(); // YYYY-MM-DD
 		JTextField specializzazioneInput = new JTextField();
 		JComboBox<String> repartoInput = new JComboBox<>(new String[]{
-				"Nessuno", "Cardiologia", "Ortopedia", "Chirurgia Generale"
+				 "Chirurgia generale", "Ortopedia", "Cardiologia"
 		});
 
 		JPanel panel = new JPanel(new GridLayout(8, 2, 10, 10));
@@ -967,6 +997,11 @@ public class Controller {
 		JComboBox<String> stanzeComboBox = new JComboBox<>();
 		JComboBox<String> lettiComboBox = new JComboBox<>();
 		JTextField motivoInput = new JTextField();
+		java.util.Date now = new java.util.Date();
+		JSpinner dataSpinner = new JSpinner(new SpinnerDateModel(now, null, null, java.util.Calendar.DAY_OF_MONTH));
+		dataSpinner.setEditor(new JSpinner.DateEditor(dataSpinner, "yyyy-MM-dd"));
+		JSpinner oraSpinner = new JSpinner(new SpinnerDateModel(now, null, null, java.util.Calendar.HOUR_OF_DAY));
+		oraSpinner.setEditor(new JSpinner.DateEditor(oraSpinner, "HH:mm:ss"));
 
 		// Logica per aggiornare le stanze quando cambia il reparto
 		repartiComboBox.addActionListener(e -> {
@@ -1004,11 +1039,13 @@ public class Controller {
 		}
 
 		// 4. Mostra il dialogo
-		JPanel panel = new JPanel(new GridLayout(5, 2, 10, 10));
+		JPanel panel = new JPanel(new GridLayout(7, 2, 10, 10));
 		panel.add(new JLabel("Paziente:")); panel.add(pazientiComboBox);
 		panel.add(new JLabel("Reparto:")); panel.add(repartiComboBox);
 		panel.add(new JLabel("Stanza:")); panel.add(stanzeComboBox);
 		panel.add(new JLabel("ID Letto:")); panel.add(lettiComboBox);
+		panel.add(new JLabel("Data Ingresso:")); panel.add(dataSpinner);
+		panel.add(new JLabel("Ora Ingresso:")); panel.add(oraSpinner);
 		panel.add(new JLabel("Motivo:")); panel.add(motivoInput);
 
 		int result = JOptionPane.showConfirmDialog(null, panel, "Registra Nuovo Ricovero", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
@@ -1018,8 +1055,13 @@ public class Controller {
 			String repartoSelezionato = (String) repartiComboBox.getSelectedItem();
 			String lettoSelezionato = (String) lettiComboBox.getSelectedItem();
 			String motivo = motivoInput.getText().trim();
+			java.util.Date dataSelezionata = (java.util.Date) dataSpinner.getValue();
+			java.util.Date oraSelezionata = (java.util.Date) oraSpinner.getValue();
+			java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat("yyyy-MM-dd");
+			java.text.SimpleDateFormat timeFormat = new java.text.SimpleDateFormat("HH:mm:ss");
+			String dataInizio = dateFormat.format(dataSelezionata) + " " + timeFormat.format(oraSelezionata);
 
-			boolean successo = registraRicovero(cfSelezionato, lettoSelezionato, repartoSelezionato, motivo);
+			boolean successo = registraRicovero(cfSelezionato, lettoSelezionato, repartoSelezionato, motivo, dataInizio);
 			if (successo) {
 				JOptionPane.showMessageDialog(null, "Ricovero aggiunto con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
 				return true;
@@ -1051,7 +1093,9 @@ public class Controller {
 	}
 
 	public boolean gestisciDimissioneDaRicovero(String cfPaziente) {
-		JTextField esitoInput = new JTextField();
+		String[] tipologieDimissione = {"Ordinaria", "Trasferimento", "Decesso", "Volontaria"};
+		JComboBox<String> esitoInput = new JComboBox<>(tipologieDimissione);
+
 		JTextField prognosiInput = new JTextField("0");
 
 		JPanel panel = new JPanel(new GridLayout(2, 2, 10, 10));
@@ -1062,7 +1106,10 @@ public class Controller {
 
 		if (result == JOptionPane.OK_OPTION) {
             try {
-			    boolean successo = dimissioni(cfPaziente, esitoInput.getText().trim(), Integer.parseInt(prognosiInput.getText().trim()));
+				String esitoSelezionato = (String) esitoInput.getSelectedItem();
+				if (esitoSelezionato == null) esitoSelezionato = "";
+
+			    boolean successo = dimissioni(cfPaziente, esitoSelezionato.trim(), Integer.parseInt(prognosiInput.getText().trim()));
 			    if (successo) {
 				    JOptionPane.showMessageDialog(null, "Paziente dimesso con successo!\nIl posto letto è stato liberato.", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
 				    return true;
@@ -1216,8 +1263,28 @@ public class Controller {
 			dati[i][0] = r.size() > 0 ? r.get(0) : "";
 			dati[i][1] = r.size() > 3 ? r.get(3) : "";
 			dati[i][2] = r.size() > 2 ? r.get(2) : "";
-			dati[i][3] = r.size() > 4 ? r.get(4) : "";
-			dati[i][4] = r.size() > 5 ? r.get(5) : "In corso";
+
+			String dataInizio = r.size() > 4 ? r.get(4) : "";
+			if (dataInizio != null && !dataInizio.isEmpty()) {
+				try {
+					java.sql.Timestamp ts = java.sql.Timestamp.valueOf(dataInizio);
+					dataInizio = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(ts);
+				} catch (Exception ex) {
+					if (dataInizio.contains(".")) dataInizio = dataInizio.substring(0, dataInizio.indexOf('.'));
+				}
+			}
+			dati[i][3] = dataInizio;
+
+			String dataFine = r.size() > 5 ? r.get(5) : "In corso";
+			if (dataFine != null && !dataFine.equals("In corso") && !dataFine.isEmpty()) {
+				try {
+					java.sql.Timestamp ts = java.sql.Timestamp.valueOf(dataFine);
+					dataFine = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(ts);
+				} catch (Exception ex) {
+					if (dataFine.contains(".")) dataFine = dataFine.substring(0, dataFine.indexOf('.'));
+				}
+			}
+			dati[i][4] = dataFine;
 			dati[i][5] = r.size() > 6 ? r.get(6) : "";
 			dati[i][6] = r.size() > 8 && r.get(8) != null ? r.get(8) : ""; // Evita null sull'esito
 		}
@@ -1239,7 +1306,7 @@ public class Controller {
 	 */
 	private void ricaricaEAggiornaTabellaLetti(gui.Letti lettiFrame, String statoFilter, String repartoFilter) {
 		List<ArrayList<String>> datiLetti = lettoDAO.getAllLetti();
-		Object[][] datiPerTabella = preparaDatiLettiPerTabella(datiLetti, statoFilter, repartoFilter);
+		Object[][] datiPerTabella = preparaDatiLettiPerTabella(datiLetti, statoFilter, repartoFilter, lettiFrame.getStanza(), lettiFrame.getPaziente());
 		lettiFrame.aggiornaTabella(datiPerTabella);
 	}
 
@@ -1247,9 +1314,6 @@ public class Controller {
 		// 1. Crea l'istanza della schermata
 		gui.Letti lettiFrame = new gui.Letti();
 
-		// Popola la lista dei reparti
-		// TODO: Assicurarsi che LettoDAO abbia un metodo getAllReparti() che restituisca List<String>
-		// lettiFrame.setRepartiList(lettoDAO.getAllReparti());
 
 		impostaSchermata(lettiFrame, lettiFrame.mainPanel, "Gestione Letti", WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -1304,16 +1368,16 @@ public class Controller {
 		mostraFinestraSecondaria(lettiFrame, frameDaChiudere);
 
 		// Caricamento iniziale dei dati con i filtri di default (Tutti, nessun reparto selezionato)
-		caricaDatiLettiAsync(lettiFrame, "Tutti", null);
+		caricaDatiLettiAsync(lettiFrame, "Tutti", null, null, null);
 	}
 
-	private void caricaDatiLettiAsync(gui.Letti lettiFrame, String statoFilter, String repartoFilter) {
+	private void caricaDatiLettiAsync(gui.Letti lettiFrame, String statoFilter, String repartoFilter, String stanzaFilter, String pazienteFilter) {
 		lettiFrame.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
 		SwingWorker<Object[][], Void> worker = new SwingWorker<Object[][], Void>() {
 			@Override
 			protected Object[][] doInBackground() throws Exception {
 				// Passa i filtri al metodo preparaDatiLettiPerTabella
-				return preparaDatiLettiPerTabella(lettoDAO.getAllLetti(), statoFilter, repartoFilter);
+				return preparaDatiLettiPerTabella(lettoDAO.getAllLetti(), statoFilter, repartoFilter, stanzaFilter, pazienteFilter);
 			}
 			@Override
 			protected void done() {
@@ -1327,14 +1391,15 @@ public class Controller {
 	public void gestisciRicercaLetti(gui.Letti lettiFrame) {
 		String stato = lettiFrame.getSelectedStato();
 		String reparto = lettiFrame.getSelectedReparto();
-		caricaDatiLettiAsync(lettiFrame, stato, reparto);
+		String stanza = lettiFrame.getStanza();
+		String paziente = lettiFrame.getPaziente();
+		caricaDatiLettiAsync(lettiFrame, stato, reparto, stanza, paziente);
 	}
 
 	public void gestisciStoricoLetto(String idLetto, String reparto) {
-		// TODO: Implementare in RicoveroDAO e RicoveroPostgresDao il metodo getStoricoRicoveriByLetto(idLetto, reparto)
-		// che restituisca tutti i ricoveri (anche chiusi) per un dato letto.
+
 		List<ArrayList<String>> storico = ricoveroDAO.getStoricoRicoveriByLetto(idLetto, reparto);
-		// List<ArrayList<String>> storico = new ArrayList<>(); // Placeholder - Rimuovi questa riga
+
 		if (storico.isEmpty()) {
 			JOptionPane.showMessageDialog(null, "Nessun ricovero storico trovato per il letto " + idLetto + " nel reparto " + reparto + ".", "Storico Letto", JOptionPane.INFORMATION_MESSAGE);
 			return;
@@ -1350,8 +1415,28 @@ public class Controller {
 
 			dati[i][0] = r.size() > 0 ? r.get(0) : ""; // ID Ricovero
 			dati[i][1] = nomePaziente.trim() + " (" + cfPaziente + ")"; // Paziente (CF)
-			dati[i][2] = r.size() > 4 ? r.get(4) : ""; // Data Inizio
-			dati[i][3] = r.size() > 5 ? r.get(5) : "In corso"; // Data Fine
+
+			String dataInizio = r.size() > 4 ? r.get(4) : "";
+			if (dataInizio != null && !dataInizio.isEmpty()) {
+				try {
+					java.sql.Timestamp ts = java.sql.Timestamp.valueOf(dataInizio);
+					dataInizio = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(ts);
+				} catch (Exception ex) {
+					if (dataInizio.contains(".")) dataInizio = dataInizio.substring(0, dataInizio.indexOf('.'));
+				}
+			}
+			dati[i][2] = dataInizio; // Data Inizio
+
+			String dataFine = r.size() > 5 ? r.get(5) : "In corso";
+			if (dataFine != null && !dataFine.equals("In corso") && !dataFine.isEmpty()) {
+				try {
+					java.sql.Timestamp ts = java.sql.Timestamp.valueOf(dataFine);
+					dataFine = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(ts);
+				} catch (Exception ex) {
+					if (dataFine.contains(".")) dataFine = dataFine.substring(0, dataFine.indexOf('.'));
+				}
+			}
+			dati[i][3] = dataFine; // Data Fine
 			dati[i][4] = r.size() > 6 ? r.get(6) : ""; // Motivo
 			dati[i][5] = r.size() > 8 && r.get(8) != null ? r.get(8) : ""; // Esito
 		}
@@ -2098,7 +2183,7 @@ public class Controller {
 		JTextField iscrizioneInput = new JTextField(datiMedico.get(5));
 		JTextField specializzazioneInput = new JTextField(datiMedico.get(6));
 		JComboBox<String> repartoInput = new JComboBox<>(new String[]{
-				"Nessuno", "Cardiologia", "Ortopedia", "Chirurgia Generale"
+				"Nessuno", "Chirurgia generale", "Ortopedia", "Cardiologia"
 		});
 		repartoInput.setSelectedItem(datiMedico.get(7));
 		// repartoInput.setEnabled(false); // Rimosso blocco per permettere al medico di modificare il proprio reparto
@@ -2184,7 +2269,7 @@ public class Controller {
 		JTextField iscrizioneInput = new JTextField(datiMedico.get(5));
 		JTextField specializzazioneInput = new JTextField(datiMedico.get(6));
 		JComboBox<String> repartoInput = new JComboBox<>(new String[]{
-				"Nessuno", "Cardiologia", "Ortopedia", "Chirurgia Generale"
+				"Nessuno", "Chirurgia generale", "Ortopedia", "Cardiologia"
 		});
 		repartoInput.setSelectedItem(datiMedico.get(7));
 
@@ -2348,7 +2433,17 @@ public class Controller {
 				dati[i][2] = cf; // CF
 				dati[i][3] = d.size() > 3 ? d.get(3) : "-"; // Reparto
 				dati[i][4] = d.size() > 8 ? d.get(8) : "-"; // Tipo (Esito)
-				dati[i][5] = d.size() > 5 ? d.get(5) : "-"; // Data
+				
+				String dataDimissione = d.size() > 5 ? d.get(5) : "-";
+				if (dataDimissione != null && !dataDimissione.equals("-") && !dataDimissione.isEmpty()) {
+					try {
+						java.sql.Timestamp ts = java.sql.Timestamp.valueOf(dataDimissione);
+						dataDimissione = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(ts);
+					} catch (Exception ex) {
+						if (dataDimissione.contains(".")) dataDimissione = dataDimissione.substring(0, dataDimissione.indexOf('.'));
+					}
+				}
+				dati[i][5] = dataDimissione; // Data
 			} catch (Exception e) {
 				final int riga = i;
 				LOGGER.warning(() -> "Errore nella formattazione dei dati dimissioni alla riga " + riga + ": " + e.getMessage());
@@ -2442,8 +2537,8 @@ public class Controller {
 
 	private Object[][] formattaDatiRicoveri(List<ArrayList<String>> ricoveriDb) {
 		if (ricoveriDb == null) return new Object[0][0];
-		// Colonne: ID Ricovero, Paziente, Codice Fiscale, Motivazione Ricovero, Reparto di Ricovero, Data e Ora Ingresso
-		Object[][] dati = new Object[ricoveriDb.size()][6];
+		// Colonne: ID Ricovero (Nascosto), Paziente, Stanza, Codice Fiscale, Motivazione Ricovero, Reparto di Ricovero, Data e Ora Ingresso
+		Object[][] dati = new Object[ricoveriDb.size()][7];
 		for (int i = 0; i < ricoveriDb.size(); i++) {
 			List<String> r = ricoveriDb.get(i);
 			try {
@@ -2454,18 +2549,35 @@ public class Controller {
 				String dataInizio = r.get(4);
 				String motivazione = r.get(5);
 				
+				// Formattazione esatta della data e ora (AAAA-MM-GG HH:mm:ss) per la tabella Ricovero
+				if (dataInizio != null && !dataInizio.isEmpty()) {
+					try {
+						java.sql.Timestamp ts = java.sql.Timestamp.valueOf(dataInizio);
+						dataInizio = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(ts);
+					} catch (Exception ex) {
+						if (dataInizio.contains(".")) dataInizio = dataInizio.substring(0, dataInizio.indexOf('.'));
+					}
+				}
+				
 				List<String> paziente = pazienteDAO.getPazienteByCf(cf);
 				String nomePaziente = "Sconosciuto";
 				if (paziente != null && !paziente.isEmpty()) {
 					nomePaziente = (paziente.size() > 1 ? paziente.get(1) : "") + " " + (paziente.size() > 2 ? paziente.get(2) : "");
 				}
 				
+				String stanza = "-";
+				List<String> letto = lettoDAO.getLettoById(idLetto, reparto);
+				if (letto != null && letto.size() > 3) {
+					stanza = letto.get(3);
+				}
+				
 				dati[i][0] = idRicovero;
 				dati[i][1] = nomePaziente.trim();
-				dati[i][2] = cf;
-				dati[i][3] = motivazione;
-				dati[i][4] = reparto;
-				dati[i][5] = dataInizio;
+				dati[i][2] = stanza;
+				dati[i][3] = cf;
+				dati[i][4] = motivazione;
+				dati[i][5] = reparto;
+				dati[i][6] = dataInizio;
 			} catch (Exception e) {
 				final int riga = i;
 				LOGGER.warning(() -> "Errore nella formattazione dei dati ricoveri alla riga " + riga + ": " + e.getMessage());
@@ -2493,7 +2605,7 @@ public class Controller {
 	 * @param datiLetti La lista di letti proveniente dal DAO.
 	 * @return Una matrice di Object pronta per essere mostrata in una JTable.
 	 */
-	private Object[][] preparaDatiLettiPerTabella(List<ArrayList<String>> datiLetti, String statoFilter, String repartoFilter) {
+	private Object[][] preparaDatiLettiPerTabella(List<ArrayList<String>> datiLetti, String statoFilter, String repartoFilter, String stanzaFilter, String pazienteFilter) {
 		if (datiLetti == null || datiLetti.isEmpty()) {
 			return new Object[0][6]; // Colonne: Numero Letto, Stanza, Nome Paziente, Codice Fiscale, Reparto, Stato
 		}
@@ -2528,10 +2640,15 @@ public class Controller {
 			
 			String idLetto = letto.size() > 0 ? letto.get(0) : "-";
 			String repartoLetto = letto.size() > 1 ? letto.get(1) : "-";
+			String stanzaLetto = letto.size() > 3 ? letto.get(3) : "-";
 
 			// Applica i filtri
 			if (repartoFilter != null && !repartoFilter.isEmpty() && !repartoLetto.equalsIgnoreCase(repartoFilter)) {
 				continue; // Salta questo letto se non corrisponde al reparto
+			}
+			
+			if (stanzaFilter != null && !stanzaFilter.trim().isEmpty() && !stanzaLetto.toLowerCase().contains(stanzaFilter.trim().toLowerCase())) {
+				continue; // Salta questo letto se non corrisponde alla stanza
 			}
 
 			// 2. Si determina lo stato controllando la chiave composta (id_reparto)
@@ -2541,18 +2658,34 @@ public class Controller {
 			if (statoFilter != null && !statoFilter.equals("Tutti") && !statoCorrente.equalsIgnoreCase(statoFilter)) {
 				continue; // Salta questo letto se non corrisponde allo stato filtrato
 			}
+			
+			String nomePaziente = "-";
+			String cfPaziente = "-";
+
+			if (isOccupato) {
+				String[] infoPaziente = ricoveriMap.get(idLetto + "_" + repartoLetto); // Recupera info paziente dal ricovero
+				nomePaziente = infoPaziente[0];
+				cfPaziente = infoPaziente[1];
+			}
+
+			// Filtro sul paziente (Nome o CF)
+			if (pazienteFilter != null && !pazienteFilter.trim().isEmpty()) {
+				String pFilt = pazienteFilter.trim().toLowerCase();
+				if (!nomePaziente.toLowerCase().contains(pFilt) && !cfPaziente.toLowerCase().contains(pFilt)) {
+					continue; // Salta se il paziente non corrisponde
+				}
+			}
 
 			Object[] rigaDati = new Object[6];
 			// Popolamento dati fissi del letto
 			rigaDati[0] = idLetto;                                    // Numero Letto (ID)
-			rigaDati[1] = letto.size() > 3 ? letto.get(3) : "-";      // Stanza
+			rigaDati[1] = stanzaLetto;                                // Stanza
 			rigaDati[4] = repartoLetto;                               // Reparto
 
 			// Popolamento dati variabili in base allo stato di occupazione
 			if (isOccupato) {
-				String[] infoPaziente = ricoveriMap.get(idLetto + "_" + repartoLetto); // Recupera info paziente dal ricovero
-				rigaDati[2] = infoPaziente[0];                        // Nome Paziente
-				rigaDati[3] = infoPaziente[1];                        // Codice Fiscale
+				rigaDati[2] = nomePaziente;                           // Nome Paziente
+				rigaDati[3] = cfPaziente;                             // Codice Fiscale
 				rigaDati[5] = "🔴 Occupato";                           // Stato con emoji
 			} else {
 				rigaDati[2] = "-";                                    // Nome Paziente
@@ -2584,7 +2717,7 @@ public class Controller {
 	private void gestisciRicercaRicoveri(gui.Ricovero ricoveroFrame) {
 		String nome = ricoveroFrame.getNome();
 		String cf = ricoveroFrame.getCodiceFiscale();
-		String id = ricoveroFrame.getIdPaziente();
+		String stanzaFiltro = ricoveroFrame.getStanza();
 		String reparto = ricoveroFrame.getRepartoSelezionato();
 
 		ricoveroFrame.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
@@ -2597,6 +2730,7 @@ public class Controller {
 				for (ArrayList<String> ricovero : ricoveriAttivi) {
 					String idRicovero = ricovero.get(0);
 					String cfPaziente = ricovero.get(1);
+					String idLetto = ricovero.get(2);
 					String repartoRicovero = ricovero.get(3);
 
 					List<String> paziente = pazienteDAO.getPazienteByCf(cfPaziente);
@@ -2605,10 +2739,16 @@ public class Controller {
 						nomePaziente = (paziente.get(1) + " " + paziente.get(2)).toLowerCase();
 					}
 
+					String stanza = "";
+					List<String> letto = lettoDAO.getLettoById(idLetto, repartoRicovero);
+					if (letto != null && letto.size() > 3) {
+						stanza = letto.get(3).toLowerCase();
+					}
+
 					boolean match = true;
 					if (match && !isNullOrEmpty(nome) && !nomePaziente.contains(nome.toLowerCase())) match = false;
 					if (match && !isNullOrEmpty(cf) && !cfPaziente.toLowerCase().contains(cf.toLowerCase())) match = false;
-					if (match && !isNullOrEmpty(id) && !idRicovero.equals(id)) match = false;
+					if (match && !isNullOrEmpty(stanzaFiltro) && !stanza.contains(stanzaFiltro.toLowerCase())) match = false;
 					if (match && !isNullOrEmpty(reparto) && !repartoRicovero.equalsIgnoreCase(reparto)) match = false;
 
 					if (match) risultatiFiltrati.add(ricovero);

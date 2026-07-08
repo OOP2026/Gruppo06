@@ -1,16 +1,15 @@
 package dao;
 
-import model.Agenda;
-
+import java.sql.Timestamp;
 import java.util.ArrayList;
 
 public interface AgendaDAO {
 
-    ArrayList<Agenda> getEventiByMedico(String matricolaMedico);
+    ArrayList<ArrayList<String>> getEventiByMedico(String matricolaMedico);
 
-    boolean addEvento(Agenda evento);
+    boolean addEvento(int idEvento, String titolo, String matricolaMedico, String descrizione, Timestamp dataOraInizio, Timestamp dataOraFine);
 
-    boolean updateEvento(Agenda evento);
+    boolean updateEvento(int idEvento, String titolo, String descrizione, Timestamp dataOraInizio, Timestamp dataOraFine);
 
     boolean deleteEvento(int idEvento);
 

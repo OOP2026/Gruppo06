@@ -638,7 +638,7 @@ public class Controller {
 	// METODI PER LA GESTIONE DELL'AGENDA
 	// =========================================================
 
-	public List<Agenda> getEventiPerMedico(String matricola) {
+	public List<ArrayList<String>> getEventiPerMedico(String matricola) {
 		if (isNullOrEmpty(matricola)) {
 			LOGGER.warning("Matricola non valida per la ricerca eventi.");
 			return new ArrayList<>(); // Ritorna una lista vuota per evitare NullPointerException
@@ -646,49 +646,53 @@ public class Controller {
 		return agendaDAO.getEventiByMedico(matricola);
 	}
 
-	public boolean addEvento(Agenda evento) {
-		if (evento == null) {
+	public boolean addEvento(int idEvento, String matricola, String titolo, String descrizione, java.sql.Timestamp inizio, java.sql.Timestamp fine) {
+		if (inizio == null || fine == null) {
 			LOGGER.warning("Errore: L'oggetto evento non può essere nullo.");
 			return false;
 		}
 		// Business Logic: Controlla sovrapposizioni prima di aggiungere
-		if (checkSovrapposizioneEvento(evento)) {
+		if (checkSovrapposizioneEvento(idEvento, matricola, inizio, fine)) {
 			JOptionPane.showMessageDialog(null, "L'orario selezionato si sovrappone con un altro evento esistente.", "Errore di Sovrapposizione", JOptionPane.ERROR_MESSAGE);
 			return false;
 		}
-		return agendaDAO.addEvento(evento);
+		return agendaDAO.addEvento(idEvento, titolo, matricola, descrizione, inizio, fine);
 	}
 
-	public boolean updateEvento(Agenda evento) {
-		if (evento == null) {
+	public boolean updateEvento(int idEvento, String matricola, String titolo, String descrizione, java.sql.Timestamp inizio, java.sql.Timestamp fine) {
+		if (inizio == null || fine == null) {
 			LOGGER.warning("Errore: L'oggetto evento non può essere nullo.");
 			return false;
 		}
 		// Business Logic: Controlla sovrapposizioni prima di aggiornare
-		if (checkSovrapposizioneEvento(evento)) {
+		if (checkSovrapposizioneEvento(idEvento, matricola, inizio, fine)) {
 			JOptionPane.showMessageDialog(null, "L'orario modificato si sovrappone con un altro evento esistente.", "Errore di Sovrapposizione", JOptionPane.ERROR_MESSAGE);
 			return false;
 		}
-		return agendaDAO.updateEvento(evento);
+		return agendaDAO.updateEvento(idEvento, titolo, descrizione, inizio, fine);
 	}
 
 	public boolean deleteEvento(int idEvento) {
 		return agendaDAO.deleteEvento(idEvento);
 	}
 
-	private boolean checkSovrapposizioneEvento(Agenda nuovoEvento) {
-		List<Agenda> eventiEsistenti = getEventiPerMedico(nuovoEvento.getMatricolaMedico());
-		for (Agenda eventoEsistente : eventiEsistenti) {
+	private boolean checkSovrapposizioneEvento(int nuovoId, String matricola, java.util.Date nuovoInizio, java.util.Date nuovoFine) {
+		List<ArrayList<String>> eventiEsistenti = getEventiPerMedico(matricola);
+		for (ArrayList<String> eventoEsistente : eventiEsistenti) {
 			// Salta il controllo se stiamo modificando lo stesso evento
-			if (eventoEsistente.getIdEvento() == nuovoEvento.getIdEvento()) {
+			if (Integer.parseInt(eventoEsistente.get(0)) == nuovoId) {
 				continue;
 			}
 
 			// Logica di sovrapposizione: (StartA < EndB) and (EndA > StartB)
-			boolean siSovrappone = nuovoEvento.getDataOraInizio().before(eventoEsistente.getDataOraFine()) &&
-					nuovoEvento.getDataOraFine().after(eventoEsistente.getDataOraInizio());
-
-			if (siSovrappone) return true; // Trovata una sovrapposizione
+			try {
+				java.sql.Timestamp inizioEsistente = java.sql.Timestamp.valueOf(eventoEsistente.get(4));
+				java.sql.Timestamp fineEsistente = java.sql.Timestamp.valueOf(eventoEsistente.get(5));
+				boolean siSovrappone = nuovoInizio.before(fineEsistente) && nuovoFine.after(inizioEsistente);
+				if (siSovrappone) return true; // Trovata una sovrapposizione
+			} catch (Exception e) {
+				LOGGER.warning("Impossibile parsare la data per il controllo di sovrapposizione: " + e.getMessage());
+			}
 		}
 		return false; // Nessuna sovrapposizione
 	}
@@ -1407,10 +1411,9 @@ public class Controller {
 			    java.sql.Timestamp tsInizio = java.sql.Timestamp.valueOf(inizio);
 			    java.sql.Timestamp tsFine = java.sql.Timestamp.valueOf(fine);
 
-			    Agenda nuovoEvento = new Agenda(idEvento, matricola, titolo, descrizione, tsInizio, tsFine);
-			    boolean successo = addEvento(nuovoEvento);
+			    boolean successo = addEvento(idEvento, matricola, titolo, descrizione, tsInizio, tsFine);
                 if (successo) {
-                    JOptionPane.showMessageDialog(null, "Evento inserito con successo nel DB!");
+                    JOptionPane.showMessageDialog(null, "Evento inserito con successo nel DB!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
                     return true;
                 } else {
                     JOptionPane.showMessageDialog(null, "Errore. Verifica eventuali sovrapposizioni.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
@@ -1699,14 +1702,13 @@ public class Controller {
 		return dati;
 	}
 
-	private Object[][] formattaDatiAgenda(List<Agenda> eventi) {
+	private Object[][] formattaDatiAgenda(List<ArrayList<String>> eventi) {
         if (eventi == null) return new Object[0][0];
 		Object[][] dati = new Object[eventi.size()][2];
 		for (int i = 0; i < eventi.size(); i++) {
-			Agenda ev = eventi.get(i);
-			String ora = ev.getDataOraInizio() != null ? ev.getDataOraInizio().toString() : "N/D";
-			String descrizione = ev.getTitolo() != null ? ev.getTitolo() : "Evento #" + ev.getIdEvento();
-			dati[i][0] = ora;
+			ArrayList<String> ev = eventi.get(i);
+			dati[i][0] = ev.size() > 4 ? ev.get(4) : "N/D"; // data_ora_inizio
+			String descrizione = ev.size() > 2 ? ev.get(2) : "Evento #" + (ev.size() > 0 ? ev.get(0) : ""); // titolo o ID
 			dati[i][1] = descrizione;
 		}
 		return dati;
@@ -1800,7 +1802,7 @@ public class Controller {
 
     private void aggiornaAgendaGUI(JFrame frame) {
         if (utenteLoggato == null) return;
-        Object[][] dati = formattaDatiAgenda(getEventiPerMedico(utenteLoggato.getMatricola()));
+        Object[][] dati = formattaDatiAgenda(agendaDAO.getEventiByMedico(utenteLoggato.getMatricola()));
         if (frame instanceof gui.SchermataAmministratore) ((gui.SchermataAmministratore) frame).aggiornaAgenda(dati);
         if (frame instanceof gui.SchermataMedico) ((gui.SchermataMedico) frame).aggiornaAgenda(dati);
     }

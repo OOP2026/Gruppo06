@@ -2,7 +2,6 @@ package implementazioneDao;
 
 import dao.AgendaDAO;
 import database_connection.ConnessioneDatabase;
-import model.Agenda;
 
 import java.sql.*;
 import java.util.ArrayList;
@@ -30,8 +29,8 @@ public class AgendaPostgresDAO implements AgendaDAO {
 
 
     @Override
-    public ArrayList<Agenda> getEventiByMedico(String matricolaMedico) {
-        ArrayList<Agenda> eventi = new ArrayList<>();
+    public ArrayList<ArrayList<String>> getEventiByMedico(String matricolaMedico) {
+        ArrayList<ArrayList<String>> eventi = new ArrayList<>();
 
         try (Connection conn = ConnessioneDatabase.getConnection();
              PreparedStatement stmt = conn.prepareStatement(GET_EVENTI_BY_MEDICO_QUERY)) {
@@ -40,14 +39,14 @@ public class AgendaPostgresDAO implements AgendaDAO {
 
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    eventi.add(new Agenda(
-                            rs.getInt(COL_ID_AGENDA),
-                            rs.getString(COL_MATRICOLA_MEDICO),
-                            rs.getString(COL_TITOLO),
-                            rs.getString(COL_DESCRIZIONE),
-                            rs.getTimestamp(COL_DATA_ORA_INIZIO),
-                            rs.getTimestamp(COL_DATA_ORA_FINE)
-                    ));
+                    ArrayList<String> evento = new ArrayList<>();
+                    evento.add(String.valueOf(rs.getInt(COL_ID_AGENDA)));
+                    evento.add(rs.getString(COL_MATRICOLA_MEDICO));
+                    evento.add(rs.getString(COL_TITOLO));
+                    evento.add(rs.getString(COL_DESCRIZIONE));
+                    evento.add(rs.getTimestamp(COL_DATA_ORA_INIZIO).toString());
+                    evento.add(rs.getTimestamp(COL_DATA_ORA_FINE).toString());
+                    eventi.add(evento);
                 }
             }
         } catch (SQLException e) {
@@ -57,15 +56,15 @@ public class AgendaPostgresDAO implements AgendaDAO {
     }
 
     @Override
-    public boolean addEvento(Agenda evento) {
+    public boolean addEvento(int idEvento, String titolo, String matricolaMedico, String descrizione, Timestamp dataOraInizio, Timestamp dataOraFine) {
         try (Connection conn = ConnessioneDatabase.getConnection();
              PreparedStatement stmt = conn.prepareStatement(ADD_EVENTO_QUERY)) {
-            stmt.setInt(1, evento.getIdEvento());
-            stmt.setString(2, evento.getTitolo());
-            stmt.setString(3, evento.getMatricolaMedico());
-            stmt.setString(4, evento.getDescrizione());
-            stmt.setTimestamp(5, evento.getDataOraInizio());
-            stmt.setTimestamp(6, evento.getDataOraFine());
+            stmt.setInt(1, idEvento);
+            stmt.setString(2, titolo);
+            stmt.setString(3, matricolaMedico);
+            stmt.setString(4, descrizione);
+            stmt.setTimestamp(5, dataOraInizio);
+            stmt.setTimestamp(6, dataOraFine);
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -75,15 +74,15 @@ public class AgendaPostgresDAO implements AgendaDAO {
     }
 
     @Override
-    public boolean updateEvento(Agenda evento) {
+    public boolean updateEvento(int idEvento, String titolo, String descrizione, Timestamp dataOraInizio, Timestamp dataOraFine) {
         try (Connection conn = ConnessioneDatabase.getConnection();
              PreparedStatement stmt = conn.prepareStatement(UPDATE_EVENTO_QUERY)) {
 
-            stmt.setString(1, evento.getTitolo());
-            stmt.setString(2, evento.getDescrizione());
-            stmt.setTimestamp(3, evento.getDataOraInizio());
-            stmt.setTimestamp(4, evento.getDataOraFine());
-            stmt.setInt(5, evento.getIdEvento());
+            stmt.setString(1, titolo);
+            stmt.setString(2, descrizione);
+            stmt.setTimestamp(3, dataOraInizio);
+            stmt.setTimestamp(4, dataOraFine);
+            stmt.setInt(5, idEvento);
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {

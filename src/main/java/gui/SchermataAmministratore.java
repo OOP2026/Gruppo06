@@ -28,49 +28,42 @@ public class SchermataAmministratore extends JFrame {
     private JButton settimanaleButton;
     private JButton newEventButton;
 
-    // COSTRUTTORE
     public SchermataAmministratore(String nomeUtente) {
 
         if (utenteLoggatoLabel != null) {
             utenteLoggatoLabel.setText(" " + nomeUtente);
             utenteLoggatoLabel.setForeground(Color.WHITE);
             utenteLoggatoLabel.setFont(new Font("Arial", Font.BOLD, 14));
-            // Aggiungo l'effetto hover anche per l'amministratore per coerenza grafica
             utenteLoggatoLabel.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
             utenteLoggatoLabel.addMouseListener(new java.awt.event.MouseAdapter() {
+                @Override
                 public void mouseEntered(java.awt.event.MouseEvent evt) {
                     utenteLoggatoLabel.setForeground(new Color(173, 216, 230)); // Azzurro chiaro
                 }
+                @Override
                 public void mouseExited(java.awt.event.MouseEvent evt) {
                     utenteLoggatoLabel.setForeground(Color.WHITE);
                 }
             });
         }
 
-        // --- STILE MENU LATERALE ---
         Login.applicaStileMenuLaterale(prestazioniButton);
         Login.applicaStileMenuLaterale(mediciButton);
         Login.applicaStileMenuLaterale(turniButton);
         Login.applicaStileMenuLaterale(esciButton);
 
-        //pulsanti dell'agenda nel menu laterale
         Login.applicaStilePulsantiCentrali(ricercaButton);
         Login.applicaStilePulsantiCentrali(newEventButton);
         Login.applicaStilePulsantiCentrali(settimanaleButton);
 
-        // --- STILE PULSANTI CENTRALI ---
         Login.applicaStilePulsantiCentrali(pazientiButton);
         Login.applicaStilePulsantiCentrali(lettiButton);
         Login.applicaStilePulsantiCentrali(dimissioniButton);
         Login.applicaStilePulsantiCentrali(ricoveroButton);
 
-        // --- POPOLA LA TABELLA DELL'AGENDA ---
         Login.setupAgendaTableStyle(agendaTable);
     }
 
-    // =========================================================
-    // METODI PUBBLICI PER ESPORRE I BOTTONI AL CONTROLLER ESTERNO
-    // =========================================================
 
     public void addPazientiListener(ActionListener listener) {
         this.pazientiButton.addActionListener(listener);
@@ -143,14 +136,6 @@ public class SchermataAmministratore extends JFrame {
      */
     public String getTestoRicercaAgenda() {
         return (dataField != null) ? dataField.getText().trim() : "";
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            SchermataAmministratore frame = new SchermataAmministratore("Dott. Mario Rossi (TEST)");
-            controller.Controller.impostaSchermata(frame, frame.mainPanel, "Ospedale - Home Amministratore", JFrame.EXIT_ON_CLOSE);
-            frame.setVisible(true);
-        });
     }
 
 }

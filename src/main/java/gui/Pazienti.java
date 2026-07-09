@@ -3,11 +3,7 @@ package gui;
 import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 
 public class Pazienti extends JFrame {
@@ -21,7 +17,6 @@ public class Pazienti extends JFrame {
     private JTable pazientiTable;
     private JButton nuovoPazienteButton;
     private JButton storicoPazienteButton;
-    private JButton assegnaLettoButton;
     private JTextField residenzaField;
     private JTextField dataField;
     private JTextField ricercaprognosiField;
@@ -33,7 +28,7 @@ public class Pazienti extends JFrame {
             "Sesso", "Residenza", "Stato Ricovero", "Reparto"
     };
 
-    private TableRowSorter<DefaultTableModel> sorter;
+    private transient TableRowSorter<DefaultTableModel> sorter;
 
     public Pazienti() {
         initComponents();
@@ -74,7 +69,6 @@ public class Pazienti extends JFrame {
         if(resetButton != null) Login.applicaStilePulsantiCentrali(resetButton);
         if(nuovoPazienteButton != null) Login.applicaStilePulsantiCentrali(nuovoPazienteButton);
         if(storicoPazienteButton != null) Login.applicaStilePulsantiCentrali(storicoPazienteButton);
-        if(assegnaLettoButton != null) Login.applicaStilePulsantiCentrali(assegnaLettoButton);
     }
 
     // Metodo per permettere al sistema di ascoltare il bottone
@@ -82,12 +76,6 @@ public class Pazienti extends JFrame {
     public void addNuovoPazienteListener(java.awt.event.ActionListener listener) {
         if (nuovoPazienteButton != null) {
             nuovoPazienteButton.addActionListener(listener);
-        }
-    }
-
-    public void addAssegnaLettoListener(java.awt.event.ActionListener listener) {
-        if (assegnaLettoButton != null) {
-            assegnaLettoButton.addActionListener(listener);
         }
     }
 
@@ -128,44 +116,47 @@ public class Pazienti extends JFrame {
         }
     }
 
-    private void eseguiRicerca() {
-        if (sorter == null) return;
-        List<RowFilter<Object, Object>> filters = new ArrayList<>();
+    private void addFilterSeTesto(List<RowFilter<Object, Object>> filters, JTextField field, int columnIndex) {
+        if (field != null && !field.getText().trim().isEmpty()) {
+            String text = field.getText().trim();
+            if (columnIndex == 3) { // Colonna Data Nascita
+                filters.add(RowFilter.regexFilter("^" + text, columnIndex));
+            } else {
+                filters.add(RowFilter.regexFilter("(?i)" + text, columnIndex));
+            }
+        }
+    }
 
-        if (nomeField != null && !nomeField.getText().trim().isEmpty()) {
-            filters.add(RowFilter.regexFilter("(?i)" + nomeField.getText().trim(), 1)); // Colonna Nome
-        }
-        if (codiceField != null && !codiceField.getText().trim().isEmpty()) {
-            filters.add(RowFilter.regexFilter("(?i)" + codiceField.getText().trim(), 2)); // Colonna CF
-        }
-        if (dataField != null && !dataField.getText().trim().isEmpty()) {
-            String text = dataField.getText().trim();
-            // Applica un filtro che matcha l'inizio della stringa (es. "2024", "2024-05", "2024-05-15")
-            filters.add(RowFilter.regexFilter("^" + text, 3)); // Colonna Data Nascita
-        }
-        if (ricercaprognosiField != null && !ricercaprognosiField.getText().trim().isEmpty()) {
-            filters.add(RowFilter.regexFilter("(?i)" + ricercaprognosiField.getText().trim(), 4)); // Colonna Diagnosi
-        }
-        if (residenzaField != null && !residenzaField.getText().trim().isEmpty()) {
-            filters.add(RowFilter.regexFilter("(?i)" + residenzaField.getText().trim(), 6)); // Colonna Residenza
-        }
+    private void addSessoFilter(List<RowFilter<Object, Object>> filters) {
         if (maschioRadioButton != null && maschioRadioButton.isSelected()) {
             filters.add(RowFilter.regexFilter("(?i)^M$", 5)); // Colonna Sesso
         } else if (femminaRadioButton != null && femminaRadioButton.isSelected()) {
             filters.add(RowFilter.regexFilter("(?i)^F$", 5)); // Colonna Sesso
         }
+    }
+
+    private void addRepartoFilter(List<RowFilter<Object, Object>> filters) {
         if (tipologiaList != null && !tipologiaList.isSelectionEmpty()) {
             List<String> repartiScelti = tipologiaList.getSelectedValuesList();
             if (!repartiScelti.isEmpty()) {
-                StringBuilder regex = new StringBuilder("(?i)(");
-                for (int i = 0; i < repartiScelti.size(); i++) {
-                    regex.append(repartiScelti.get(i));
-                    if (i < repartiScelti.size() - 1) regex.append("|");
-                }
-                regex.append(")");
-                filters.add(RowFilter.regexFilter(regex.toString(), 8)); // Colonna Reparto
+                String regex = "(?i)(" + String.join("|", repartiScelti) + ")";
+                filters.add(RowFilter.regexFilter(regex, 8)); // Colonna Reparto
             }
         }
+    }
+
+    private void eseguiRicerca() {
+        if (sorter == null) return;
+        List<RowFilter<Object, Object>> filters = new ArrayList<>();
+
+        addFilterSeTesto(filters, nomeField, 1); // Nome
+        addFilterSeTesto(filters, codiceField, 2); // CF
+        addFilterSeTesto(filters, dataField, 3); // Data Nascita
+        addFilterSeTesto(filters, ricercaprognosiField, 4); // Diagnosi
+        addFilterSeTesto(filters, residenzaField, 6); // Residenza
+
+        addSessoFilter(filters);
+        addRepartoFilter(filters);
 
         if (filters.isEmpty()) {
             sorter.setRowFilter(null);
@@ -185,12 +176,5 @@ public class Pazienti extends JFrame {
         if (dataField != null) dataField.setText("");
         if (sorter != null) sorter.setRowFilter(null);
     }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            Pazienti frame = new Pazienti();
-            controller.Controller.impostaSchermata(frame, frame.mainPanel, "Ricerca Pazienti", JFrame.EXIT_ON_CLOSE);
-            frame.setVisible(true);
-        });
-    }
+    
 }

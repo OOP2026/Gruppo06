@@ -2,7 +2,6 @@ package gui;
 
 import javax.swing.*;
 import javax.swing.table.*;
-import java.awt.*;
 import java.util.Calendar;
 import java.awt.event.ActionListener;
 import java.util.Date;
@@ -125,7 +124,7 @@ public class Ricovero extends JFrame {
     public String[] getRicoveroSelezionato() {
         int rigaSelezionata = ricoveriTable.getSelectedRow();
         if (rigaSelezionata == -1) {
-            return null;
+            return new String[0];
         }
         int modelRow = ricoveriTable.convertRowIndexToModel(rigaSelezionata);
         String idRicovero = null;
@@ -168,11 +167,4 @@ public class Ricovero extends JFrame {
         Login.applicaStilePulsantiCentrali(gestisciDimissioneButton);
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            Ricovero frame = new Ricovero();
-            controller.Controller.impostaSchermata(frame, frame.mainPanel, "Ricerca Ricovero", JFrame.EXIT_ON_CLOSE);
-            frame.setVisible(true);
-        });
-    }
 }

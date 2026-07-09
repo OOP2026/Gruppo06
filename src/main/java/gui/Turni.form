@@ -230,7 +230,9 @@
             <children>
               <component id="db7d5" class="javax.swing.JTable" binding="turniTable">
                 <constraints/>
-                <properties/>
+                <properties>
+                  <autoCreateRowSorter value="true"/>
+                </properties>
               </component>
             </children>
           </scrollpane>

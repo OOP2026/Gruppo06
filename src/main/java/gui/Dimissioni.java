@@ -1,23 +1,18 @@
 package gui;
 
 import javax.swing.*;
-import javax.swing.table.*;
-import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import javax.swing.table.DefaultTableModel;
 import java.util.Calendar;
 import java.awt.event.ActionListener;
 import java.util.Date;
-import java.util.ArrayList;
-import java.util.List;
 
 public class Dimissioni extends JFrame {
 
     public JPanel mainPanel;
-    private JTextField codiceficaleField;
+    private JTextField codiceFiscaleField;
     private JList<String> repartoList;
-    private JList<String> tipoDimissioneList; // Questo è il reparto di dimissione
-    private JSpinner spinner1;
+    private JList<String> tipoDimissioneList;
+    private JSpinner dataDimissioneSpinner;
     private JButton cercaButton;
     private JButton resetButton;
     private JTable pazientiTable;
@@ -26,13 +21,17 @@ public class Dimissioni extends JFrame {
     private JTextField nomeCognomeField;
 
     private static final String[] COLONNE = {
-            "Paziente", "Codice Fiscale",
+            "ID Ricovero", "Paziente", "Codice Fiscale",
             "Reparto Dimissione", "Tipo Dimissione", "Data Dimissione"
     };
 
-    private TableRowSorter<DefaultTableModel> sorter;
-    private boolean isDataModificata = false;
-    private List<String> idRicoveriNascosti = new ArrayList<>();
+    private static final String[] REPARTI_LIST_DATA = {
+            "Chirurgia generale", "Ortopedia", "Cardiologia"
+    };
+
+    private static final String[] TIPO_DIMISSIONE_LIST_DATA = {
+            "Ordinaria", "Trasferimento", "Volontaria", "Decesso"
+    };
 
     public Dimissioni() {
         initComponents();
@@ -40,18 +39,18 @@ public class Dimissioni extends JFrame {
     }
 
     public void aggiornaTabella(Object[][] dati) {
-        idRicoveriNascosti.clear();
         if (pazientiTable != null) {
             DefaultTableModel model = (DefaultTableModel) pazientiTable.getModel();
             model.setRowCount(0);
+
+            // Nascondiamo la colonna dell'ID Ricovero
+            pazientiTable.getColumnModel().getColumn(0).setMinWidth(0);
+            pazientiTable.getColumnModel().getColumn(0).setMaxWidth(0);
+            pazientiTable.getColumnModel().getColumn(0).setWidth(0);
+
             if (dati != null) {
                 for (Object[] riga : dati) {
-                    if (riga != null && riga.length > 0) {
-                        idRicoveriNascosti.add((String) riga[0]); // Salva l'ID Ricovero
-                        Object[] rigaSenzaId = new Object[riga.length - 1];
-                        System.arraycopy(riga, 1, rigaSenzaId, 0, riga.length - 1);
-                        model.addRow(rigaSenzaId);
-                    }
+                    model.addRow(riga);
                 }
             }
         }
@@ -76,7 +75,7 @@ public class Dimissioni extends JFrame {
 
     // Metodi per ottenere i valori dai campi di input
     public String getCodiceFiscale() {
-        return codiceficaleField.getText();
+        return codiceFiscaleField.getText();
     }
 
     public String getNomeCognome() {
@@ -92,119 +91,57 @@ public class Dimissioni extends JFrame {
     }
 
     public Date getDataSelezionata() {
-        return (Date) spinner1.getValue();
+        return (Date) dataDimissioneSpinner.getValue();
     }
 
     public String getCFPazienteSelezionato() {
         int selectedRow = pazientiTable.getSelectedRow();
         if (selectedRow != -1) {
-            // La colonna 1 (nuova) contiene il Codice Fiscale
-            return (String) pazientiTable.getValueAt(selectedRow, 1);
+            // La colonna 2 contiene il Codice Fiscale
+            return (String) pazientiTable.getValueAt(selectedRow, 2);
         }
         return null;
     }
 
     public String getIdRicoveroSelezionato() {
         int selectedRow = pazientiTable.getSelectedRow();
-        if (selectedRow != -1) {
-            int modelRow = pazientiTable.convertRowIndexToModel(selectedRow);
-            if (modelRow >= 0 && modelRow < idRicoveriNascosti.size()) {
-                return idRicoveriNascosti.get(modelRow);
-            }
-        }
+        if (selectedRow != -1) return (String) pazientiTable.getValueAt(selectedRow, 0);
         return null;
     }
 
-    public void resetCampiRicerca() {
-        codiceficaleField.setText("");
+    public void resetCampiRicerca(ActionListener cercaListener) {
+        codiceFiscaleField.setText("");
         nomeCognomeField.setText("");
         repartoList.clearSelection();
         tipoDimissioneList.clearSelection();
-        spinner1.setValue(new Date()); // Resetta alla data odierna
-        
-        // Riporta il cursore sulla porzione del giorno anche dopo un Reset
-        JSpinner.DefaultEditor editor = (JSpinner.DefaultEditor) spinner1.getEditor();
-        SwingUtilities.invokeLater(() -> {
-            editor.getTextField().setCaretPosition(editor.getTextField().getText().length());
-        });
 
-        isDataModificata = false;
-        if (sorter != null) sorter.setRowFilter(null);
+        // Esegue la ricerca con i campi resettati per mostrare tutti i risultati
+        if (cercaListener != null) {
+            cercaListener.actionPerformed(null);
+        }
     }
 
     private void initComponents() {
         DefaultTableModel model = new DefaultTableModel(new Object[0][0], COLONNE) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                // Rende la tabella non editabile
                 return false;
             }
         };
         pazientiTable.setModel(model);
 
-        sorter = new TableRowSorter<>(model);
-        pazientiTable.setRowSorter(sorter);
+        pazientiTable.setAutoCreateRowSorter(true);
 
-        // Popola la lista dei reparti
-        repartoList.setListData(new String[]{
-                "Chirurgia generale", "Ortopedia", "Cardiologia"
-        });
+        //Reparti
+        repartoList.setListData(REPARTI_LIST_DATA);
 
-        // Popola la lista dei tipi di dimissione
-        tipoDimissioneList.setListData(new String[]{
-                "Ordinaria",
-                "Trasferimento",
-                "Volontaria",
-                "Decesso"
-        });
+        //Dimissione
+        tipoDimissioneList.setListData(TIPO_DIMISSIONE_LIST_DATA);
 
-        // Imposta il modello per lo spinner della data
         SpinnerDateModel dateModel = new SpinnerDateModel(new Date(), null, null, Calendar.DAY_OF_MONTH);
-        spinner1.setModel(dateModel);
-        spinner1.setEditor(new JSpinner.DateEditor(spinner1, "yyyy-MM-dd"));
-
-        spinner1.addChangeListener(e -> isDataModificata = true);
-        JSpinner.DefaultEditor editor = (JSpinner.DefaultEditor) spinner1.getEditor();
-        
-        // Sposta il cursore alla fine in modo che le freccette modifichino di default il giorno (l'ultima parte della data)
-        SwingUtilities.invokeLater(() -> {
-            editor.getTextField().setCaretPosition(editor.getTextField().getText().length());
-        });
-
-        // Allinea visivamente il testo a sinistra e assicura che il cursore 
-        // vada in fondo (sul giorno) ogni volta che si clicca o si seleziona il campo
-        editor.getTextField().setHorizontalAlignment(JTextField.LEFT);
-        editor.getTextField().addFocusListener(new java.awt.event.FocusAdapter() {
-            @Override
-            public void focusGained(java.awt.event.FocusEvent e) {
-                SwingUtilities.invokeLater(() -> {
-                    editor.getTextField().setCaretPosition(editor.getTextField().getText().length());
-                });
-            }
-        });
-        editor.getTextField().addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                SwingUtilities.invokeLater(() -> {
-                    editor.getTextField().setCaretPosition(editor.getTextField().getText().length());
-                });
-            }
-        });
-
-        editor.getTextField().getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            @Override
-            public void insertUpdate(javax.swing.event.DocumentEvent e) { isDataModificata = true; }
-            @Override
-            public void removeUpdate(javax.swing.event.DocumentEvent e) { isDataModificata = true; }
-            @Override
-            public void changedUpdate(javax.swing.event.DocumentEvent e) { isDataModificata = true; }
-        });
-
-        if (cercaButton != null) {
-            cercaButton.addActionListener(e -> eseguiRicerca());
-        }
+        dataDimissioneSpinner.setModel(dateModel);
+        dataDimissioneSpinner.setEditor(new JSpinner.DateEditor(dataDimissioneSpinner, "yyyy-MM-dd"));
     }
-
     private void setupStyles() {
         Login.setupTableStyle(pazientiTable);
         Login.styleList(repartoList);
@@ -213,51 +150,5 @@ public class Dimissioni extends JFrame {
         Login.applicaStilePulsantiCentrali(resetButton);
         Login.applicaStilePulsantiCentrali(letturaDimissioneButton);
         Login.applicaStilePulsantiCentrali(archiviaDimissioneButton);
-    }
-
-    private void eseguiRicerca() {
-        if (sorter == null) return;
-        List<RowFilter<Object, Object>> filters = new ArrayList<>();
-
-        if (codiceficaleField != null && !codiceficaleField.getText().trim().isEmpty()) {
-            filters.add(RowFilter.regexFilter("(?i)" + codiceficaleField.getText().trim(), 1)); // Colonna CF
-        }
-        if (nomeCognomeField != null && !nomeCognomeField.getText().trim().isEmpty()) {
-            filters.add(RowFilter.regexFilter("(?i)" + nomeCognomeField.getText().trim(), 0)); // Colonna Paziente
-        }
-        if (repartoList != null && !repartoList.isSelectionEmpty()) {
-            List<String> repartiScelti = repartoList.getSelectedValuesList();
-            if (!repartiScelti.isEmpty()) {
-                String regex = "(?i)(" + String.join("|", repartiScelti) + ")";
-                filters.add(RowFilter.regexFilter(regex, 2)); // Colonna Reparto Dimissione
-            }
-        }
-        if (tipoDimissioneList != null && !tipoDimissioneList.isSelectionEmpty()) {
-            List<String> tipiScelti = tipoDimissioneList.getSelectedValuesList();
-            if (!tipiScelti.isEmpty()) {
-                String regex = "(?i)(" + String.join("|", tipiScelti) + ")";
-                filters.add(RowFilter.regexFilter(regex, 3)); // Colonna Tipo Dimissione
-            }
-        }
-
-        if (isDataModificata && spinner1 != null && spinner1.getValue() != null) {
-            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
-            String dataStr = sdf.format((Date) spinner1.getValue());
-            filters.add(RowFilter.regexFilter("^" + dataStr, 4)); // Colonna Data Dimissione
-        }
-
-        if (filters.isEmpty()) {
-            sorter.setRowFilter(null);
-        } else {
-            sorter.setRowFilter(RowFilter.andFilter(filters));
-        }
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            Dimissioni frame = new Dimissioni();
-            controller.Controller.impostaSchermata(frame, frame.mainPanel, "Ricerca Dimissioni", JFrame.EXIT_ON_CLOSE);
-            frame.setVisible(true);
-        });
     }
 }

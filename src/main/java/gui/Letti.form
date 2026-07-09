@@ -236,7 +236,9 @@
             <children>
               <component id="697a5" class="javax.swing.JTable" binding="lettiTable">
                 <constraints/>
-                <properties/>
+                <properties>
+                  <autoCreateRowSorter value="true"/>
+                </properties>
               </component>
             </children>
           </scrollpane>

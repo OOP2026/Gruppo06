@@ -3,7 +3,6 @@ package gui;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
-import java.awt.*;
 import java.awt.event.ActionListener;
 
 
@@ -11,7 +10,7 @@ public class Letti extends JFrame {
     public JPanel mainPanel;
     private JRadioButton tuttiRadioButton;
     private JRadioButton disponibileRadioButton;
-    private JRadioButton occupatoRadioButton; // Specificare il tipo generico
+    private JRadioButton occupatoRadioButton;
     private JList<String> repartoList;
     private JButton cercaButton;
     private JButton resetButton;
@@ -59,7 +58,7 @@ public class Letti extends JFrame {
         
         // Centra il testo nelle colonne della tabella per far risaltare meglio le emoji
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
-        centerRenderer.setHorizontalAlignment(JLabel.CENTER);
+        centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
         for (int i = 0; i < lettiTable.getColumnCount(); i++) {
             lettiTable.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
         }
@@ -148,21 +147,5 @@ public class Letti extends JFrame {
                 model.addRow(riga);
             }
         }
-    }
-
-    public void setRepartiList(java.util.List<String> reparti) {
-        DefaultListModel<String> model = new DefaultListModel<>();
-        for (String reparto : reparti) {
-            model.addElement(reparto);
-        }
-        repartoList.setModel(model);
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            Letti frame = new Letti();
-            controller.Controller.impostaSchermata(frame, frame.mainPanel, "Gestione Letti", JFrame.EXIT_ON_CLOSE);
-            frame.setVisible(true);
-        });
     }
 }

@@ -175,11 +175,4 @@ public class Login {
         });
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            JFrame frame = new JFrame("Login");
-            controller.Controller.impostaSchermata(frame, new Login().mainPanel, "Login", JFrame.EXIT_ON_CLOSE);
-            frame.setVisible(true);
-        });
-    }
 }

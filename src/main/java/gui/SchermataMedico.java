@@ -16,8 +16,10 @@ public class SchermataMedico extends JFrame {
     private JButton lettiButton;
     private JButton dimissioniButton;
     private JButton ricoveroButton;
+
+    // Attributi per l'Agenda
     private JPanel agendaPanel;
-    private JTextField dataField;
+    private JTextField ricercaField;
     private JButton ricercaButton;
     private  JTable agendaTable ;
     private JButton newEventButton;
@@ -32,44 +34,40 @@ public class SchermataMedico extends JFrame {
             utenteLoggatoLabel.setToolTipText("Clicca per visualizzare e modificare il tuo profilo");
 
             utenteLoggatoLabel.addMouseListener(new java.awt.event.MouseAdapter() {
+                @Override
                 public void mouseEntered(java.awt.event.MouseEvent evt) {
                     utenteLoggatoLabel.setForeground(new Color(173, 216, 230)); // Azzurro chiaro
                 }
+                @Override
                 public void mouseExited(java.awt.event.MouseEvent evt) {
                     utenteLoggatoLabel.setForeground(Color.WHITE);
                 }
             });
         }
 
-        // --- FORZA IL COLORE BIANCO PER IL TITOLO DEL PANNELLO "AGENDA" ---
         if (agendaPanel != null && agendaPanel.getBorder() instanceof javax.swing.border.TitledBorder) {
             ((javax.swing.border.TitledBorder) agendaPanel.getBorder()).setTitleColor(Color.WHITE);
         }
 
-        // --- STILE MENU LATERALE ---
+
         Login.applicaStileMenuLaterale(prestazioniButton);
         Login.applicaStileMenuLaterale(turniButton);
         Login.applicaStileMenuLaterale(esciButton);
 
-        // Pulsanti dell'agenda nel menu laterale
+
         Login.applicaStilePulsantiCentrali(ricercaButton);
         Login.applicaStilePulsantiCentrali(newEventButton);
         Login.applicaStilePulsantiCentrali(settimanaleButton);
 
-        // --- STILE PULSANTI CENTRALI ---
+
         Login.applicaStilePulsantiCentrali(pazientiButton);
         Login.applicaStilePulsantiCentrali(lettiButton);
         Login.applicaStilePulsantiCentrali(dimissioniButton);
         Login.applicaStilePulsantiCentrali(ricoveroButton);
 
 
-        // --- POPOLA LA TABELLA DELL'AGENDA ---
         Login.setupAgendaTableStyle(agendaTable);
     }
-
-    // =========================================================
-    // METODI PUBBLICI PER ESPORRE I BOTTONI AL CONTROLLER ESTERNO
-    // =========================================================
 
     public void addPazientiListener(ActionListener listener) {
         if (pazientiButton != null) pazientiButton.addActionListener(listener);
@@ -131,11 +129,4 @@ public class SchermataMedico extends JFrame {
         }
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            SchermataMedico frame = new SchermataMedico("Dott. Luigi Verdi (TEST)");
-            controller.Controller.impostaSchermata(frame, frame.mainPanel, "Ospedale - Home Medico", JFrame.EXIT_ON_CLOSE);
-            frame.setVisible(true);
-        });
-    }
 }

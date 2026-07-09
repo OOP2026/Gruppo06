@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.logging.Logger;
 import javax.swing.*;
+import java.awt.event.ActionListener;
 import java.awt.*;
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -561,9 +562,6 @@ public class Controller {
 		String tipoDimissione = dimissioniFrame.getTipoDimissioneSelezionato();
 		java.util.Date data = dimissioniFrame.getDataSelezionata();
 
-		// La logica di ricerca è ora implementata nel controller,
-		// anche se per performance sarebbe meglio eseguirla a livello di database.
-		// Il metodo ricercaDimissioni con parametri esegue un filtraggio lato client.
 		List<ArrayList<String>> risultati = ricercaDimissioni(cf, nomeCognome, reparto, tipoDimissione, data);
 		
 		dimissioniFrame.aggiornaTabella(formattaDatiDimissioni(risultati));
@@ -2261,16 +2259,15 @@ public class Controller {
 		impostaSchermata(mediciFrame, mediciFrame.mainPanel, "Gestione Medici", WindowConstants.DISPOSE_ON_CLOSE);
 
         mediciFrame.addNuovoMedicoListener(e -> {
-            if (gestisciCreazioneNuovoMedico()) {
+            if (gestisciCreazioneNuovoMedico()) { //
                 mediciFrame.aggiornaTabella(formattaDatiMedici(medicoDAO.getAllMedici()));
             }
         });
 
 		// Collegamento per il pulsante "Aggiorna Medico"
 		mediciFrame.addModificaMedicoListener(e -> {
-			String[] datiSelezionati = mediciFrame.getDatiMedicoSelezionato();
-			if (datiSelezionati != null && datiSelezionati.length > 0) {
-				String matricola = datiSelezionati[0]; // La matricola è il primo elemento
+			String matricola = mediciFrame.getMatricolaMedicoSelezionato();
+			if (matricola != null) {
 				if (gestisciModificaMedico(matricola)) {
 					// Ricarica la tabella per mostrare i dati aggiornati
 					mediciFrame.aggiornaTabella(formattaDatiMedici(medicoDAO.getAllMedici()));
@@ -2281,10 +2278,9 @@ public class Controller {
 		});
 
 		mediciFrame.addAssenzaListener(e -> {
-			String[] datiSelezionati = mediciFrame.getDatiMedicoSelezionato();
-			if (datiSelezionati != null && datiSelezionati.length > 0) {
-				String matricola = datiSelezionati[0];
-				List<ArrayList<String>> assenzeDb = assenzaDAO.getAssenzeByMedico(matricola);
+			String matricola = mediciFrame.getMatricolaMedicoSelezionato();
+			if (matricola != null) {
+				List<ArrayList<String>> assenzeDb = assenzaDAO.getAssenzeByMedico(matricola); //
 				Assenza assenzaCorrente = null;
 				java.time.LocalDate oggi = java.time.LocalDate.now();
 				if (assenzeDb != null) {
@@ -2380,8 +2376,9 @@ public class Controller {
 
 		// Logica per il pulsante "Reset"
 		dimissioniFrame.addResetListener(e -> {
-			dimissioniFrame.resetCampiRicerca();
-			dimissioniFrame.aggiornaTabella(formattaDatiDimissioni(ricercaDimissioni()));
+			// Passa l'ActionListener di ricerca al metodo resetCampiRicerca per aggiornare la tabella dopo il reset.
+			ActionListener cercaListener = event -> gestisciRicercaDimissioni(dimissioniFrame);
+			dimissioniFrame.resetCampiRicerca(cercaListener);
 		});
 
 		// Logica per il pulsante "Lettura Dimissione"

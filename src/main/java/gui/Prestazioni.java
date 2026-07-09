@@ -16,15 +16,11 @@ public class Prestazioni {
     private JTextField nomeField;
     private JTextField codiceField;
     private JSpinner dataSpinner;
-    private JList repartoList;
-    private JList tipologiaList;
+    private JList<String> repartoList;
+    private JList<String> tipologiaList;
     private JButton resetButton;
     private JButton cercaButton;
-    private JLabel tipoLabel;
 
-    private static final String[] COLONNE = {
-            "Paziente", "CF Paziente", "Tipo Prestazione", "Esito", "Data", "Reparto Erogante"
-    };
     private static final String[] ALL_COLUMNS = {
             "Paziente", "CF Paziente", "Tipo Prestazione", "Esito", "Data", "Reparto Erogante", "ID_Prestazione"
     };
@@ -121,11 +117,11 @@ public class Prestazioni {
     }
 
     public String getRepartoSelezionato() {
-        return (String) repartoList.getSelectedValue();
+        return repartoList.getSelectedValue();
     }
 
     public String getTipologiaSelezionata() {
-        return (String) tipologiaList.getSelectedValue();
+        return tipologiaList.getSelectedValue();
     }
 
     public String getCodPrestazione() {

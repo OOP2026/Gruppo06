@@ -1,16 +1,12 @@
 package gui;
 
 import javax.swing.*;
-import javax.swing.table.*;
-import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import javax.swing.table.DefaultTableModel;
 import java.util.Calendar;
 import java.util.Date;
 
 public class Turni extends JFrame {
 
-    // Dichiarazione componenti GUI
     public JPanel panelHome;
     private JTextField nomeField;
     private JSpinner dataSpinner;
@@ -21,16 +17,24 @@ public class Turni extends JFrame {
     private JTable turniTable;
     private JButton nuovoTurnoButton1;
     private JButton modificaTurno;
-    private JTextField idTurnoField; // Dichiarazione del nuovo campo ID Turno
+    private JTextField idTurnoField;
 
-    // Struttura campi per JTable turniTable
     private static final String[] COLONNE = {
             "ID Turno", "Data", "Matricola", "Dipendente", "Ruolo", "Reparto", "Orario Effettivo" // Aggiornato a 7 colonne
     };
+
+    private static final String[] TIPOLOGIA_DATA = {
+            "Medico", "Amministratore"
+    };
+
+    private static final String[] REPARTI_DATA = {
+            "Chirurgia Generale", "Cardiologia", "Ortopedia",
+            "Pediatria", "Terapia Intensiva", "Pronto Soccorso",
+            "Bariatria", "Radiologia Interventistica", "Nessuno"
+    };
     
-    private Object[][] datiTurni = new Object[0][0];
+    private transient Object[][] datiTurni = new Object[0][0];
     
-    //Dichiarazione Costruttore
     public Turni() {
         initComponents();
         setupStyles();
@@ -44,11 +48,11 @@ public class Turni extends JFrame {
     }
 
     public void addNuovoTurnoListener(java.awt.event.ActionListener listener) {
-        if (nuovoTurnoButton1 != null) nuovoTurnoButton1.addActionListener(listener);
+        nuovoTurnoButton1.addActionListener(listener);
     }
 
     public void addModificaTurnoListener(java.awt.event.ActionListener listener) {
-        if (modificaTurno != null) modificaTurno.addActionListener(listener);
+        modificaTurno.addActionListener(listener);
     }
 
     public String[] getDatiTurnoSelezionato() {
@@ -60,10 +64,9 @@ public class Turni extends JFrame {
             String orarioEffettivo = (String) model.getValueAt(selectedRow, 6); // Orario Effettivo è ora la colonna 6
             return new String[]{data, matricola, orarioEffettivo};
         }
-        return null;
+        return new String[0];
     }
 
-    //Inizializzazione Componenti
     private void initComponents() {
         // Setup Spinner Data
         SpinnerDateModel dateModel = new SpinnerDateModel(new Date(), null, null, Calendar.DAY_OF_MONTH);
@@ -71,17 +74,10 @@ public class Turni extends JFrame {
         dataSpinner.setEditor(new JSpinner.DateEditor(dataSpinner, "yyyy-MM-dd")); // Formato data YYYY-MM-DD
 
         //Dichiarazione campi JList
-        tipologiaList.setListData(new String[]{
-                "Medico", "Amministratore"
-        });
+        tipologiaList.setListData(TIPOLOGIA_DATA);
         //Dichiarazione campi JList
-        repartoList.setListData(new String[]{
-                "Chirurgia Generale", "Cardiologia", "Ortopedia",
-                "Pediatria", "Terapia Intensiva", "Pronto Soccorso",
-                "Bariatria", "Radiologia Interventistica", "Nessuno"
-        });
-
-
+        repartoList.setListData(REPARTI_DATA);
+        
         DefaultTableModel model = new DefaultTableModel(COLONNE, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -128,38 +124,33 @@ public class Turni extends JFrame {
         });
     }
 
+    private boolean isTurnoCorrispondente(Object[] row, String filtroIdTurno, String filtroNome, String filtroMatricola, String filtroRuolo, String filtroReparto, String filtroData) {
+        String rIdTurno = row[0] != null ? ((String) row[0]).toLowerCase() : "";
+        String rData = row[1] != null ? ((String) row[1]).toLowerCase() : "";
+        String rMatricola = row[2] != null ? ((String) row[2]).toLowerCase() : "";
+        String rNome = row[3] != null ? ((String) row[3]).toLowerCase() : ""; // Dipendente
+        String rRuolo = row[4] != null ? (String) row[4] : "";
+        String rReparto = row[5] != null ? ((String) row[5]).toLowerCase() : "";
+
+        boolean matchIdTurno = (filtroIdTurno == null || filtroIdTurno.isEmpty() || rIdTurno.equals(filtroIdTurno.toLowerCase()));
+        boolean matchData = (filtroData == null || filtroData.isEmpty() || rData.equals(filtroData.toLowerCase()));
+        boolean matchNome = (filtroNome == null || filtroNome.isEmpty() || rNome.contains(filtroNome));
+        boolean matchMatricola = (filtroMatricola == null || filtroMatricola.isEmpty() || rMatricola.contains(filtroMatricola));
+        boolean matchRuolo = (filtroRuolo == null || rRuolo.equalsIgnoreCase(filtroRuolo));
+        boolean matchReparto = (filtroReparto == null || rReparto.equalsIgnoreCase(filtroReparto));
+
+        return matchIdTurno && matchData && matchNome && matchMatricola && matchRuolo && matchReparto;
+    }
+
     private void loadTableData(String filtroIdTurno, String filtroNome, String filtroMatricola, String filtroRuolo, String filtroReparto, String filtroData) {
         DefaultTableModel m = (DefaultTableModel) turniTable.getModel();
         m.setRowCount(0);
 
         for (Object[] row : datiTurni) {
-            // Adatta gli indici in base al nuovo array COLONNE (7 elementi)
-            String rIdTurno = row[0] != null ? ((String) row[0]).toLowerCase() : "";
-            String rData = row[1] != null ? ((String) row[1]).toLowerCase() : "";
-            String rMatricola = row[2] != null ? ((String) row[2]).toLowerCase() : "";
-            String rNome = row[3] != null ? ((String) row[3]).toLowerCase() : ""; // Dipendente
-            String rRuolo = row[4] != null ? (String) row[4] : "";
-            String rReparto = row[5] != null ? ((String) row[5]).toLowerCase() : "";
-
-            boolean matchIdTurno = (filtroIdTurno == null || filtroIdTurno.isEmpty() || rIdTurno.equals(filtroIdTurno.toLowerCase())); // Exact match for ID
-            boolean matchData = (filtroData == null || filtroData.isEmpty() || rData.equals(filtroData.toLowerCase())); // Exact match for Data
-            boolean matchNome = (filtroNome == null || filtroNome.isEmpty() || rNome.contains(filtroNome));
-            boolean matchMatricola = (filtroMatricola == null || filtroMatricola.isEmpty() || rMatricola.contains(filtroMatricola));
-            boolean matchRuolo = (filtroRuolo == null || rRuolo.equalsIgnoreCase(filtroRuolo));
-            boolean matchReparto = (filtroReparto == null || rReparto.equalsIgnoreCase(filtroReparto));
-
-            if (matchIdTurno && matchData && matchNome && matchMatricola && matchRuolo && matchReparto) {
+            if (isTurnoCorrispondente(row, filtroIdTurno, filtroNome, filtroMatricola, filtroRuolo, filtroReparto, filtroData)) {
                 m.addRow(row);
             }
         }
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            Turni frame = new Turni();
-           controller.Controller.impostaSchermata(frame, frame.panelHome, "Gestione turni lavorativi", JFrame.EXIT_ON_CLOSE);
-
-            frame.setVisible(true);
-        });
-    }
 }

@@ -2,7 +2,6 @@ package gui;
 
 import javax.swing.*;
 import javax.swing.table.*;
-import java.awt.*;
 
 public class Medici extends JFrame {
     //Dichiarazione componenti GUI
@@ -18,21 +17,25 @@ public class Medici extends JFrame {
     private JList<String> repartoList;
     private JButton assenzaButton;
     private JButton modificamedicoButton;
-    private JRadioButton tuttiRadioButton;
     private JRadioButton attivoRadioButton;
     private JRadioButton assenteRadioButton;
+    private JRadioButton occupatoRadioButton;
+    private JRadioButton tuttiRadioButton;
 
-    //Selezione colori GUI
-    private static final Color AZZURRO_HOME = new Color(70, 132, 197);
-    private static final Color SELECTION_BG = new Color(187, 222, 247);
-    private static final Color ALT_ROW_BG = new Color(0xf5, 0xf8, 0xfc);
-    //Selezione font GUI
-    private static final Font BASE_FONT = new Font("SansSerif", Font.PLAIN, 12);
-    private static final Font HEADER_FONT = new Font("SansSerif", Font.BOLD, 12);
     //Assegnazione campi presso: JTable mediciTable
     private static final String[] COLONNE = {
             "Matricola", "Cognome e Nome", "Specializzazione",
             "Reparto Assegnato", "Stato"
+    };
+
+    private static final String[] SPECIALIZZAZIONI_DATA = {
+            "Chirurgia Generale", "Cardiologia", "Neurologia",
+            "Anestesia", "Chirurgia Toracica", "Ematologia", "Otorinolaringoiatria"
+    };
+
+    private static final String[] REPARTI_DATA = {
+            "Blocco Operatorio", "Terapia Intensiva", "Neuroradiologia",
+            "Chirurgia Toracica", "Laboratorio Analisi", "Pronto Soccorso"
     };
     
     private Object[][] datiMedici = new Object[0][0];
@@ -51,43 +54,38 @@ public class Medici extends JFrame {
     }
 
     public void addNuovoMedicoListener(java.awt.event.ActionListener listener) {
-        if (newmedicoButton != null) newmedicoButton.addActionListener(listener);
+        newmedicoButton.addActionListener(listener);
     }
 
     public void addModificaMedicoListener(java.awt.event.ActionListener listener) {
-        if (modificamedicoButton != null) modificamedicoButton.addActionListener(listener);
+        modificamedicoButton.addActionListener(listener);
     }
 
     public void addAssenzaListener(java.awt.event.ActionListener listener) {
-        if (assenzaButton != null) assenzaButton.addActionListener(listener);
+        assenzaButton.addActionListener(listener);
     }
 
-    public String[] getDatiMedicoSelezionato() {
+    public String getMatricolaMedicoSelezionato() {
         int selectedRow = mediciTable.getSelectedRow();
         if (selectedRow == -1) {
             return null; // Nessuna riga selezionata
         }
         // La matricola è nella prima colonna (indice 0)
-        return new String[]{(String) mediciTable.getValueAt(selectedRow, 0)};
+        return (String) mediciTable.getValueAt(selectedRow, 0);
     }
     //Inserimento parametri list e definizione modelli Table
     private void initComponents() {
-        specializzazioneList.setListData(new String[]{
-                "Chirurgia Generale", "Cardiologia", "Neurologia",
-                "Anestesia", "Chirurgia Toracica", "Ematologia", "Otorinolaringoiatria"
-        });
+        specializzazioneList.setListData(SPECIALIZZAZIONI_DATA);
 
-        repartoList.setListData(new String[]{
-                "Blocco Operatorio", "Terapia Intensiva", "Neuroradiologia",
-                "Chirurgia Toracica", "Laboratorio Analisi", "Pronto Soccorso"
-        });
+        repartoList.setListData(REPARTI_DATA);
 
         // Raggruppa i radio button per consentire una sola selezione
         ButtonGroup statoGroup = new ButtonGroup();
         statoGroup.add(tuttiRadioButton);
         statoGroup.add(attivoRadioButton);
         statoGroup.add(assenteRadioButton);
-        tuttiRadioButton.setSelected(true); // Imposta "Tutti" come predefinito
+        statoGroup.add(occupatoRadioButton);
+        tuttiRadioButton.setSelected(true);
 
         DefaultTableModel model = new DefaultTableModel(COLONNE, 0) {
             @Override
@@ -102,11 +100,11 @@ public class Medici extends JFrame {
         Login.styleList(specializzazioneList);
         Login.styleList(repartoList);
         Login.setupTableStyle(mediciTable);
-        if(cercaButton != null) Login.applicaStilePulsantiCentrali(cercaButton);
-        if(resetButton != null) Login.applicaStilePulsantiCentrali(resetButton);
-        if(modificamedicoButton != null) Login.applicaStilePulsantiCentrali(modificamedicoButton);
-        if(newmedicoButton != null) Login.applicaStilePulsantiCentrali(newmedicoButton);
-        if(assenzaButton != null) Login.applicaStilePulsantiCentrali(assenzaButton);
+        Login.applicaStilePulsantiCentrali(cercaButton);
+        Login.applicaStilePulsantiCentrali(resetButton);
+        Login.applicaStilePulsantiCentrali(modificamedicoButton);
+        Login.applicaStilePulsantiCentrali(newmedicoButton);
+        Login.applicaStilePulsantiCentrali(assenzaButton);
     }
 
     private void setupListeners() { //Setup Listener e operazioni di filtraggio su Matricola
@@ -134,29 +132,36 @@ public class Medici extends JFrame {
         DefaultTableModel m = (DefaultTableModel) mediciTable.getModel();
         m.setRowCount(0);
 
+        String filtroStato = null;
+        if (tuttiRadioButton.isSelected()) {
+            filtroStato = null; // Nessun filtro
+        } else if (attivoRadioButton.isSelected()) {
+            filtroStato = "attivo";
+        } else if (assenteRadioButton.isSelected()) {
+            filtroStato = "assente";
+        } else if (occupatoRadioButton.isSelected()) {
+            filtroStato = "occupato";
+        }
+
         for (Object[] row : datiMedici) {
             String rMatricola = ((String) row[0]).toLowerCase();
             String rNome = ((String) row[1]).toLowerCase();
             String rSpec = (String) row[2];
             String rReparto = (String) row[3];
+            String rStato = ((String) row[4]).toLowerCase();
 
             boolean matchNome = (filtroNome == null || filtroNome.isEmpty() || rNome.contains(filtroNome));
             boolean matchMatricola = (filtroMatricola == null || filtroMatricola.isEmpty() || rMatricola.contains(filtroMatricola));
 
             boolean matchSpec = (filtroSpec == null || rSpec.equals(filtroSpec));
             boolean matchReparto = (filtroReparto == null || rReparto.equals(filtroReparto));
+            
+            boolean matchStato = (filtroStato == null || rStato.equals(filtroStato));
 
-            if (matchNome && matchMatricola && matchSpec && matchReparto) {
+            if (matchNome && matchMatricola && matchSpec && matchReparto && matchStato) {
                 m.addRow(row);
             }
         }
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            Medici frame = new Medici();
-            controller.Controller.impostaSchermata(frame, frame.mainPanel, "Gestione Medici ", JFrame.EXIT_ON_CLOSE);
-            frame.setVisible(true);
-        });
-    }
 }

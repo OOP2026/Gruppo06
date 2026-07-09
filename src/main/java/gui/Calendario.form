@@ -20,6 +20,7 @@
           <component id="7c335" class="javax.swing.JTable" binding="settimanaTable">
             <constraints/>
             <properties>
+              <autoCreateRowSorter value="true"/>
               <fillsViewportHeight value="true"/>
             </properties>
           </component>

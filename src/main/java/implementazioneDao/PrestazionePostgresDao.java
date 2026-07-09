@@ -16,8 +16,11 @@ public class PrestazionePostgresDao implements PrestazioneDAO {
     private static final Logger LOGGER = Logger.getLogger(PrestazionePostgresDao.class.getName());
 
     private static final String AGGIUNGI_PRESTAZIONE_QUERY = "INSERT INTO prestazione (tipologia_prestazione, esito_prestazione, id_turno, cf_paziente, matricola_medico, id_agenda) VALUES (?, ?, ?, ?, ?, ?)";
-    private static final String GET_ALL_PRESTAZIONI_QUERY = "SELECT p.id_prestazione, p.tipologia_prestazione, p.esito_prestazione, t.data_turno  AS data_turno, p.cf_paziente, p.matricola_medico FROM prestazione p LEFT JOIN turno_lavorativo t ON p.id_turno = t.id_turno ORDER BY p.id_prestazione ASC";
-    private static final String GET_PRESTAZIONI_BY_MEDICO_QUERY = "SELECT p.id_prestazione, p.tipologia_prestazione, p.esito_prestazione, t.data_turno  AS data_turno, p.cf_paziente, p.matricola_medico FROM prestazione p LEFT JOIN turno_lavorativo t ON p.id_turno = t.id_turno WHERE p.matricola_medico = ? ORDER BY p.id_prestazione ASC";
+    private static final String GET_ALL_PRESTAZIONI_QUERY = "SELECT p.id_prestazione, p.tipologia_prestazione, p.esito_prestazione, t.data_turno AS data_turno, p.cf_paziente, p.matricola_medico, p.referto FROM prestazione p LEFT JOIN turno_lavorativo t ON p.id_turno = t.id_turno ORDER BY p.id_prestazione ASC";
+    private static final String GET_PRESTAZIONI_BY_MEDICO_QUERY = "SELECT p.id_prestazione, p.tipologia_prestazione, p.esito_prestazione, t.data_turno AS data_turno, p.cf_paziente, p.matricola_medico, p.referto FROM prestazione p LEFT JOIN turno_lavorativo t ON p.id_turno = t.id_turno WHERE p.matricola_medico = ? ORDER BY p.id_prestazione ASC";
+    private static final String GET_PRESTAZIONE_BY_ID_QUERY = "SELECT p.id_prestazione, p.tipologia_prestazione, p.esito_prestazione, t.data_turno AS data_turno, p.cf_paziente, p.matricola_medico, p.referto FROM prestazione p LEFT JOIN turno_lavorativo t ON p.id_turno = t.id_turno WHERE p.id_prestazione = ?";
+    private static final String UPDATE_PRESTAZIONE_QUERY = "UPDATE prestazione SET tipologia_prestazione = ?, esito_prestazione = ?, referto = ? WHERE id_prestazione = ?";
+    private static final String DELETE_PRESTAZIONE_QUERY = "DELETE FROM prestazione WHERE id_prestazione = ?";
 
     @Override
     public boolean aggiungiPrestazione(String tipologiaPrestazione, String esitoPrestazione, String idTurno, String cfPaziente, String matricolaMedico, String idAgenda) {
@@ -50,6 +53,7 @@ public class PrestazionePostgresDao implements PrestazioneDAO {
                 p.add(rs.getString("data_turno"));
                 p.add(rs.getString("cf_paziente"));
                 p.add(rs.getString("matricola_medico"));
+                p.add(rs.getString("referto"));
                 prestazioni.add(p);
             }
         } catch (SQLException e) {
@@ -73,6 +77,7 @@ public class PrestazionePostgresDao implements PrestazioneDAO {
                     p.add(rs.getString("data_turno"));
                     p.add(rs.getString("cf_paziente"));
                     p.add(rs.getString("matricola_medico"));
+                    p.add(rs.getString("referto"));
                     prestazioni.add(p);
                 }
             }
@@ -80,5 +85,56 @@ public class PrestazionePostgresDao implements PrestazioneDAO {
             LOGGER.log(Level.SEVERE, "Errore durante il recupero delle prestazioni per il medico " + matricola, e);
         }
         return prestazioni;
+    }
+
+    @Override
+    public ArrayList<String> getPrestazioneById(String idPrestazione) {
+        ArrayList<String> prestazione = null;
+        try (Connection conn = ConnessioneDatabase.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(GET_PRESTAZIONE_BY_ID_QUERY)) {
+            stmt.setInt(1, Integer.parseInt(idPrestazione));
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    prestazione = new ArrayList<>();
+                    prestazione.add(String.valueOf(rs.getInt("id_prestazione")));
+                    prestazione.add(rs.getString("tipologia_prestazione"));
+                    prestazione.add(rs.getString("esito_prestazione"));
+                    prestazione.add(rs.getString("data_turno"));
+                    prestazione.add(rs.getString("cf_paziente"));
+                    prestazione.add(rs.getString("matricola_medico"));
+                    prestazione.add(rs.getString("referto"));
+                }
+            }
+        } catch (SQLException | NumberFormatException e) {
+            LOGGER.log(Level.SEVERE, "Errore durante il recupero della prestazione con ID " + idPrestazione, e);
+        }
+        return prestazione;
+    }
+
+    @Override
+    public boolean updatePrestazione(int idPrestazione, String tipologia, String esito, String referto) {
+        try (Connection conn = ConnessioneDatabase.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(UPDATE_PRESTAZIONE_QUERY)) {
+            stmt.setString(1, tipologia);
+            stmt.setString(2, esito);
+            stmt.setString(3, referto);
+            stmt.setInt(4, idPrestazione);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Errore durante l'aggiornamento della prestazione con ID " + idPrestazione, e);
+            return false;
+        }
+    }
+
+    @Override
+    public boolean eliminaPrestazione(int idPrestazione) {
+        try (Connection conn = ConnessioneDatabase.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(DELETE_PRESTAZIONE_QUERY)) {
+            stmt.setInt(1, idPrestazione);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Errore durante l'eliminazione della prestazione con ID " + idPrestazione, e);
+            return false;
+        }
     }
 }

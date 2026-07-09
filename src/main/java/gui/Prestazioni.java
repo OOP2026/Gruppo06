@@ -21,7 +21,10 @@ public class Prestazioni extends JFrame {
     private JLabel tipoLabel;
 
     private static final String[] COLONNE = {
-            "ID Prestaz.", "Tipo Prestazione", "Esito", "Data", "CF Paziente", "Reparto Erogante"
+            "Paziente", "CF Paziente", "Tipo Prestazione", "Esito", "Data", "Reparto Erogante"
+    };
+    private static final String[] ALL_COLUMNS = {
+            "Paziente", "CF Paziente", "Tipo Prestazione", "Esito", "Data", "Reparto Erogante", "ID_Prestazione"
     };
 
     public Prestazioni() {
@@ -34,13 +37,19 @@ public class Prestazioni extends JFrame {
         JSpinner.DateEditor dateEditor = new JSpinner.DateEditor(dataSpinner, "yyyy-MM-dd");
         dataSpinner.setEditor(dateEditor);
 
-        DefaultTableModel model = new DefaultTableModel(COLONNE, 0) {
+        DefaultTableModel model = new DefaultTableModel(ALL_COLUMNS, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
             }
         };
         prestazioniTable.setModel(model);
+
+        // Nascondi la colonna dell'ID (indice 6) impostando la sua larghezza a 0
+        javax.swing.table.TableColumn idColumn = prestazioniTable.getColumnModel().getColumn(6);
+        idColumn.setMinWidth(0);
+        idColumn.setMaxWidth(0);
+        idColumn.setWidth(0);
     }
 
     private void setupStyles() {
@@ -84,8 +93,8 @@ public class Prestazioni extends JFrame {
         if (selectedRow == -1) {
             return null;
         }
-        // ID Prestazione is in the first column (index 0)
-        return prestazioniTable.getValueAt(selectedRow, 0).toString();
+        // L'ID Prestazione è ora in una colonna "nascosta" (la 7a, indice 6) nel modello dati per non appesantire la UI.
+        return prestazioniTable.getModel().getValueAt(selectedRow, 6).toString();
     }
 
     public String getCodPrestazione() {

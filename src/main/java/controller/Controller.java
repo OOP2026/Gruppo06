@@ -1672,20 +1672,10 @@ public class Controller {
 
 	public boolean gestisciModificaPrestazione(String idPrestazione) {
 		// NOTA: Questo metodo richiede l'aggiunta di `getPrestazioneById` e `updatePrestazione` al PrestazioneDAO.
-		// Esempio: ArrayList<String> prestazione = prestazioneDAO.getPrestazioneById(idPrestazione);
-		// Esempio: boolean successo = prestazioneDAO.updatePrestazione(id, esito, descrizione);
-		
-		// Dati Fittizi per la dimostrazione (DA SOSTITUIRE CON CHIAMATA DAO REALE)
-		ArrayList<String> prestazione = new ArrayList<>();
-		prestazione.add(idPrestazione); // 0:id
-		prestazione.add("Visita di controllo"); // 1:tipologia
-		prestazione.add("In attesa"); // 2:esito
-		prestazione.add("2024-05-20"); // 3:data
-		prestazione.add("RSSMRA80A01H501U"); // 4:cf
-		prestazione.add("M123"); // 5:matricola
-		prestazione.add(""); // 6:descrizione
+		// La logica fittizia è stata sostituita con le chiamate reali al DAO.
+		ArrayList<String> prestazione = prestazioneDAO.getPrestazioneById(idPrestazione);
 
-		if (prestazione.isEmpty()) {
+		if (prestazione == null || prestazione.isEmpty()) {
 			JOptionPane.showMessageDialog(null, "Dettagli prestazione non trovati.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
 			return false;
 		}
@@ -1722,11 +1712,46 @@ public class Controller {
 		bottomPanel.add(scrollPane, java.awt.BorderLayout.CENTER);
 		panel.add(bottomPanel, java.awt.BorderLayout.CENTER);
 
-		int result = JOptionPane.showConfirmDialog(null, panel, "Gestisci Prestazione #" + idPrestazione, JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+		Object[] options = {"Salva Modifiche", "Annulla", "Elimina Prestazione"};
+		int choice = JOptionPane.showOptionDialog(null, panel, "Gestisci Prestazione #" + idPrestazione,
+				JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
 
-		if (result == JOptionPane.OK_OPTION) {
-			JOptionPane.showMessageDialog(null, "Prestazione aggiornata con successo! (Logica DAO da implementare)", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
-			return true;
+		if (choice == 0) { // Salva Modifiche
+			try {
+				String nuovaTipologia = (String) tipoProceduraInput.getSelectedItem();
+				String nuovoEsito = (String) esitoInput.getSelectedItem();
+				String nuovoReferto = refertoInput.getText();
+
+				boolean successo = prestazioneDAO.updatePrestazione(Integer.parseInt(idPrestazione), nuovaTipologia, nuovoEsito, nuovoReferto);
+
+				if (successo) {
+					JOptionPane.showMessageDialog(null, "Prestazione aggiornata con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
+					return true;
+				} else {
+					JOptionPane.showMessageDialog(null, "Errore durante l'aggiornamento della prestazione.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+				}
+			} catch (NumberFormatException e) {
+				JOptionPane.showMessageDialog(null, "ID prestazione non valido.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+			}
+		} else if (choice == 2) { // Elimina Prestazione
+			int conferma = JOptionPane.showConfirmDialog(null,
+					"Sei sicuro di voler eliminare questa prestazione?\nL'azione è irreversibile.",
+					"Conferma Eliminazione Prestazione",
+					JOptionPane.YES_NO_OPTION,
+					JOptionPane.WARNING_MESSAGE);
+			if (conferma == JOptionPane.YES_OPTION) {
+				try {
+					boolean successo = prestazioneDAO.eliminaPrestazione(Integer.parseInt(idPrestazione));
+					if (successo) {
+						JOptionPane.showMessageDialog(null, "Prestazione eliminata con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
+						return true;
+					} else {
+						JOptionPane.showMessageDialog(null, "Errore durante l'eliminazione della prestazione.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+					}
+				} catch (NumberFormatException e) {
+					JOptionPane.showMessageDialog(null, "ID prestazione non valido per l'eliminazione.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+				}
+			}
 		}
 		return false;
 	}
@@ -2654,14 +2679,27 @@ public class Controller {
 
 	private Object[][] formattaDatiPrestazioni(List<ArrayList<String>> prestazioniDb) {
 		if (prestazioniDb == null) return new Object[0][0];
-		Object[][] dati = new Object[prestazioniDb.size()][6];
+		// Colonne GUI: Paziente, CF Paziente, Tipo, Esito, Data, Reparto. Colonne dati: 7 (con ID nascosto).
+		Object[][] dati = new Object[prestazioniDb.size()][7];
 		for (int i = 0; i < prestazioniDb.size(); i++) {
 			List<String> p = prestazioniDb.get(i);
 			try {
-				// DAO returns: 0:id, 1:tipologia_prestazione, 2:esito, 3:data, 4:cf, 5:matricola
-				dati[i][0] = p.size() > 0 ? p.get(0) : "-"; // ID Prestaz.
-				dati[i][1] = p.size() > 1 ? p.get(1) : "-"; // Tipo Prestazione
-				dati[i][2] = p.size() > 2 ? p.get(2) : "-"; // Esito
+				// DAO returns: 0:id, 1:tipologia, 2:esito, 3:data, 4:cf, 5:matricola, 6:referto
+				String idPrestazione = p.size() > 0 ? p.get(0) : "-";
+				String cfPaziente = p.size() > 4 ? p.get(4) : "-";
+
+				String nomePaziente = "Sconosciuto";
+				if (!"-".equals(cfPaziente)) {
+					List<String> paziente = pazienteDAO.getPazienteByCf(cfPaziente);
+					if (paziente != null && !paziente.isEmpty()) {
+						nomePaziente = (paziente.size() > 2 ? paziente.get(2) : "") + " " + (paziente.size() > 1 ? paziente.get(1) : "");
+					}
+				}
+
+				dati[i][0] = nomePaziente.trim(); // Paziente
+				dati[i][1] = cfPaziente; // CF Paziente
+				dati[i][2] = p.size() > 1 ? p.get(1) : "-"; // Tipo Prestazione
+				dati[i][3] = p.size() > 2 ? p.get(2) : "-"; // Esito
 				
 				String dataTurno = p.size() > 3 && p.get(3) != null ? p.get(3) : "-";
 				String turnoFormattato = "-";
@@ -2675,8 +2713,7 @@ public class Controller {
 						turnoFormattato = dataTurno;
 					}
 				}
-				dati[i][3] = turnoFormattato; // Data Prestazione
-				dati[i][4] = p.size() > 4 ? p.get(4) : "-"; // CF Paziente
+				dati[i][4] = turnoFormattato; // Data Prestazione
 
 				String matricola = p.size() > 5 && p.get(5) != null ? p.get(5) : "";
 				String repartoErogante = "-";
@@ -2687,6 +2724,7 @@ public class Controller {
 					}
 				}
 				dati[i][5] = repartoErogante; // Reparto Erogante
+				dati[i][6] = idPrestazione;   // ID Prestazione (per operazioni, non mostrato)
 			} catch (Exception e) {
 				final int riga = i;
 				LOGGER.warning(() -> "Errore nella formattazione dei dati prestazioni alla riga " + riga + ": " + e.getMessage());

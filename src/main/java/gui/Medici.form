@@ -306,7 +306,7 @@
             <children>
               <component id="51d54" class="javax.swing.JButton" binding="newmedicoButton">
                 <constraints>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="4" fill="0" indent="0" use-parent-layout="false">
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="4" fill="0" indent="0" use-parent-layout="false">
                     <minimum-size width="150" height="50"/>
                     <preferred-size width="150" height="50"/>
                     <maximum-size width="150" height="50"/>
@@ -344,9 +344,9 @@
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="3" indent="0" use-parent-layout="false">
-                <minimum-size width="140" height="50"/>
-                <preferred-size width="140" height="50"/>
-                <maximum-size width="140" height="50"/>
+                <minimum-size width="150" height="50"/>
+                <preferred-size width="150" height="50"/>
+                <maximum-size width="150" height="50"/>
               </grid>
             </constraints>
             <properties/>
@@ -355,9 +355,9 @@
               <component id="28954" class="javax.swing.JButton" binding="modificamedicoButton">
                 <constraints>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false">
-                    <minimum-size width="140" height="50"/>
-                    <preferred-size width="140" height="50"/>
-                    <maximum-size width="140" height="50"/>
+                    <minimum-size width="150" height="50"/>
+                    <preferred-size width="150" height="50"/>
+                    <maximum-size width="150" height="50"/>
                   </grid>
                 </constraints>
                 <properties>

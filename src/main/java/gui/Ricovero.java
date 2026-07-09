@@ -27,6 +27,7 @@ public class Ricovero extends JFrame {
 
     private JButton nuovoRicoveroButton;
     private JButton gestisciRicoveroButton;
+    private JButton gestisciDimissioneButton;
 
     private List<String> idRicoveriNascosti = new ArrayList<>();
 
@@ -140,6 +141,7 @@ public class Ricovero extends JFrame {
         Login.applicaStilePulsantiCentrali(resetButton);
         Login.applicaStilePulsantiCentrali(nuovoRicoveroButton);
         Login.applicaStilePulsantiCentrali(gestisciRicoveroButton);
+        Login.applicaStilePulsantiCentrali(gestisciDimissioneButton);
     }
 
     public static void main(String[] args) {

@@ -1237,6 +1237,127 @@ public class Controller {
         return false;
 	}
 
+	public boolean gestisciModificaRicovero(String idRicovero, String cfPaziente) {
+		List<String> ricoveroAttivo = ricoveroDAO.getRicoveroAttivo(cfPaziente);
+		if (ricoveroAttivo == null || ricoveroAttivo.isEmpty()) {
+			JOptionPane.showMessageDialog(null, "Ricovero attivo non trovato per questo paziente.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+			return false;
+		}
+
+		String idLettoAttuale = ricoveroAttivo.get(2);
+		String repartoAttuale = ricoveroAttivo.get(3);
+		String stanzaAttuale = "-";
+
+		List<String> lettoAttuale = lettoDAO.getLettoById(idLettoAttuale, repartoAttuale);
+		if (lettoAttuale != null && lettoAttuale.size() > 3) {
+			stanzaAttuale = lettoAttuale.get(3);
+		}
+
+		// Calcola letti disponibili (escludendo quello attualmente occupato dal paziente stesso)
+		java.util.Set<String> lettiOccupati = new java.util.HashSet<>();
+		List<ArrayList<String>> ricoveri = ricoveroDAO.getAllRicoveriAttivi();
+		if (ricoveri != null) {
+			for (List<String> r : ricoveri) {
+				if (r.size() > 3 && !r.get(0).equals(idRicovero)) {
+					lettiOccupati.add(r.get(2) + "_" + r.get(3));
+				}
+			}
+		}
+
+		List<ArrayList<String>> tuttiLetti = lettoDAO.getAllLetti();
+		java.util.Map<String, java.util.Map<String, List<String>>> repartiStanzeLetti = new java.util.HashMap<>();
+		java.util.Set<String> repartiDisponibili = new java.util.TreeSet<>();
+
+		if (tuttiLetti != null) {
+			for (List<String> letto : tuttiLetti) {
+				String id = letto.size() > 0 ? letto.get(0) : "";
+				String rep = letto.size() > 1 ? letto.get(1) : "";
+				String sta = letto.size() > 3 ? letto.get(3) : "Sconosciuta";
+
+				if (!lettiOccupati.contains(id + "_" + rep)) {
+					repartiDisponibili.add(rep);
+					repartiStanzeLetti.computeIfAbsent(rep, k -> new java.util.TreeMap<>()).computeIfAbsent(sta, k -> new ArrayList<>()).add(id);
+				}
+			}
+		}
+
+		if (repartiDisponibili.isEmpty()) {
+			JOptionPane.showMessageDialog(null, "Non ci sono letti disponibili per il trasferimento.", "Nessun Letto Disponibile", JOptionPane.INFORMATION_MESSAGE);
+			return false;
+		}
+
+		JComboBox<String> repartiComboBox = new JComboBox<>(repartiDisponibili.toArray(new String[0]));
+		JComboBox<String> stanzeComboBox = new JComboBox<>();
+		JComboBox<String> lettiComboBox = new JComboBox<>();
+
+		repartiComboBox.addActionListener(e -> {
+			String repartoSel = (String) repartiComboBox.getSelectedItem();
+			stanzeComboBox.removeAllItems();
+			lettiComboBox.removeAllItems();
+			if (repartoSel != null) {
+				java.util.Map<String, List<String>> stanze = repartiStanzeLetti.get(repartoSel);
+				if (stanze != null) {
+					for (String stanza : stanze.keySet()) {
+						stanzeComboBox.addItem(stanza);
+					}
+				}
+			}
+		});
+
+		stanzeComboBox.addActionListener(e -> {
+			String repartoSel = (String) repartiComboBox.getSelectedItem();
+			String stanzaSel = (String) stanzeComboBox.getSelectedItem();
+			lettiComboBox.removeAllItems();
+			if (repartoSel != null && stanzaSel != null) {
+				List<String> letti = repartiStanzeLetti.get(repartoSel).get(stanzaSel);
+				if (letti != null) {
+					for (String letto : letti) {
+						lettiComboBox.addItem(letto);
+					}
+				}
+			}
+		});
+
+		if (repartiComboBox.getItemCount() > 0) {
+			repartiComboBox.setSelectedIndex(0);
+		}
+
+		JPanel panel = new JPanel(new GridLayout(6, 2, 10, 10));
+		
+		panel.add(new JLabel("Vecchio Reparto:"));
+		panel.add(new JLabel("<html><b>" + repartoAttuale + "</b></html>"));
+		panel.add(new JLabel("Nuovo Reparto:"));
+		panel.add(repartiComboBox);
+
+		panel.add(new JLabel("Vecchia Stanza:"));
+		panel.add(new JLabel("<html><b>" + stanzaAttuale + "</b></html>"));
+		panel.add(new JLabel("Nuova Stanza:"));
+		panel.add(stanzeComboBox);
+
+		panel.add(new JLabel("Vecchio Letto:"));
+		panel.add(new JLabel("<html><b>" + idLettoAttuale + "</b></html>"));
+		panel.add(new JLabel("Nuovo Letto:"));
+		panel.add(lettiComboBox);
+
+		int result = JOptionPane.showConfirmDialog(null, panel, "Trasferimento Paziente", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+		if (result == JOptionPane.OK_OPTION && lettiComboBox.getSelectedIndex() != -1) {
+			String nuovoReparto = (String) repartiComboBox.getSelectedItem();
+			String nuovoLetto = (String) lettiComboBox.getSelectedItem();
+
+			boolean successo = ricoveroDAO.aggiornaLettoRicovero(idRicovero, nuovoLetto, nuovoReparto);
+			if (successo) {
+				lettoDAO.aggiornaStatoLetto(idLettoAttuale, repartoAttuale, false); // Libera vecchio
+				lettoDAO.aggiornaStatoLetto(nuovoLetto, nuovoReparto, true);  // Occupa nuovo
+				JOptionPane.showMessageDialog(null, "Trasferimento effettuato con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
+				return true;
+			} else {
+				JOptionPane.showMessageDialog(null, "Errore durante il trasferimento del paziente.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+			}
+		}
+		return false;
+	}
+
 	// =========================================================
 	// METODI DI NAVIGAZIONE E GESTIONE SCHERMATE (ORCHESTRAZIONE GUI)
 	// =========================================================
@@ -2303,11 +2424,22 @@ public class Controller {
             }
         });
 
-		ricoveroFrame.addGestisciRicoveroListener(e -> {
+		ricoveroFrame.addGestisciDimissioneListener(e -> {
 			String[] selezionato = ricoveroFrame.getRicoveroSelezionato();
 			if (selezionato != null) {
 				if (gestisciDimissioneDaRicovero(selezionato[1])) {
 					caricaDatiRicoveriAsync(ricoveroFrame); // Ricarica la tabella dopo la dimissione
+				}
+			} else {
+				JOptionPane.showMessageDialog(ricoveroFrame, "Per favore, seleziona un ricovero dalla tabella prima di cliccare su Gestisci Dimissione.", "Nessun Ricovero Selezionato", JOptionPane.WARNING_MESSAGE);
+			}
+		});
+
+		ricoveroFrame.addGestisciRicoveroListener(e -> {
+			String[] selezionato = ricoveroFrame.getRicoveroSelezionato();
+			if (selezionato != null) {
+				if (gestisciModificaRicovero(selezionato[0], selezionato[1])) {
+					caricaDatiRicoveriAsync(ricoveroFrame);
 				}
 			} else {
 				JOptionPane.showMessageDialog(ricoveroFrame, "Per favore, seleziona un ricovero dalla tabella prima di cliccare su Gestisci Ricovero.", "Nessun Ricovero Selezionato", JOptionPane.WARNING_MESSAGE);
@@ -3034,8 +3166,15 @@ public class Controller {
 				String dataInizio = r.get(4);
 				String motivazione = r.get(5);
 				
-				// Formattazione esatta della data e ora (AAAA-MM-GG HH:mm:ss) per la tabella Ricovero
-				dataInizio = formattaTimestampString(dataInizio);
+				// Formattazione esatta della data e ora (yyyy-MM-dd HH:mm) per la tabella Ricovero
+				if (dataInizio != null && !dataInizio.isEmpty()) {
+					try {
+						java.sql.Timestamp ts = java.sql.Timestamp.valueOf(dataInizio);
+						dataInizio = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm").format(ts);
+					} catch (Exception ex) {
+						dataInizio = formattaTimestampString(dataInizio);
+					}
+				}
 				
 				List<String> paziente = pazienteDAO.getPazienteByCf(cf);
 				String nomePaziente = "Sconosciuto";
@@ -3201,6 +3340,7 @@ public class Controller {
 		String cf = ricoveroFrame.getCodiceFiscale();
 		String stanzaFiltro = ricoveroFrame.getStanza();
 		String reparto = ricoveroFrame.getRepartoSelezionato();
+		String dataFiltroStr = ricoveroFrame.getDataStr();
 
 		ricoveroFrame.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
 		SwingWorker<Object[][], Void> worker = new SwingWorker<Object[][], Void>() {
@@ -3209,11 +3349,22 @@ public class Controller {
 				List<ArrayList<String>> ricoveriAttivi = ricoveroDAO.getAllRicoveriAttivi();
 				List<ArrayList<String>> risultatiFiltrati = new ArrayList<>();
 
+				String dataFiltroDb = "";
+				if (dataFiltroStr != null && !dataFiltroStr.isEmpty()) {
+					try {
+						java.util.Date d = new java.text.SimpleDateFormat("yyyy-MM-dd").parse(dataFiltroStr);
+						dataFiltroDb = new java.text.SimpleDateFormat("yyyy-MM-dd").format(d);
+					} catch (Exception e) {
+						LOGGER.warning("Formato data ricerca non valido: " + dataFiltroStr);
+					}
+				}
+
 				for (ArrayList<String> ricovero : ricoveriAttivi) {
 					String idRicovero = ricovero.get(0);
 					String cfPaziente = ricovero.get(1);
 					String idLetto = ricovero.get(2);
 					String repartoRicovero = ricovero.get(3);
+					String dataInizio = ricovero.size() > 4 ? ricovero.get(4) : "";
 
 					List<String> paziente = pazienteDAO.getPazienteByCf(cfPaziente);
 					String nomePaziente = "";
@@ -3232,6 +3383,8 @@ public class Controller {
 					if (match && !isNullOrEmpty(cf) && !cfPaziente.toLowerCase().contains(cf.toLowerCase())) match = false;
 					if (match && !isNullOrEmpty(stanzaFiltro) && !stanza.contains(stanzaFiltro.toLowerCase())) match = false;
 					if (match && !isNullOrEmpty(reparto) && !repartoRicovero.equalsIgnoreCase(reparto)) match = false;
+
+					if (match && !dataFiltroDb.isEmpty() && !dataInizio.startsWith(dataFiltroDb)) match = false;
 
 					if (match) risultatiFiltrati.add(ricovero);
 				}

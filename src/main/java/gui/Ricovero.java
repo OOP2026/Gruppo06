@@ -3,8 +3,6 @@ package gui;
 import javax.swing.*;
 import javax.swing.table.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 import java.util.Calendar;
 import java.awt.event.ActionListener;
 import java.util.Date;
@@ -19,7 +17,6 @@ public class Ricovero extends JFrame {
     private JTextField stanzaField;
     private JList<String> repartoList;
     private JSpinner dataSpinner;
-    private JSpinner oraSpinner;
 
     private JButton cercaButton;
     private JButton resetButton;
@@ -29,10 +26,12 @@ public class Ricovero extends JFrame {
     private JButton gestisciRicoveroButton;
     private JButton gestisciDimissioneButton;
 
+    private boolean dataModificata = false;
+
     private List<String> idRicoveriNascosti = new ArrayList<>();
 
     private static final String[] COLONNE = {
-            "Paziente", "Stanza", "Codice Fiscale", 
+            "Codice Fiscale", "Paziente", "Stanza", 
             "Motivazione Ricovero", "Reparto di Ricovero", "Data e Ora Ingresso"
     };
 
@@ -47,10 +46,18 @@ public class Ricovero extends JFrame {
         model.setRowCount(0); // Pulisce la tabella
         if (dati != null) {
             for (Object[] riga : dati) {
-                if (riga != null && riga.length > 0) {
+                if (riga != null && riga.length >= 7) {
                     idRicoveriNascosti.add((String) riga[0]); // Salva l'ID in memoria
-                    Object[] rigaVisibile = new Object[riga.length - 1];
-                    System.arraycopy(riga, 1, rigaVisibile, 0, riga.length - 1);
+                    
+                    // Mappiamo l'array dal vecchio formato del DAO al nuovo ordine visibile:
+                    Object[] rigaVisibile = new Object[6];
+                    rigaVisibile[0] = riga[3]; // Codice Fiscale
+                    rigaVisibile[1] = riga[1]; // Paziente
+                    rigaVisibile[2] = riga[2]; // Stanza
+                    rigaVisibile[3] = riga[4]; // Motivazione Ricovero
+                    rigaVisibile[4] = riga[5]; // Reparto di Ricovero
+                    rigaVisibile[5] = riga[6]; // Data e Ora Ingresso
+                    
                     model.addRow(rigaVisibile);
                 }
             }
@@ -60,6 +67,10 @@ public class Ricovero extends JFrame {
     // Metodi per aggiungere i listener ai pulsanti
     public void addNuovoRicoveroListener(ActionListener listener) {
         nuovoRicoveroButton.addActionListener(listener);
+    }
+
+    public void addGestisciDimissioneListener(ActionListener listener) {
+        gestisciDimissioneButton.addActionListener(listener);
     }
 
     public void addGestisciRicoveroListener(ActionListener listener) {
@@ -91,13 +102,24 @@ public class Ricovero extends JFrame {
         return repartoList.getSelectedValue();
     }
 
+    public String getDataStr() {
+        try {
+            dataSpinner.commitEdit();
+        } catch (java.text.ParseException e) {
+        }
+        JSpinner.DateEditor editor = (JSpinner.DateEditor) dataSpinner.getEditor();
+        String text = editor.getTextField().getText().trim();
+        if (text.isEmpty() || !dataModificata) return "";
+        return text;
+    }
+
     public void resetCampiRicerca() {
         nomeField.setText("");
         codiceField.setText("");
         stanzaField.setText("");
         repartoList.clearSelection();
         dataSpinner.setValue(new Date());
-        oraSpinner.setValue(new Date());
+        dataModificata = false;
     }
 
     public String[] getRicoveroSelezionato() {
@@ -110,18 +132,20 @@ public class Ricovero extends JFrame {
         if (modelRow >= 0 && modelRow < idRicoveriNascosti.size()) {
             idRicovero = idRicoveriNascosti.get(modelRow);
         }
-        String cf = (String) ricoveriTable.getValueAt(rigaSelezionata, 2);
+        String cf = (String) ricoveriTable.getValueAt(rigaSelezionata, 0);
         return new String[]{idRicovero, cf};
     }
 
     private void initComponents() {
         SpinnerDateModel dateModel = new SpinnerDateModel(new Date(), null, null, Calendar.DAY_OF_MONTH);
         dataSpinner.setModel(dateModel);
-        dataSpinner.setEditor(new JSpinner.DateEditor(dataSpinner, "dd/MM/yyyy"));
-
-        SpinnerDateModel timeModel = new SpinnerDateModel(new Date(), null, null, Calendar.HOUR_OF_DAY);
-        oraSpinner.setModel(timeModel);
-        oraSpinner.setEditor(new JSpinner.DateEditor(oraSpinner, "HH:mm"));
+        dataSpinner.setEditor(new JSpinner.DateEditor(dataSpinner, "yyyy-MM-dd"));
+        dataSpinner.addChangeListener(e -> dataModificata = true);
+        ((JSpinner.DateEditor) dataSpinner.getEditor()).getTextField().getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { dataModificata = true; }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { dataModificata = true; }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { dataModificata = true; }
+        });
 
         repartoList.setListData(new String[]{"Chirurgia generale", "Ortopedia", "Cardiologia"});
 

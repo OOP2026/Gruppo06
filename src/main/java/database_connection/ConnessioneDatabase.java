@@ -13,11 +13,13 @@ import java.util.logging.Logger;
 public final class ConnessioneDatabase {
 
     private static Connection connection = null;
+    private static boolean primoAvvioLoggato = false;
 
     private static final Logger LOGGER = Logger.getLogger(ConnessioneDatabase.class.getName());
     private static final String URL = "jdbc:postgresql://localhost:5432/OspedaleOOP";
     private static final String USER = "postgres";
     private static final String PASSWORD = System.getenv("DB_PASSWORD");
+
     /**
      * Costruttore privato per impedire l'istanziazione diretta della classe dall'esterno.
      * Garantisce l'integrità del pattern Singleton.
@@ -35,7 +37,7 @@ public final class ConnessioneDatabase {
      */
     public static Connection getInstance() {
         try {
-            if (connection == null || connection.isClosed()|| !connection.isValid(3)) {
+            if (connection == null || connection.isClosed() || !connection.isValid(3)) {
 
                 if (PASSWORD == null) {
                     LOGGER.severe("La password del database non è stata trovata. Imposta la variabile d'ambiente 'DB_PASSWORD'.");
@@ -44,7 +46,10 @@ public final class ConnessioneDatabase {
 
                 connection = DriverManager.getConnection(URL, USER, PASSWORD);
 
-                LOGGER.info("Connessione al database PostgreSQL stabilita con successo!");
+                if (!primoAvvioLoggato) {
+                    LOGGER.info("Connessione al database PostgreSQL stabilita con successo!");
+                    primoAvvioLoggato = true;
+                }
             }
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Errore critico durante la connessione al database", e);
@@ -79,20 +84,25 @@ public final class ConnessioneDatabase {
         try {
             operazioni.run();
             conn.commit();
-        } catch (RuntimeException | Error e) {
-            try {
-                conn.rollback();
-            } catch (SQLException rollbackEx) {
-                LOGGER.log(Level.SEVERE, "Errore durante il rollback della transazione", rollbackEx);
-            }
-            throw e;
-        } catch (SQLException e) {
+        } catch (SQLException e) { // Spostato prima per catturare specificamente l'errore di commit
             try {
                 conn.rollback();
             } catch (SQLException rollbackEx) {
                 LOGGER.log(Level.SEVERE, "Errore durante il rollback della transazione", rollbackEx);
             }
             throw new RuntimeException("Errore durante il commit della transazione", e);
+        } catch (Exception e) { // Modificato per catturare Exception
+            try {
+                conn.rollback();
+            } catch (SQLException rollbackEx) {
+                LOGGER.log(Level.SEVERE, "Errore durante il rollback della transazione", rollbackEx);
+            }
+
+            // Rilancia come RuntimeException se non lo è già
+            if (e instanceof RuntimeException) {
+                throw (RuntimeException) e;
+            }
+            throw new RuntimeException("Errore inatteso durante l'esecuzione delle operazioni", e);
         } finally {
             try {
                 conn.setAutoCommit(autoCommitOriginale);

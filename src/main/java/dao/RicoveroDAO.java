@@ -15,4 +15,6 @@ public interface RicoveroDAO {
 
     // Recupera lo storico dei ricoveri per un letto e reparto specifici
     List<ArrayList<String>> getStoricoRicoveriByLetto(String idLetto, String reparto);
+
+    boolean aggiornaLettoRicovero(String idRicovero, String nuovoLetto, String nuovoReparto);
 }

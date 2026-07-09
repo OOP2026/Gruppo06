@@ -22,6 +22,7 @@ public class RicoveroPostgresDao implements RicoveroDAO {
     private static final String IS_LETTO_ATTUALMENTE_OCCUPATO_QUERY = "SELECT 1 FROM ricovero WHERE id_letto = ? AND reparto = ? AND data_fine IS NULL LIMIT 1";
     private static final String GET_STORICO_RICOVERI_QUERY = "SELECT id_ricovero, cf, id_letto, reparto, data_inizio, data_fine, motivazione, prognosi, esito FROM ricovero WHERE cf = ? ORDER BY data_inizio DESC";
     private static final String GET_STORICO_RICOVERI_BY_LETTO_QUERY = "SELECT id_ricovero, cf, id_letto, reparto, data_inizio, data_fine, motivazione, prognosi, esito FROM ricovero WHERE id_letto = ? AND reparto = ? ORDER BY data_inizio DESC";
+    private static final String AGGIORNA_LETTO_RICOVERO_QUERY = "UPDATE ricovero SET id_letto = ?, reparto = ? WHERE id_ricovero = ?";
 
     // Costanti per i nomi delle colonne per evitare duplicazioni e code smells
     private static final String COL_ID_RICOVERO = "id_ricovero";
@@ -188,5 +189,20 @@ public class RicoveroPostgresDao implements RicoveroDAO {
             LOGGER.log(Level.SEVERE, "Errore durante il recupero dello storico ricoveri per il letto " + idLetto + " nel reparto " + reparto, e);
         }
         return storico;
+    }
+
+    @Override
+    public boolean aggiornaLettoRicovero(String idRicovero, String nuovoLetto, String nuovoReparto) {
+        try (Connection conn = ConnessioneDatabase.getInstance();
+             PreparedStatement stmt = conn.prepareStatement(AGGIORNA_LETTO_RICOVERO_QUERY)) {
+            stmt.setString(1, nuovoLetto);
+            stmt.setString(2, nuovoReparto);
+            stmt.setInt(3, Integer.parseInt(idRicovero));
+            int righeModificate = stmt.executeUpdate();
+            return righeModificate > 0;
+        } catch (SQLException | NumberFormatException e) {
+            LOGGER.log(Level.SEVERE, "Errore durante l'aggiornamento del letto del ricovero", e);
+        }
+        return false;
     }
 }

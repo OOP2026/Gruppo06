@@ -39,18 +39,22 @@ public class Turni extends JFrame {
         initComponents();
         setupStyles();
 
-        // Setup Spinner Data
-        SpinnerDateModel dateModel = new SpinnerDateModel(new Date(), null, null, Calendar.DAY_OF_MONTH);
-        dataSpinner.setModel(dateModel);
-        dataSpinner.setEditor(new JSpinner.DateEditor(dataSpinner, "yyyy-MM-dd"));
+        if (dataSpinner != null) {
+            SpinnerDateModel dateModel = new SpinnerDateModel(new Date(), null, null, Calendar.DAY_OF_MONTH);
+            dataSpinner.setModel(dateModel);
+            dataSpinner.setEditor(new JSpinner.DateEditor(dataSpinner, "yyyy-MM-dd"));
+        }
 
-        // Dichiarazione campi JList
-        tipologiaList.setListData(TIPOLOGIA_DATA);
-        repartoList.setListData(REPARTI_DATA);
+        if (tipologiaList != null) {
+            tipologiaList.setListData(TIPOLOGIA_DATA);
+        }
+        if (repartoList != null) {
+            repartoList.setListData(REPARTI_DATA);
+        }
 
-        // Inizializzazione modello tabella
-        turniTable.setModel(new DefaultTableModel(COLONNE, 0) { @Override public boolean isCellEditable(int row, int column) { return false; } });
-
+        if (turniTable != null) {
+            turniTable.setModel(new DefaultTableModel(COLONNE, 0) { @Override public boolean isCellEditable(int row, int column) { return false; } });
+        }
         setupListeners();
         loadTableData(null, null, null, null, null, null);
     }

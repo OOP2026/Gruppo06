@@ -2183,7 +2183,7 @@ public class Controller {
 		JTextField iscrizioneInput = new JTextField(datiMedico.get(5));
 		JTextField specializzazioneInput = new JTextField(datiMedico.get(6));
 		JComboBox<String> repartoInput = new JComboBox<>(new String[]{
-				"Nessuno", "Chirurgia generale", "Ortopedia", "Cardiologia"
+				"Nessuno", "Chirurgia Generale", "Ortopedia", "Cardiologia"
 		});
 		repartoInput.setSelectedItem(datiMedico.get(7));
 		// repartoInput.setEnabled(false); // Rimosso blocco per permettere al medico di modificare il proprio reparto

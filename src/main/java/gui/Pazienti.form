@@ -187,9 +187,7 @@
                 <constraints>
                   <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="9" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
-                <properties>
-                  <preferred-size width="150" height="-1"/>
-                </properties>
+                <properties/>
               </component>
               <component id="55c6" class="javax.swing.JLabel">
                 <constraints>
@@ -212,7 +210,7 @@
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="10" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="Ricerca Prognosi"/>
+                  <text value="Ricerca Diagnosi"/>
                 </properties>
               </component>
             </children>

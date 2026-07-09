@@ -12,7 +12,7 @@ public class Assenza {
     private String motivoAssenza;
     private boolean approvazione;
     private Medico medico;
-    private Turno_Lavoro turnoLavoro;
+    private TurnoLavoro turnoLavoro;
 
 
     /**
@@ -25,7 +25,7 @@ public class Assenza {
      * @param medico            Il medico a cui si riferisce l'assenza.
      * @param turnoLavoro       Il turno di lavoro impattato dall'assenza.
      */
-    public Assenza(LocalDate dataInizioAssenza, LocalDate dataFineAssenza, String motivoAssenza, boolean approvazione, Medico medico, Turno_Lavoro turnoLavoro){
+    public Assenza(LocalDate dataInizioAssenza, LocalDate dataFineAssenza, String motivoAssenza, boolean approvazione, Medico medico, TurnoLavoro turnoLavoro){
         this.dataInizioAssenza = dataInizioAssenza;
         this.dataFineAssenza = dataFineAssenza;
         this.motivoAssenza = motivoAssenza;
@@ -42,6 +42,14 @@ public class Assenza {
         return dataInizioAssenza;
     }
 
+    /**
+     * Imposta la data di inizio dell'assenza.
+     * @param dataInizioAssenza La nuova data di inizio.
+     */
+    public void setDataInizioAssenza(LocalDate dataInizioAssenza) {
+        this.dataInizioAssenza = dataInizioAssenza;
+    }
+
 
     /**
      * Restituisce la data di fine dell'assenza.
@@ -52,11 +60,43 @@ public class Assenza {
     }
 
     /**
+     * Imposta la data di fine dell'assenza.
+     * @param dataFineAssenza La nuova data di fine.
+     */
+    public void setDataFineAssenza(LocalDate dataFineAssenza) {
+        this.dataFineAssenza = dataFineAssenza;
+    }
+
+    /**
      * Restituisce la motivazione dell'assenza.
      * @return La motivazione.
      */
     public String getMotivoAssenza() {
         return motivoAssenza;
+    }
+
+    /**
+     * Imposta la motivazione dell'assenza.
+     * @param motivoAssenza La nuova motivazione.
+     */
+    public void setMotivoAssenza(String motivoAssenza) {
+        this.motivoAssenza = motivoAssenza;
+    }
+
+    /**
+     * Verifica se l'assenza è stata approvata.
+     * @return {@code true} se approvata, altrimenti {@code false}.
+     */
+    public boolean isApprovazione() {
+        return approvazione;
+    }
+
+    /**
+     * Imposta lo stato di approvazione dell'assenza.
+     * @param approvazione {@code true} per approvare, {@code false} altrimenti.
+     */
+    public void setApprovazione(boolean approvazione) {
+        this.approvazione = approvazione;
     }
 
 
@@ -76,4 +116,19 @@ public class Assenza {
         this.medico = medico;
     }
 
+    /**
+     * Restituisce il turno di lavoro associato all'assenza.
+     * @return Il turno di lavoro.
+     */
+    public TurnoLavoro getTurnoLavoro() {
+        return turnoLavoro;
+    }
+
+    /**
+     * Associa un nuovo turno di lavoro a questa assenza.
+     * @param turnoLavoro Il nuovo turno di lavoro.
+     */
+    public void setTurnoLavoro(TurnoLavoro turnoLavoro) {
+        this.turnoLavoro = turnoLavoro;
+    }
 }

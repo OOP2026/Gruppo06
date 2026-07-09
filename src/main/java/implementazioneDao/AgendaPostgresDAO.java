@@ -35,7 +35,7 @@ public class AgendaPostgresDAO implements AgendaDAO {
     public java.util.List<ArrayList<String>> getEventiByMatricola(String matricola) {
         ArrayList<ArrayList<String>> eventi = new ArrayList<>();
 
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(GET_EVENTI_BY_MATRICOLA_QUERY)) {
 
             stmt.setString(1, matricola);
@@ -74,7 +74,7 @@ public class AgendaPostgresDAO implements AgendaDAO {
             query = ADD_EVENTO_MEDICO_QUERY;
         }
 
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setString(1, titolo);
             stmt.setString(2, descrizione);
@@ -83,7 +83,7 @@ public class AgendaPostgresDAO implements AgendaDAO {
             stmt.setString(5, matricola);
 
             return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante l'inserimento dell'evento nel database per la matricola: " + matricola, e);
             return false;
         }
@@ -91,7 +91,7 @@ public class AgendaPostgresDAO implements AgendaDAO {
 
     @Override
     public boolean updateEvento(int idEvento, String titolo, String descrizione, Timestamp dataOraInizio, Timestamp dataOraFine) {
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(UPDATE_EVENTO_QUERY)) {
 
             stmt.setString(1, titolo);
@@ -101,7 +101,7 @@ public class AgendaPostgresDAO implements AgendaDAO {
             stmt.setInt(5, idEvento);
 
             return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante l'aggiornamento dell'evento nel database", e);
             return false;
         }
@@ -109,11 +109,11 @@ public class AgendaPostgresDAO implements AgendaDAO {
 
     @Override
     public boolean deleteEvento(int idEvento) {
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(DELETE_EVENTO_QUERY)) {
             stmt.setInt(1, idEvento);
             return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante l'eliminazione dell'evento dal database", e);
             return false;
         }
@@ -121,11 +121,11 @@ public class AgendaPostgresDAO implements AgendaDAO {
 
     @Override
     public boolean creaAgendaPerMedico(String matricolaMedico) {
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(CREA_AGENDA_QUERY)) {
             stmt.setString(1, matricolaMedico);
             return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante la creazione automatica dell'agenda per il medico", e);
             return false;
         }
@@ -133,11 +133,11 @@ public class AgendaPostgresDAO implements AgendaDAO {
 
     @Override
     public boolean creaAgendaPerAmministratore(String matricolaAmministratore) {
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(CREA_AGENDA_ADMIN_QUERY)) {
             stmt.setString(1, matricolaAmministratore);
             return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante la creazione automatica dell'agenda per l'amministratore", e);
             return false;
         }

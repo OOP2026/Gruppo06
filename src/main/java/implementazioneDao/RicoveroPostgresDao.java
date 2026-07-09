@@ -34,7 +34,7 @@ public class RicoveroPostgresDao implements RicoveroDAO {
     // NOTA: Aggiorna la firma in RicoveroDAO aggiungendo 'String reparto'
     @Override
     public boolean aggiungiRicovero(String cfPaziente, String idLetto, String reparto, String dataInizio, String motivazione) {
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(AGGIUNGI_RICOVERO_QUERY)) {
             stmt.setString(1, cfPaziente);
             stmt.setString(2, idLetto);
@@ -42,7 +42,7 @@ public class RicoveroPostgresDao implements RicoveroDAO {
             stmt.setTimestamp(4, java.sql.Timestamp.valueOf(dataInizio));
             stmt.setString(5, motivazione);
             return stmt.executeUpdate() > 0;
-        } catch (SQLException | IllegalArgumentException e) {
+        } catch (SQLException | IllegalArgumentException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante l'aggiunta del ricovero", e);
         }
         return false;
@@ -53,7 +53,7 @@ public class RicoveroPostgresDao implements RicoveroDAO {
         // La query viene resa più robusta: in caso di dati corrotti (ricoveri multipli attivi per un paziente),
         // seleziona solo il più recente. Questo assicura che operazioni come la dimissione
         // agiscano sempre sull'ultimo ricovero valido.
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(GET_RICOVERO_ATTIVO_QUERY)) {
             stmt.setString(1, cfPaziente);
             ResultSet rs = stmt.executeQuery();
@@ -68,7 +68,7 @@ public class RicoveroPostgresDao implements RicoveroDAO {
                 ricovero.add(rs.getString(COL_MOTIVAZIONE));
                 return ricovero;
             }
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante il recupero del ricovero attivo", e);
         }
         return new ArrayList<>();
@@ -92,7 +92,7 @@ public class RicoveroPostgresDao implements RicoveroDAO {
     @Override
     public ArrayList<ArrayList<String>> getStoricoRicoveri(String cfPaziente) {
         ArrayList<ArrayList<String>> storico = new ArrayList<>();
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(GET_STORICO_RICOVERI_QUERY)) {
             stmt.setString(1, cfPaziente);
             try (ResultSet rs = stmt.executeQuery()) {
@@ -112,7 +112,7 @@ public class RicoveroPostgresDao implements RicoveroDAO {
                     storico.add(ricovero);
                 }
             }
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante il recupero dello storico ricoveri", e);
         }
         return storico;
@@ -122,7 +122,7 @@ public class RicoveroPostgresDao implements RicoveroDAO {
     public List<ArrayList<String>> getAllRicoveriAttivi() {
         List<ArrayList<String>> ricoveri = new ArrayList<>();
         // La query seleziona tutti i ricoveri che non hanno una data di fine
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(GET_ALL_RICOVERI_ATTIVI_QUERY);
              ResultSet rs = stmt.executeQuery()) {
 
@@ -137,7 +137,7 @@ public class RicoveroPostgresDao implements RicoveroDAO {
                 ricovero.add(rs.getString(COL_MOTIVAZIONE));
                 ricoveri.add(ricovero);
             }
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante il recupero di tutti i ricoveri attivi", e);
         }
         return ricoveri;
@@ -146,14 +146,14 @@ public class RicoveroPostgresDao implements RicoveroDAO {
     // NOTA: Aggiorna la firma in RicoveroDAO aggiungendo 'String reparto'
     @Override
     public boolean isLettoAttualmenteOccupato(String idLetto, String reparto) {
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(IS_LETTO_ATTUALMENTE_OCCUPATO_QUERY)) {
             stmt.setString(1, idLetto);
             stmt.setString(2, reparto);
             try (ResultSet rs = stmt.executeQuery()) {
                 return rs.next(); // Se rs.next() è true, esiste un record, quindi il letto è occupato.
             }
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante la verifica dello stato di occupazione del letto " + idLetto, e);
             // Failsafe: se non posso controllare, assumo sia occupato per prevenire doppie assegnazioni.
             return true;
@@ -163,7 +163,7 @@ public class RicoveroPostgresDao implements RicoveroDAO {
     @Override
     public List<ArrayList<String>> getStoricoRicoveriByLetto(String idLetto, String reparto) {
         List<ArrayList<String>> storico = new ArrayList<>();
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(GET_STORICO_RICOVERI_BY_LETTO_QUERY)) {
             stmt.setString(1, idLetto);
             stmt.setString(2, reparto);
@@ -184,7 +184,7 @@ public class RicoveroPostgresDao implements RicoveroDAO {
                     storico.add(ricovero);
                 }
             }
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante il recupero dello storico ricoveri per il letto " + idLetto + " nel reparto " + reparto, e);
         }
         return storico;

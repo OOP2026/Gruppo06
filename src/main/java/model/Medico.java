@@ -28,12 +28,12 @@ public class Medico extends Utente {
 
     /**
      * Imposta la data di iscrizione all'albo alla data corrente e la restituisce.
-     * @deprecated Questo metodo imposta la data al momento corrente. Usare {@link #setIscrizioneAlbo(LocalDate)} per impostare una data specifica.
+     * @deprecated Questo metodo imposta la data al momento corrente.
      * @return La data di iscrizione impostata.
      */
     @Deprecated
     public LocalDate setIscrizioneAlbo() {
-        this.iscrizioneAlbo = LocalDate.now(ZoneId.systemDefault()); // Imposta la data di iscrizione all'albo al momento della creazione del medico
+        this.iscrizioneAlbo = LocalDate.now(ZoneId.systemDefault());
         return this.iscrizioneAlbo;
     }
 

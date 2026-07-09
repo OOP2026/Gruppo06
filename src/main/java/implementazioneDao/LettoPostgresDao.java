@@ -33,12 +33,12 @@ public class LettoPostgresDao implements LettoDAO {
     public boolean aggiungiLetto(String idLetto, String reparto) {
         // Questa funzione non è più del tutto compatibile con la nuova struttura del DB (manca num_stanza)
         // e andrebbe aggiornata o rimossa. Per ora, la lasciamo parzialmente funzionante.
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(AGGIUNGI_LETTO_QUERY)) {
             stmt.setString(1, idLetto);
             stmt.setString(2, reparto);
             return stmt.executeUpdate() > 0; // Restituisce true se l'inserimento va a buon fine
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) { // Aggiunto NullPointerException
             LOGGER.log(Level.SEVERE, "Errore durante l'aggiunta del letto", e);
         }
         return false;
@@ -47,7 +47,7 @@ public class LettoPostgresDao implements LettoDAO {
     // NOTA: Aggiorna la firma in LettoDAO aggiungendo 'String reparto'
     @Override
     public ArrayList<String> getLettoById(String idLetto, String reparto) {
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(GET_LETTO_BY_ID_QUERY)) {
             stmt.setString(1, idLetto);
             stmt.setString(2, reparto);
@@ -61,7 +61,7 @@ public class LettoPostgresDao implements LettoDAO {
                 letto.add(rs.getString(COL_NUM_STANZA));
                 return letto;
             }
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante il recupero del letto per ID", e);
         }
         return new ArrayList<>();
@@ -70,7 +70,7 @@ public class LettoPostgresDao implements LettoDAO {
     @Override
     public ArrayList<ArrayList<String>> getAllLetti() {
         ArrayList<ArrayList<String>> letti = new ArrayList<>();
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(GET_ALL_LETTI_QUERY);
              ResultSet rs = stmt.executeQuery()) {
 
@@ -83,7 +83,7 @@ public class LettoPostgresDao implements LettoDAO {
                 letto.add(rs.getString(COL_NUM_STANZA));
                 letti.add(letto);
             }
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante il recupero di tutti i letti", e);
         }
         return letti;
@@ -93,13 +93,13 @@ public class LettoPostgresDao implements LettoDAO {
     @Override
     public boolean aggiornaStatoLetto(String idLetto, String reparto, boolean occupato) {
         boolean isLibero = !occupato; // La logica è invertita: se è occupato, non è libero.
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(AGGIORNA_STATO_LETTO_QUERY)) {
             stmt.setBoolean(1, isLibero);
             stmt.setString(2, idLetto);
             stmt.setString(3, reparto);
             return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante l'aggiornamento dello stato del letto", e);
         }
         return false;
@@ -108,14 +108,14 @@ public class LettoPostgresDao implements LettoDAO {
     @Override
     public List<String> getAllReparti() {
         List<String> reparti = new ArrayList<>();
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(GET_ALL_REPARTI_QUERY);
              ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
                 reparti.add(rs.getString(COL_REPARTO_APPARTENENZA));
             }
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante il recupero dei reparti", e);
         }
         return reparti;

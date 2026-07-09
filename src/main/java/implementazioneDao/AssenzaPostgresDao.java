@@ -29,7 +29,7 @@ public class AssenzaPostgresDao implements AssenzaDAO {
 
     @Override
     public boolean aggiungiAssenza(String matricola, String dataInizio, String dataFine, String motivazione) {
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(AGGIUNGI_ASSENZA_QUERY)) {
              
             stmt.setString(1, matricola);
@@ -38,7 +38,7 @@ public class AssenzaPostgresDao implements AssenzaDAO {
             stmt.setString(4, motivazione);
 
             return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante l'aggiunta dell'assenza", e);
         }
         return false;
@@ -46,7 +46,7 @@ public class AssenzaPostgresDao implements AssenzaDAO {
 
     @Override
     public ArrayList<String> getAssenza(String matricola, String dataInizio) {
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(GET_ASSENZA_QUERY)) {
              
             stmt.setString(1, matricola);
@@ -66,7 +66,7 @@ public class AssenzaPostgresDao implements AssenzaDAO {
 
                 return assenza;
             }
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante il recupero dell'assenza", e);
         }
         return new ArrayList<>();
@@ -75,7 +75,7 @@ public class AssenzaPostgresDao implements AssenzaDAO {
     @Override
     public ArrayList<ArrayList<String>> getAssenzeByMedico(String matricola) {
         ArrayList<ArrayList<String>> assenze = new ArrayList<>();
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(GET_ASSENZE_BY_MEDICO_QUERY)) {
              
             stmt.setString(1, matricola);
@@ -94,7 +94,7 @@ public class AssenzaPostgresDao implements AssenzaDAO {
 
                 assenze.add(assenza);
             }
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante il recupero delle assenze del medico", e);
         }
         return assenze;
@@ -102,14 +102,14 @@ public class AssenzaPostgresDao implements AssenzaDAO {
 
     @Override
     public boolean aggiornaAssenza(String matricola, String dataInizio, String dataFine, String motivazione) {
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(AGGIORNA_ASSENZA_QUERY)) {
             stmt.setDate(1, java.sql.Date.valueOf(dataFine));
             stmt.setString(2, motivazione);
             stmt.setString(3, matricola);
             stmt.setDate(4, java.sql.Date.valueOf(dataInizio));
             return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante l'aggiornamento dell'assenza", e);
         }
         return false;
@@ -117,12 +117,12 @@ public class AssenzaPostgresDao implements AssenzaDAO {
 
     @Override
     public boolean eliminaAssenza(String matricola, String dataInizio) {
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(ELIMINA_ASSENZA_QUERY)) {
             stmt.setString(1, matricola);
             stmt.setDate(2, java.sql.Date.valueOf(dataInizio));
             return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante l'eliminazione dell'assenza", e);
         }
         return false;

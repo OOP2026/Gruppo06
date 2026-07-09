@@ -34,7 +34,7 @@ public class MedicoPostgresDao implements MedicoDAO {
 
     @Override
     public boolean aggiungiMedico(String nome, String cognome, String matricola, String login, String password, String iscrizioneAlbo, String specializzazione, String reparto) {
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(AGGIUNGI_MEDICO_QUERY)) {
 
             stmt.setString(1, nome);
@@ -50,8 +50,8 @@ public class MedicoPostgresDao implements MedicoDAO {
             }
             stmt.setString(7, specializzazione);
             stmt.setString(8, reparto);
-            return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
+            return stmt.executeUpdate() > 0; 
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante l'aggiunta del medico", e);
             return false;
         }
@@ -60,7 +60,7 @@ public class MedicoPostgresDao implements MedicoDAO {
 
     @Override
     public ArrayList<String> getMedicoByMatricola(String matricola) {
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(GET_MEDICO_BY_MATRICOLA_QUERY)) {
 
             stmt.setString(1, matricola);
@@ -82,7 +82,7 @@ public class MedicoPostgresDao implements MedicoDAO {
 
                 return datiMedico;
             }
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante il recupero del medico per matricola", e);
         }
         return new ArrayList<>();
@@ -91,7 +91,7 @@ public class MedicoPostgresDao implements MedicoDAO {
     @Override
     public ArrayList<ArrayList<String>> getAllMedici() {
         ArrayList<ArrayList<String>> medici = new ArrayList<>();
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(GET_ALL_MEDICI_QUERY);
              ResultSet rs = stmt.executeQuery()) {
 
@@ -111,7 +111,7 @@ public class MedicoPostgresDao implements MedicoDAO {
 
                 medici.add(datiMedico);
             }
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante il recupero di tutti i medici", e);
         }
         return medici;
@@ -119,7 +119,7 @@ public class MedicoPostgresDao implements MedicoDAO {
 
     @Override
     public boolean aggiornaMedico(String nome, String cognome, String matricola, String iscrizioneAlbo, String specializzazione, String reparto) {
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(AGGIORNA_MEDICO_QUERY)) {
             stmt.setString(1, nome);
             stmt.setString(2, cognome);
@@ -135,7 +135,7 @@ public class MedicoPostgresDao implements MedicoDAO {
             stmt.setString(6, matricola);
 
             return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante l'aggiornamento del medico", e);
         }
         return false;
@@ -149,7 +149,7 @@ public class MedicoPostgresDao implements MedicoDAO {
 
     @Override
     public ArrayList<String> getMedicoByLoginAndPassword(String login, String password) {
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(GET_MEDICO_BY_LOGIN_AND_PASSWORD_QUERY)) {
 
             stmt.setString(1, login);
@@ -172,7 +172,7 @@ public class MedicoPostgresDao implements MedicoDAO {
 
                 return datiMedico;
             }
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante il recupero del medico per login e password", e);
         }
         return new ArrayList<>();
@@ -180,14 +180,14 @@ public class MedicoPostgresDao implements MedicoDAO {
 
     @Override
     public boolean checkLoginEsistente(String login) {
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(CHECK_LOGIN_ESISTENTE_QUERY)) {
 
             stmt.setString(1, login);
             ResultSet rs = stmt.executeQuery();
             return rs.next(); // Ritorna true se trova una corrispondenza
 
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante la verifica del login del medico", e);
         }
         return false;

@@ -33,14 +33,14 @@ public class DimissioniPostgresDao implements DimissioniDAO {
 
     @Override
     public boolean creaDimissione(String idRicovero, String dataFine, String prognosi, String esito) {
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(CREA_DIMISSIONE_QUERY)) {
             stmt.setTimestamp(1, java.sql.Timestamp.valueOf(dataFine));
             stmt.setString(2, prognosi);
             stmt.setString(3, esito);
             stmt.setInt(4, Integer.parseInt(idRicovero));
             return stmt.executeUpdate() > 0;
-        } catch (SQLException | IllegalArgumentException e) {
+        } catch (SQLException | IllegalArgumentException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante la creazione della dimissione", e);
         }
         return false;
@@ -49,7 +49,7 @@ public class DimissioniPostgresDao implements DimissioniDAO {
     @Override
     public ArrayList<ArrayList<String>> getAllDimissioni() {
         ArrayList<ArrayList<String>> dimissioni = new ArrayList<>();
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(GET_ALL_DIMISSIONI_QUERY);
              ResultSet rs = stmt.executeQuery()) {
 
@@ -66,7 +66,7 @@ public class DimissioniPostgresDao implements DimissioniDAO {
                 ricovero.add(rs.getString(COL_ESITO));
                 dimissioni.add(ricovero);
             }
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante il recupero di tutte le dimissioni", e);
         }
         return dimissioni;
@@ -74,7 +74,7 @@ public class DimissioniPostgresDao implements DimissioniDAO {
 
     @Override
     public ArrayList<String> getUltimoRicoveroChiuso(String cfPaziente) {
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(GET_ULTIMO_RICOVERO_CHIUSO_QUERY)) {
             stmt.setString(1, cfPaziente);
             ResultSet rs = stmt.executeQuery();
@@ -91,7 +91,7 @@ public class DimissioniPostgresDao implements DimissioniDAO {
                 ricovero.add(rs.getString(COL_ESITO));
                 return ricovero;
             }
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante il recupero dell'ultimo ricovero chiuso per il paziente " + cfPaziente, e);
         }
         return new ArrayList<>();
@@ -99,11 +99,11 @@ public class DimissioniPostgresDao implements DimissioniDAO {
 
     @Override
     public boolean eliminaDimissione(String idRicovero) {
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(ELIMINA_DIMISSIONE_QUERY)) {
             stmt.setInt(1, Integer.parseInt(idRicovero));
             return stmt.executeUpdate() > 0;
-        } catch (SQLException | NumberFormatException e) {
+        } catch (SQLException | NumberFormatException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante l'eliminazione della dimissione", e);
         }
         return false;

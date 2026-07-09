@@ -2,32 +2,60 @@ package model;
 
 /**
  * Rappresenta un reparto ospedaliero.
- * Contiene informazioni sul nome, il numero di medici afferenti e le entità associate.
+ * Contiene informazioni sul nome e il numero di medici afferenti.
  */
 public class Reparto {
-    public String nome_reparto;
-    public int numero_afferenti;
-    public Stanza stanza;
-    public Letto letto;
-    public Paziente paziente;
-    public Ricovero ricovero;
+    private String nomeReparto;
+    private int numeroAfferenti;
 
     /**
      * Costruisce un nuovo oggetto Reparto.
-     * @param nome_reparto Il nome del reparto.
-     * @param numero_afferenti Il numero di medici afferenti.
-     * @param stanza La stanza associata.
-     * @param letto Il letto associato.
-     * @param paziente Il paziente associato.
-     * @param ricovero Il ricovero associato.
+     * @param nomeReparto Il nome del reparto.
+     * @param numeroAfferenti Il numero di medici afferenti.
      */
-    public Reparto(String nome_reparto, int numero_afferenti, Stanza stanza, Letto letto, Paziente paziente, Ricovero ricovero){
-        this.nome_reparto = nome_reparto;
-        this.numero_afferenti = numero_afferenti;
-        this.stanza = stanza;
-        this.letto = letto;
-        this.paziente = paziente;
-        this.ricovero = ricovero;
+    public Reparto(String nomeReparto, int numeroAfferenti) {
+        this.nomeReparto = nomeReparto;
+        this.numeroAfferenti = numeroAfferenti;
+    }
+
+    /**
+     * Restituisce il nome del reparto.
+     * @return il nome del reparto.
+     */
+    public String getNomeReparto() {
+        return nomeReparto;
+    }
+
+    /**
+     * Imposta il nome del reparto.
+     * @param nomeReparto il nuovo nome del reparto.
+     */
+    public void setNomeReparto(String nomeReparto) {
+        this.nomeReparto = nomeReparto;
+    }
+
+    /**
+     * Restituisce il numero di medici afferenti al reparto.
+     * @return il numero di medici.
+     */
+    public int getNumeroAfferenti() {
+        return numeroAfferenti;
+    }
+
+    /**
+     * Imposta il numero di medici afferenti al reparto.
+     * @param numeroAfferenti il nuovo numero di medici.
+     */
+    public void setNumeroAfferenti(int numeroAfferenti) {
+        this.numeroAfferenti = numeroAfferenti;
+    }
+
+    @Override
+    public String toString() {
+        return "Reparto{" +
+                "nomeReparto='" + nomeReparto + '\'' +
+                ", numeroAfferenti=" + numeroAfferenti +
+                '}';
     }
 
 }

@@ -1,7 +1,5 @@
 package model;
 
-
-
 /**
  * Rappresenta una stanza di degenza in un ospedale.
  * Una stanza contiene un certo numero di letti disposti in una griglia.

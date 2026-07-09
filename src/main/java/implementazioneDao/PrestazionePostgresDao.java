@@ -24,7 +24,7 @@ public class PrestazionePostgresDao implements PrestazioneDAO {
 
     @Override
     public boolean aggiungiPrestazione(String tipologiaPrestazione, String esitoPrestazione, String idTurno, String cfPaziente, String matricolaMedico, String idAgenda) {
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(AGGIUNGI_PRESTAZIONE_QUERY)) {
             stmt.setString(1, tipologiaPrestazione);
             stmt.setString(2, esitoPrestazione);
@@ -33,7 +33,7 @@ public class PrestazionePostgresDao implements PrestazioneDAO {
             stmt.setString(5, matricolaMedico);
             stmt.setInt(6, Integer.parseInt(idAgenda));
             return stmt.executeUpdate() > 0;
-        } catch (SQLException | NumberFormatException e) {
+        } catch (SQLException | NumberFormatException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante l'aggiunta della prestazione", e);
             return false;
         }
@@ -42,7 +42,7 @@ public class PrestazionePostgresDao implements PrestazioneDAO {
     @Override
     public ArrayList<ArrayList<String>> getAllPrestazioni() {
         ArrayList<ArrayList<String>> prestazioni = new ArrayList<>();
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(GET_ALL_PRESTAZIONI_QUERY);
              ResultSet rs = stmt.executeQuery()) {
             while (rs.next()) {
@@ -56,7 +56,7 @@ public class PrestazionePostgresDao implements PrestazioneDAO {
                 p.add(rs.getString("referto"));
                 prestazioni.add(p);
             }
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante il recupero delle prestazioni", e);
         }
         return prestazioni;
@@ -65,7 +65,7 @@ public class PrestazionePostgresDao implements PrestazioneDAO {
     @Override
     public ArrayList<ArrayList<String>> getPrestazioniByMedico(String matricola) {
         ArrayList<ArrayList<String>> prestazioni = new ArrayList<>();
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(GET_PRESTAZIONI_BY_MEDICO_QUERY)) {
             stmt.setString(1, matricola);
             try (ResultSet rs = stmt.executeQuery()) {
@@ -81,7 +81,7 @@ public class PrestazionePostgresDao implements PrestazioneDAO {
                     prestazioni.add(p);
                 }
             }
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante il recupero delle prestazioni per il medico " + matricola, e);
         }
         return prestazioni;
@@ -90,7 +90,7 @@ public class PrestazionePostgresDao implements PrestazioneDAO {
     @Override
     public ArrayList<String> getPrestazioneById(String idPrestazione) {
         ArrayList<String> prestazione = null;
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(GET_PRESTAZIONE_BY_ID_QUERY)) {
             stmt.setInt(1, Integer.parseInt(idPrestazione));
             try (ResultSet rs = stmt.executeQuery()) {
@@ -105,7 +105,7 @@ public class PrestazionePostgresDao implements PrestazioneDAO {
                     prestazione.add(rs.getString("referto"));
                 }
             }
-        } catch (SQLException | NumberFormatException e) {
+        } catch (SQLException | NumberFormatException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante il recupero della prestazione con ID " + idPrestazione, e);
         }
         return prestazione;
@@ -113,14 +113,14 @@ public class PrestazionePostgresDao implements PrestazioneDAO {
 
     @Override
     public boolean updatePrestazione(int idPrestazione, String tipologia, String esito, String referto) {
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(UPDATE_PRESTAZIONE_QUERY)) {
             stmt.setString(1, tipologia);
             stmt.setString(2, esito);
             stmt.setString(3, referto);
             stmt.setInt(4, idPrestazione);
             return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante l'aggiornamento della prestazione con ID " + idPrestazione, e);
             return false;
         }
@@ -128,11 +128,11 @@ public class PrestazionePostgresDao implements PrestazioneDAO {
 
     @Override
     public boolean eliminaPrestazione(int idPrestazione) {
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(DELETE_PRESTAZIONE_QUERY)) {
             stmt.setInt(1, idPrestazione);
             return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante l'eliminazione della prestazione con ID " + idPrestazione, e);
             return false;
         }

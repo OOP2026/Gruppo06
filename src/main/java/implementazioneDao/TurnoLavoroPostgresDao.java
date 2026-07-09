@@ -32,7 +32,7 @@ public class TurnoLavoroPostgresDao implements Turno_LavoroDAO {
 
     @Override
     public boolean aggiungiTurno(String matricola, String data, String inizioTurno, String fineTurno, String idAgenda) {
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(AGGIUNGI_TURNO_QUERY)) {
 
             stmt.setObject(1, LocalDate.parse(data));
@@ -42,7 +42,7 @@ public class TurnoLavoroPostgresDao implements Turno_LavoroDAO {
             stmt.setInt(5, Integer.parseInt(idAgenda));
 
             return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante l'aggiunta del turno", e);
         }
         return false;
@@ -50,7 +50,7 @@ public class TurnoLavoroPostgresDao implements Turno_LavoroDAO {
 
     @Override
     public ArrayList<String> getTurno(String matricola, String data, String inizioTurno) {
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(GET_TURNO_QUERY)) {
 
             stmt.setString(1, matricola);
@@ -73,7 +73,7 @@ public class TurnoLavoroPostgresDao implements Turno_LavoroDAO {
 
                 return turno;
             }
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante il recupero del turno", e);
         }
         return new ArrayList<>();
@@ -82,7 +82,7 @@ public class TurnoLavoroPostgresDao implements Turno_LavoroDAO {
     @Override
     public ArrayList<ArrayList<String>> getTurniByMedico(String matricola) {
         ArrayList<ArrayList<String>> turni = new ArrayList<>();
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(GET_TURNI_BY_MEDICO_QUERY)) {
 
             stmt.setString(1, matricola);
@@ -103,7 +103,7 @@ public class TurnoLavoroPostgresDao implements Turno_LavoroDAO {
 
                 turni.add(turno);
             }
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante il recupero dei turni per medico", e);
         }
         return turni;
@@ -111,7 +111,7 @@ public class TurnoLavoroPostgresDao implements Turno_LavoroDAO {
 
     @Override
     public boolean aggiornaTurno(String matricola, String data, String vecchioInizio, String nuovoInizio, String nuovaFine) {
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(AGGIORNA_TURNO_QUERY)) {
             stmt.setObject(1, LocalTime.parse(nuovoInizio));
             stmt.setObject(2, LocalTime.parse(nuovaFine));
@@ -119,7 +119,7 @@ public class TurnoLavoroPostgresDao implements Turno_LavoroDAO {
             stmt.setObject(4, LocalDate.parse(data));
             stmt.setObject(5, LocalTime.parse(vecchioInizio));
             return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante l'aggiornamento del turno", e);
         }
         return false;
@@ -127,13 +127,13 @@ public class TurnoLavoroPostgresDao implements Turno_LavoroDAO {
 
     @Override
     public boolean eliminaTurno(String matricola, String data, String inizioTurno) {
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(ELIMINA_TURNO_QUERY)) {
             stmt.setString(1, matricola);
             stmt.setObject(2, LocalDate.parse(data));
             stmt.setObject(3, LocalTime.parse(inizioTurno));
             return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante l'eliminazione del turno", e);
         }
         return false; 

@@ -25,7 +25,7 @@ public class PazientePostgresDao implements PazienteDAO {
 
     @Override
     public boolean aggiungiPaziente(String cf, String nome, String cognome, String dataNascita, String sesso, String residenza, String diagnosi) {
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(AGGIUNGI_PAZIENTE_QUERY)) {
              
             stmt.setString(1, nome);
@@ -37,7 +37,7 @@ public class PazientePostgresDao implements PazienteDAO {
             stmt.setString(7, diagnosi);
             
             return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante l'aggiunta del paziente nel database", e);
         }
         return false;
@@ -45,7 +45,7 @@ public class PazientePostgresDao implements PazienteDAO {
 
     @Override
     public ArrayList<String> getPazienteByCf(String cf) {
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(GET_PAZIENTE_BY_CF_QUERY)) {
              
             stmt.setString(1, cf);
@@ -63,7 +63,7 @@ public class PazientePostgresDao implements PazienteDAO {
                     return paziente;
                 }
             }
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore nel recupero del paziente dal database", e);
         }
         return new ArrayList<>();
@@ -72,7 +72,7 @@ public class PazientePostgresDao implements PazienteDAO {
     @Override
     public ArrayList<ArrayList<String>> getAllPazienti() {
         ArrayList<ArrayList<String>> paziente = new ArrayList<>();
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(GET_ALL_PAZIENTI_QUERY);
              ResultSet rs = stmt.executeQuery()) {
              
@@ -88,7 +88,7 @@ public class PazientePostgresDao implements PazienteDAO {
                 datiPaziente.add(rs.getString("diagnosi"));
                 paziente.add(datiPaziente);
             }
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore nel recupero di tutti i pazienti dal database", e);
         }
         return paziente;
@@ -96,7 +96,7 @@ public class PazientePostgresDao implements PazienteDAO {
 
     @Override
     public boolean aggiornaPaziente(String cf, String nome, String cognome, String dataNascita, String sesso, String residenza, String diagnosi) {
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(AGGIORNA_PAZIENTE_QUERY)) {
 
             stmt.setString(1, nome);
@@ -108,7 +108,7 @@ public class PazientePostgresDao implements PazienteDAO {
             stmt.setString(7, cf);
 
             return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante l'aggiornamento del paziente nel database", e);
         }
         return false;
@@ -116,11 +116,11 @@ public class PazientePostgresDao implements PazienteDAO {
 
     @Override
     public boolean eliminaPaziente(String cf) {
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(ELIMINA_PAZIENTE_QUERY)) {
             stmt.setString(1, cf);
             return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante l'eliminazione del paziente dal database", e);
         }
         return false;

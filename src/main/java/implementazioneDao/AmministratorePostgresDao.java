@@ -21,14 +21,14 @@ public class AmministratorePostgresDao implements AmministratoreDAO {
  
         @Override
         public boolean checkLoginEsistente(String login) {
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
                  PreparedStatement stmt = conn.prepareStatement(CHECK_LOGIN_ESISTENTE_QUERY)) {
  
                 stmt.setString(1, login);
                 ResultSet rs = stmt.executeQuery();
                 return rs.next(); // Ritorna true se trova una corrispondenza
 
-            } catch (SQLException e) {
+            } catch (SQLException | NullPointerException e) {
                 LOGGER.log(Level.SEVERE, "Errore durante la verifica del login", e);
             }
             return false;
@@ -36,7 +36,7 @@ public class AmministratorePostgresDao implements AmministratoreDAO {
  
     @Override
     public boolean aggiungiAmministratore(String matricola, String login, String password, String nome, String cognome, String pin) {
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(AGGIUNGI_AMMINISTRATORE_QUERY)) {
             stmt.setString(1, matricola);
             stmt.setString(2, login);
@@ -45,7 +45,7 @@ public class AmministratorePostgresDao implements AmministratoreDAO {
             stmt.setString(5, cognome);
             stmt.setString(6, pin);
             return stmt.executeUpdate() > 0;
-        } catch (SQLException e) {
+        } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante l'inserimento dell'amministratore nel DB", e);
             return false;
         }
@@ -54,7 +54,7 @@ public class AmministratorePostgresDao implements AmministratoreDAO {
  
     @Override
         public ArrayList<String> getAmministratoreByLoginAndPassword(String login, String password) {
-        try (Connection conn = ConnessioneDatabase.getConnection();
+        try (Connection conn = ConnessioneDatabase.getInstance();
                  PreparedStatement stmt = conn.prepareStatement(GET_AMMINISTRATORE_BY_LOGIN_AND_PASSWORD_QUERY)) {
  
                 stmt.setString(1, login);
@@ -76,7 +76,7 @@ public class AmministratorePostgresDao implements AmministratoreDAO {
                     
                     return datiAmministratore;
                 }
-            } catch (SQLException e) {
+            } catch (SQLException | NullPointerException e) {
                 LOGGER.log(Level.SEVERE, "Errore durante il recupero dell'amministratore per login e password", e);
             }
             return new ArrayList<>();

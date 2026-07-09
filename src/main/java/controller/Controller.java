@@ -5,6 +5,7 @@ import database_connection.ConnessioneDatabase;
 import implementazioneDao.*;
 import model.*;
 
+import java.security.SecureRandom;
 import java.time.Clock;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -47,9 +48,11 @@ public class Controller {
 	private static final String LABEL_MATRICOLA_MEDICO = "Matricola Medico:";
 	private static final String LABEL_DATA = "Data (AAAA-MM-GG):";
 	private static final String LABEL_ORA_INIZIO = "Ora Inizio (HH:MM:SS):";
-	private static final String LABEL_ORA_FINE = "Ora Fine (HH:MM:SS):"; 
+	private static final String LABEL_ORA_FINE = "Ora Fine (HH:MM:SS):";
 	private static final String DEFAULT_DATE = java.time.LocalDate.now().toString();
 	private static final String INFO_TITLE = "Informazione";
+	private static final String SCONOSCIUTA = "Sconosciuta";
+	private static final String NESSUN_TURNO_TROVATO = "Nessun turno trovato";
 
 	private static final Logger LOGGER = Logger.getLogger(Controller.class.getName());
 
@@ -179,7 +182,8 @@ public class Controller {
 	 */
 	public boolean registrazione(String login, String password, String nome, String cognome, String pin, boolean isAdmin) {
 		// La logica di generazione della matricola dovrebbe essere più robusta
-		String matricola = (isAdmin ? "A" : "M") + (int)(Math.random() * 1000);
+		SecureRandom random = new SecureRandom();
+		String matricola = (isAdmin ? "A" : "M") + (100000 + random.nextInt(900000)); // Genera un numero a 6 cifre
 
 		if (isAdmin) {
 			if (amministratoreDAO.checkLoginEsistente(login)) {
@@ -219,7 +223,6 @@ public class Controller {
 			return true;
 		}
 
-		// Se fallisce, prova a fare il login come medico
 		ArrayList<String> datiMedico = medicoDAO.getMedicoByLoginAndPassword(login, password);
 		if (datiMedico != null && !datiMedico.isEmpty()) {
 			String nome = datiMedico.get(0);
@@ -628,7 +631,7 @@ public class Controller {
 			for (List<String> letto : tuttiLetti) {
 				String idLetto = letto.size() > 0 ? letto.get(0) : "";
 				String reparto = letto.size() > 1 ? letto.get(1) : "";
-				String stanza = letto.size() > 3 ? letto.get(3) : "Sconosciuta";
+				String stanza = letto.size() > 3 ? letto.get(3) : SCONOSCIUTA;
 
 				if (!lettiOccupati.contains(idLetto + "_" + reparto)) {
 					repartiDisponibili.add(reparto);
@@ -811,18 +814,11 @@ public class Controller {
 		List<String> letto = lettoDAO.getLettoById(idLetto, reparto);
 		if (letto == null || letto.isEmpty()) {
 			LOGGER.warning("Tentativo di verificare disponibilità per un letto inesistente: ID " + idLetto);
-			return false; // Il letto non esiste, quindi non è disponibile.
+			return false;
 		}
 
-		// 2. Verifichiamo se è occupato secondo la fonte di verità (tabella ricoveri).
-		// Il metodo isLettoAttualmenteOccupato interroga la tabella ricoveri.
-		// Se NON è occupato, allora è disponibile.
 		return !ricoveroDAO.isLettoAttualmenteOccupato(idLetto, reparto);
 	}
-
-	// =========================================================
-	// METODI PER LA GESTIONE DELL'AGENDA
-	// =========================================================
 
 	public List<ArrayList<String>> getEventiPerUtente(String matricola) {
 		if (isNullOrEmpty(matricola)) {
@@ -837,7 +833,6 @@ public class Controller {
 			LOGGER.warning("Errore: L'oggetto evento non può essere nullo.");
 			return false;
 		}
-		// Business Logic: Controlla sovrapposizioni prima di aggiungere
 		if (checkSovrapposizioneEvento(-1, matricola, inizio, fine)) {
 			JOptionPane.showMessageDialog(null, "L'orario selezionato si sovrappone con un altro evento esistente.", "Errore di Sovrapposizione", JOptionPane.ERROR_MESSAGE);
 			return false;
@@ -850,7 +845,6 @@ public class Controller {
 			LOGGER.warning("Errore: L'oggetto evento non può essere nullo.");
 			return false;
 		}
-		// Business Logic: Controlla sovrapposizioni prima di aggiornare
 		if (checkSovrapposizioneEvento(idEvento, matricola, inizio, fine)) {
 			JOptionPane.showMessageDialog(null, "L'orario modificato si sovrappone con un altro evento esistente.", "Errore di Sovrapposizione", JOptionPane.ERROR_MESSAGE);
 			return false;
@@ -865,12 +859,10 @@ public class Controller {
 	private boolean checkSovrapposizioneEvento(int nuovoId, String matricola, java.util.Date nuovoInizio, java.util.Date nuovoFine) {
 		List<ArrayList<String>> eventiEsistenti = getEventiPerUtente(matricola);
 		for (ArrayList<String> eventoEsistente : eventiEsistenti) {
-			// Salta il controllo se stiamo modificando lo stesso evento
 			if (Integer.parseInt(eventoEsistente.get(0)) == nuovoId) {
 				continue;
 			}
 
-			// Logica di sovrapposizione: (StartA < EndB) and (EndA > StartB)
 			try {
 				java.sql.Timestamp inizioEsistente = java.sql.Timestamp.valueOf(eventoEsistente.get(4));
 				java.sql.Timestamp fineEsistente = java.sql.Timestamp.valueOf(eventoEsistente.get(5));
@@ -880,7 +872,7 @@ public class Controller {
 				LOGGER.warning("Impossibile parsare la data per il controllo di sovrapposizione: " + e.getMessage());
 			}
 		}
-		return false; // Nessuna sovrapposizione
+		return false;
 	}
 
 	public boolean gestisciCreazioneNuovoMedico() {
@@ -910,7 +902,8 @@ public class Controller {
 			String cognome = cognomeInput.getText().trim();
 			String login = loginInput.getText().trim();
 			String password = new String(passwordInput.getPassword()).trim();
-			String matricola = "M" + (int)(Math.random() * 1000); // Calcolata automaticamente
+			SecureRandom random = new SecureRandom();
+			String matricola = "M" + (100000 + random.nextInt(900000)); // Genera un numero a 6 cifre
 			String iscrizioneAlbo = iscrizioneInput.getText().trim();
 			String specializzazione = specializzazioneInput.getText().trim();
 			String reparto = (String) repartoInput.getSelectedItem();
@@ -937,17 +930,14 @@ public class Controller {
 		}
 		List<ArrayList<String>> eventi = agendaDAO.getEventiByMatricola(matricola);
 		if (eventi == null || eventi.isEmpty()) {
-			// Se l'agenda non esiste, la creiamo "on-demand"
 			if (matricola.toUpperCase().startsWith("A")) {
 				agendaDAO.creaAgendaPerAmministratore(matricola);
 			} else {
 				agendaDAO.creaAgendaPerMedico(matricola);
 			}
-			// E la rileggiamo per ottenere l'ID
 			eventi = agendaDAO.getEventiByMatricola(matricola);
 		}
 		if (eventi != null && !eventi.isEmpty()) {
-			// L'ID dell'agenda è il primo campo del primo "evento" (che in realtà è l'agenda stessa)
 			return eventi.get(0).get(0);
 		}
 		return null;
@@ -986,7 +976,6 @@ public class Controller {
 		if (result == JOptionPane.OK_OPTION) {
 			try {
 				String matricola = (String) matricolaComboBox.getSelectedItem();
-				// L'ID dell'agenda viene recuperato in background senza mostrarlo all'utente
 				String idAgenda = getIdAgendaPerMatricola(matricola);
 
 				boolean successo = aggiungiTurno(matricola, dataInput.getText().trim(), inizioInput.getText().trim(), fineInput.getText().trim(), idAgenda);
@@ -1006,16 +995,13 @@ public class Controller {
 	}
 
 	public boolean gestisciModificaTurno(String matricola, String data, String orarioEffettivo) {
-		// Estrai il vecchio orario di inizio dalla stringa "inizio - fine"
 		String[] orari = orarioEffettivo.split(" - ");
 		String vecchioInizio = orari.length > 0 ? orari[0].trim() : "08:00:00";
 		String vecchiaFine = orari.length > 1 ? orari[1].trim() : "14:00:00";
 
-		// Prepara i campi per il nuovo orario, pre-compilandoli con i valori attuali
 		JTextField nuovoInizioInput = new JTextField(vecchioInizio);
 		JTextField nuovaFineInput = new JTextField(vecchiaFine);
 
-		// Crea il pannello del dialogo
 		JPanel panel = new JPanel(new GridLayout(4, 2, 10, 10));
 		panel.add(new JLabel(LABEL_MATRICOLA_MEDICO));
 		panel.add(new JLabel("<html><b>" + matricola + "</b></html>")); // Mostra la matricola (non editabile)
@@ -1050,8 +1036,6 @@ public class Controller {
 	}
 
 	public boolean gestisciCreazioneNuovoRicovero() {
-		// Logica per ottenere i pazienti disponibili (non ancora ricoverati)
-		// 1. Ottieni i pazienti disponibili (non ancora ricoverati)
 		java.util.Set<String> pazientiRicoverati = new java.util.HashSet<>();
 		java.util.Set<String> lettiOccupati = new java.util.HashSet<>();
 		List<ArrayList<String>> ricoveriAttivi = ricoveroDAO.getAllRicoveriAttivi();
@@ -1089,7 +1073,7 @@ public class Controller {
 			for (List<String> letto : tuttiLetti) {
 				String idLetto = letto.size() > 0 ? letto.get(0) : "";
 				String reparto = letto.size() > 1 ? letto.get(1) : "";
-				String stanza = letto.size() > 3 ? letto.get(3) : "Sconosciuta";
+				String stanza = letto.size() > 3 ? letto.get(3) : SCONOSCIUTA;
 
 				if (!lettiOccupati.contains(idLetto + "_" + reparto)) {
 					repartiDisponibili.add(reparto);
@@ -1270,7 +1254,7 @@ public class Controller {
 			for (List<String> letto : tuttiLetti) {
 				String id = letto.size() > 0 ? letto.get(0) : "";
 				String rep = letto.size() > 1 ? letto.get(1) : "";
-				String sta = letto.size() > 3 ? letto.get(3) : "Sconosciuta";
+				String sta = letto.size() > 3 ? letto.get(3) : SCONOSCIUTA;
 
 				if (!lettiOccupati.contains(id + "_" + rep)) {
 					repartiDisponibili.add(rep);
@@ -1715,7 +1699,7 @@ public class Controller {
 					}
 				}
 				if (turnoInput.getItemCount() == 0) {
-					turnoInput.addItem("Nessun turno trovato");
+					turnoInput.addItem(NESSUN_TURNO_TROVATO);
 				}
 
 				if (!isMedico) { // Amministratore: aggiorna l'agenda in base al medico selezionato
@@ -1746,7 +1730,7 @@ public class Controller {
 			String matSelezionata = (String) matricolaInput.getSelectedItem();
 			oraInizioPrestazioneComboBox.removeAllItems();
 
-			if (turnoSelezionato == null || turnoSelezionato.equals("Nessun turno trovato") || matSelezionata == null) {
+			if (turnoSelezionato == null || turnoSelezionato.equals(NESSUN_TURNO_TROVATO) || matSelezionata == null) {
 				oraInizioPrestazioneComboBox.setEnabled(false);
 				return;
 			}
@@ -1808,7 +1792,7 @@ public class Controller {
 				if (oraInizioPrestazioneComboBox.getItemCount() > 0) {
 					oraInizioPrestazioneComboBox.setEnabled(true);
 				} else {
-					oraInizioPrestazioneComboBox.addItem("Nessuno slot libero");
+					oraInizioPrestazioneComboBox.addItem(NESSUN_TURNO_TROVATO);
 					oraInizioPrestazioneComboBox.setEnabled(false);
 				}
 
@@ -1825,7 +1809,7 @@ public class Controller {
 			// su `turnoInput`. Dobbiamo forzarlo manualmente per assicurare che lo spinner dell'orario
 			// venga configurato correttamente all'apertura della finestra, risolvendo il bug.
 			aggiornaTurniEAgenda.actionPerformed(null); // Popola i turni
-			if (turnoInput.getActionListeners().length > 0) {
+			if (turnoInput.getActionListeners().length != 0) {
 				turnoInput.getActionListeners()[0].actionPerformed(null); // Configura lo spinner
 			}
 		}
@@ -1855,7 +1839,7 @@ public class Controller {
 		panel.add(new JLabel("Tipo Esame/Prestazione:")); panel.add(tipoProceduraInput);
 		panel.add(new JLabel("Esito Prestazione:")); panel.add(esitoInput);
 		panel.add(new JLabel("CF Paziente:")); panel.add(cfPazienteInput);
-		panel.add(new JLabel("Matricola Medico:")); panel.add(matricolaInput);
+		panel.add(new JLabel(LABEL_MATRICOLA_MEDICO)); panel.add(matricolaInput);
 		panel.add(new JLabel("ID Turno:")); panel.add(turnoInput);
 		panel.add(new JLabel("Ora Inizio Prestazione:")); panel.add(oraInizioPrestazioneComboBox);
 		if (!isMedico) {
@@ -1876,7 +1860,7 @@ public class Controller {
 				String esito = (String) esitoInput.getSelectedItem();
 				String turnoSel = (String) turnoInput.getSelectedItem();
 				String idTurno = "";
-				if (turnoSel != null && !turnoSel.equals("Nessun turno trovato")) {
+				if (turnoSel != null && !turnoSel.equals(NESSUN_TURNO_TROVATO)) {
 					idTurno = turnoDisplayToIdMap.get(turnoSel);
 				}
 				
@@ -1898,7 +1882,7 @@ public class Controller {
 					idAgendaFinale = (String) idAgendaInput.getSelectedItem();
 				}
 
-				if (idTurno == null || idTurno.equals("Nessun turno trovato") || idTurno.trim().isEmpty()) {
+				if (idTurno == null || idTurno.trim().isEmpty()) {
 					JOptionPane.showMessageDialog(null, "Devi selezionare un turno valido.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
 					return false;
 				}
@@ -1937,8 +1921,7 @@ public class Controller {
 	}
 
 	public boolean gestisciModificaPrestazione(String idPrestazione) {
-		// NOTA: Questo metodo richiede l'aggiunta di `getPrestazioneById` e `updatePrestazione` al PrestazioneDAO.
-		// La logica fittizia è stata sostituita con le chiamate reali al DAO.
+
 		ArrayList<String> prestazione = prestazioneDAO.getPrestazioneById(idPrestazione);
 
 		if (prestazione == null || prestazione.isEmpty()) {
@@ -1946,7 +1929,6 @@ public class Controller {
 			return false;
 		}
 
-		// DAO dovrebbe ritornare: 0:id, 1:tipologia, 2:esito, 3:data, 4:cf, 5:matricola, 6:descrizione
 		String tipologia = prestazione.size() > 1 ? prestazione.get(1) : "";
 		String esitoAttuale = prestazione.size() > 2 ? prestazione.get(2) : "Erogata";
 		String cfPaziente = prestazione.size() > 4 ? prestazione.get(4) : "";
@@ -1982,7 +1964,7 @@ public class Controller {
 		int choice = JOptionPane.showOptionDialog(null, panel, "Gestisci Prestazione #" + idPrestazione,
 				JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
 
-		if (choice == 0) { // Salva Modifiche
+		if (choice == 0) {
 			try {
 				String nuovaTipologia = (String) tipoProceduraInput.getSelectedItem();
 				String nuovoEsito = (String) esitoInput.getSelectedItem();
@@ -2099,13 +2081,11 @@ public class Controller {
 		String repartoRicerca = prestazioniPanel.getRepartoSelezionato();
 		String tipologiaRicerca = prestazioniPanel.getTipologiaSelezionata();
 
-		// Mostra un cursore di attesa per dare un feedback all'utente
 		prestazioniPanel.mainPanel.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
 
 		SwingWorker<Object[][], Void> worker = new SwingWorker<Object[][], Void>() {
 			@Override
 			protected Object[][] doInBackground() throws Exception {
-				// Esegui le query e il filtraggio in background per non bloccare la GUI
 				List<ArrayList<String>> prestazioni;
 				if (utenteLoggato instanceof Medico) {
 					prestazioni = prestazioneDAO.getPrestazioniByMedico(utenteLoggato.getMatricola());
@@ -2198,7 +2178,6 @@ public class Controller {
 					LOGGER.log(java.util.logging.Level.SEVERE, "Errore durante la ricerca delle prestazioni", e);
 					JOptionPane.showMessageDialog(prestazioniPanel.mainPanel, "Si è verificato un errore durante la ricerca.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
 				} finally {
-					// Ripristina il cursore predefinito in ogni caso
 					prestazioniPanel.mainPanel.setCursor(java.awt.Cursor.getDefaultCursor());
 				}
 			}
@@ -2210,9 +2189,8 @@ public class Controller {
 		gui.SchermataMedico medicoHome = new gui.SchermataMedico(nomeUtente);
 		impostaSchermata(medicoHome, medicoHome.mainPanel, "Ospedale - Home Medico", WindowConstants.DISPOSE_ON_CLOSE);
 
-		homeFrame = medicoHome; // Imposta come schermata principale
+		homeFrame = medicoHome;
 
-		// Esposizione e deleghe per il Medico
 		medicoHome.addPazientiListener(e -> apriSchermataPazienti(medicoHome));
 		medicoHome.addLettiListener(e -> apriSchermataLetti(medicoHome));
 		medicoHome.addPrestazioniListener(e -> apriSchermataPrestazioni(medicoHome));
@@ -2220,7 +2198,6 @@ public class Controller {
 		medicoHome.addRicoveroListener(e -> apriSchermataRicoveri(medicoHome));
 		medicoHome.addTurniListener(e -> apriSchermataTurni(medicoHome));
 		
-		// Aggiunto listener per aprire il calendario settimanale
 		medicoHome.addSettimanaleListener(e -> apriSchermataCalendario(medicoHome));
 		
 		medicoHome.addRicercaAgendaListener(e -> aggiornaAgendaGUI(medicoHome));
@@ -2230,7 +2207,6 @@ public class Controller {
 
         aggiornaAgendaGUI(medicoHome);
 		
-		// Listener per il click sul nome in alto (Modifica Profilo)
 		medicoHome.addProfiloListener(new java.awt.event.MouseAdapter() {
 			@Override
 			public void mouseClicked(java.awt.event.MouseEvent e) {
@@ -2244,7 +2220,6 @@ public class Controller {
 		medicoHome.addEsciListener(e -> {
 			int conferma = JOptionPane.showConfirmDialog(null, MSG_CONFERMA_USCITA, TITLE_CONFERMA_USCITA, JOptionPane.YES_NO_OPTION);
 			if (conferma == JOptionPane.YES_OPTION) {
-				// Torna alla schermata di login
 				medicoHome.dispose();
 				logout();
 				avviaSchermataLogin();
@@ -2264,12 +2239,10 @@ public class Controller {
             }
         });
 
-		// Collegamento per il pulsante "Aggiorna Medico"
 		mediciFrame.addModificaMedicoListener(e -> {
 			String matricola = mediciFrame.getMatricolaMedicoSelezionato();
 			if (matricola != null) {
 				if (gestisciModificaMedico(matricola)) {
-					// Ricarica la tabella per mostrare i dati aggiornati
 					mediciFrame.aggiornaTabella(formattaDatiMedici(medicoDAO.getAllMedici()));
 				}
 			} else {
@@ -2285,13 +2258,10 @@ public class Controller {
 				java.time.LocalDate oggi = java.time.LocalDate.now();
 				if (assenzeDb != null) {
 					for (List<String> a : assenzeDb) {
-						// Rimosso il controllo sull'approvazione. Un'assenza registrata è considerata attiva se le date corrispondono.
 						try {
 							java.time.LocalDate dataInizio = java.time.LocalDate.parse(a.get(1));
 							java.time.LocalDate dataFine = java.time.LocalDate.parse(a.get(2));
 							if (!oggi.isBefore(dataInizio) && !oggi.isAfter(dataFine)) {
-								// Istanzio l'oggetto Assenza per usare i suoi metodi, migliorando la leggibilità e l'incapsulamento.
-								// Passo 'true' per l'approvazione e 'null' per gli oggetti non disponibili in questo contesto.
 								assenzaCorrente = new Assenza(dataInizio, dataFine, a.get(3), true, null, null);
 								break;
 							}
@@ -2310,7 +2280,7 @@ public class Controller {
 					int choice = JOptionPane.showOptionDialog(mediciFrame, messaggio, "Dettagli Assenza Approvata",
 							JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, options[0]);
 					
-					if (choice == 1) { // Revoca Assenza
+					if (choice == 1) {
 						int conferma = JOptionPane.showConfirmDialog(mediciFrame, "Sei sicuro di voler revocare questa assenza?", "Conferma Revoca", JOptionPane.YES_NO_OPTION);
 						if (conferma == JOptionPane.YES_OPTION) {
 							if (eliminaAssenza(matricola, assenzaCorrente.getDataInizioAssenza().toString())) {
@@ -2320,7 +2290,7 @@ public class Controller {
 								JOptionPane.showMessageDialog(mediciFrame, "Errore durante la revoca dell'assenza.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
 							}
 						}
-					} else if (choice == 2) { // Aggiungi Nuova Assenza
+					} else if (choice == 2) {
 						if (gestisciCreazioneNuovaAssenza(matricola)) {
 							mediciFrame.aggiornaTabella(formattaDatiMedici(medicoDAO.getAllMedici()));
 						}
@@ -2337,7 +2307,6 @@ public class Controller {
 
 		mostraFinestraSecondaria(mediciFrame, frameDaChiudere);
 
-		// Utilizzo di SwingWorker per non bloccare la GUI a causa delle Query N+1
 		mediciFrame.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
 		SwingWorker<Object[][], Void> worker = new SwingWorker<Object[][], Void>() {
 			@Override
@@ -2359,7 +2328,6 @@ public class Controller {
 		gui.Dimissioni dimissioniFrame = new gui.Dimissioni();
 		impostaSchermata(dimissioniFrame, dimissioniFrame.mainPanel, "Ricerca Dimissioni", WindowConstants.DISPOSE_ON_CLOSE);
 	
-		// Logica per il pulsante "Archivia Dimissione"
         dimissioniFrame.addArchiviaDimissioneListener(e -> {
             String idSelezionato = dimissioniFrame.getIdRicoveroSelezionato();
             if (idSelezionato != null) {
@@ -2371,17 +2339,13 @@ public class Controller {
             }
         });
 
-		// Logica per il pulsante "Cerca"
 		dimissioniFrame.addCercaListener(e -> gestisciRicercaDimissioni(dimissioniFrame));
 
-		// Logica per il pulsante "Reset"
 		dimissioniFrame.addResetListener(e -> {
-			// Passa l'ActionListener di ricerca al metodo resetCampiRicerca per aggiornare la tabella dopo il reset.
 			ActionListener cercaListener = event -> gestisciRicercaDimissioni(dimissioniFrame);
 			dimissioniFrame.resetCampiRicerca(cercaListener);
 		});
 
-		// Logica per il pulsante "Lettura Dimissione"
 		dimissioniFrame.addLetturaDimissioneListener(e -> {
 			String cfSelezionato = dimissioniFrame.getCFPazienteSelezionato();
 			if (cfSelezionato != null) {
@@ -2393,7 +2357,6 @@ public class Controller {
 
 		mostraFinestraSecondaria(dimissioniFrame, frameDaChiudere);
 
-		// Utilizzo di SwingWorker per caricare i dati in background
 		dimissioniFrame.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
 		SwingWorker<Object[][], Void> worker = new SwingWorker<Object[][], Void>() {
 			@Override
@@ -2451,7 +2414,6 @@ public class Controller {
 
 		mostraFinestraSecondaria(ricoveroFrame, frameDaChiudere);
 
-		// Caricamento iniziale asincrono
 		caricaDatiRicoveriAsync(ricoveroFrame);
 	}
 
@@ -2762,8 +2724,6 @@ public class Controller {
 				String nuovoNome = nomeInput.getText().trim();
 				String nuovoCognome = cognomeInput.getText().trim();
 
-				// TODO: Sostituire `successo = true` con la vera chiamata di aggiornamento al DB, per es:
-				// boolean successo = amministratoreDAO.aggiornaAmministratore(matricola, nuovoNome, nuovoCognome);
 				boolean successo = true; 
 
 				if (successo) {
@@ -3251,66 +3211,51 @@ public class Controller {
 		java.util.List<Object[]> datiFiltrati = new java.util.ArrayList<>();
 
 		for (List<String> datiSingoloLetto : datiLetti) {
-			
 			String idLetto = datiSingoloLetto.size() > 0 ? datiSingoloLetto.get(0) : "-";
 			String repartoLetto = datiSingoloLetto.size() > 1 ? datiSingoloLetto.get(1) : "-";
 			String stanzaLetto = datiSingoloLetto.size() > 3 ? datiSingoloLetto.get(3) : "-";
 
-			// Creazione dell'oggetto Letto per incapsulare i dati e la logica, usando i suoi getter e setter.
-			Letto letto = new Letto(repartoLetto, false); // Inizializzato come libero, lo stato verrà aggiornato dopo.
+			Letto letto = new Letto(repartoLetto, false);
 
-			// Applica i filtri
-			if (repartoFilter != null && !repartoFilter.isEmpty() && !letto.getReparto().equalsIgnoreCase(repartoFilter)) {
-				continue; // Salta questo letto se non corrisponde al reparto
-			}
-			
-			if (stanzaFilter != null && !stanzaFilter.trim().isEmpty() && !stanzaLetto.toLowerCase().contains(stanzaFilter.trim().toLowerCase())) {
-				continue; // Salta questo letto se non corrisponde alla stanza
-			}
+			boolean repartoMatch = (repartoFilter == null || repartoFilter.isEmpty() || letto.getReparto().equalsIgnoreCase(repartoFilter));
+			boolean stanzaMatch = (stanzaFilter == null || stanzaFilter.trim().isEmpty() || stanzaLetto.toLowerCase().contains(stanzaFilter.trim().toLowerCase()));
 
-			// 2. Si determina lo stato controllando la chiave composta (id_reparto)
-			boolean isOccupato = ricoveriMap.containsKey(idLetto + "_" + letto.getReparto());
-			letto.setOccupato(isOccupato);
-			String statoCorrente = letto.isOccupato() ? "Occupato" : "Libero";
+			if (repartoMatch && stanzaMatch) {
+				boolean isOccupato = ricoveriMap.containsKey(idLetto + "_" + letto.getReparto());
+				letto.setOccupato(isOccupato);
+				String statoCorrente = letto.isOccupato() ? "Occupato" : "Libero";
 
-			if (statoFilter != null && !statoFilter.equals("Tutti") && !statoCorrente.equalsIgnoreCase(statoFilter)) {
-				continue; // Salta questo letto se non corrisponde allo stato filtrato
-			}
-			
-			String nomePaziente = "-";
-			String cfPaziente = "-";
+				boolean statoMatch = (statoFilter == null || statoFilter.equals("Tutti") || statoCorrente.equalsIgnoreCase(statoFilter));
 
-			if (letto.isOccupato()) {
-				String[] infoPaziente = ricoveriMap.get(idLetto + "_" + letto.getReparto()); // Recupera info paziente dal ricovero
-				nomePaziente = infoPaziente[0];
-				cfPaziente = infoPaziente[1];
-			}
+				String nomePaziente = "-";
+				String cfPaziente = "-";
+				if (letto.isOccupato()) {
+					String[] infoPaziente = ricoveriMap.get(idLetto + "_" + letto.getReparto());
+					nomePaziente = infoPaziente[0];
+					cfPaziente = infoPaziente[1];
+				}
 
-			// Filtro sul paziente (Nome o CF)
-			if (pazienteFilter != null && !pazienteFilter.trim().isEmpty()) {
-				String pFilt = pazienteFilter.trim().toLowerCase();
-				if (!nomePaziente.toLowerCase().contains(pFilt) && !cfPaziente.toLowerCase().contains(pFilt)) {
-					continue; // Salta se il paziente non corrisponde
+				String pFilt = (pazienteFilter != null) ? pazienteFilter.trim().toLowerCase() : "";
+				boolean pazienteMatch = (pFilt.isEmpty() || nomePaziente.toLowerCase().contains(pFilt) || cfPaziente.toLowerCase().contains(pFilt));
+
+				if (statoMatch && pazienteMatch) {
+					Object[] rigaDati = new Object[6];
+					rigaDati[0] = idLetto;
+					rigaDati[1] = stanzaLetto;
+					rigaDati[4] = letto.getReparto();
+
+					if (letto.isOccupato()) {
+						rigaDati[2] = nomePaziente;
+						rigaDati[3] = cfPaziente;
+						rigaDati[5] = "🔴 Occupato";
+					} else {
+						rigaDati[2] = "-";
+						rigaDati[3] = "-";
+						rigaDati[5] = "🟢 Libero";
+					}
+					datiFiltrati.add(rigaDati);
 				}
 			}
-
-			Object[] rigaDati = new Object[6];
-			// Popolamento dati fissi del letto
-			rigaDati[0] = idLetto;                                    // Numero Letto (ID)
-			rigaDati[1] = stanzaLetto;                                // Stanza
-			rigaDati[4] = letto.getReparto();                         // Reparto
-
-			// Popolamento dati variabili in base allo stato di occupazione
-			if (letto.isOccupato()) {
-				rigaDati[2] = nomePaziente;                           // Nome Paziente
-				rigaDati[3] = cfPaziente;                             // Codice Fiscale
-				rigaDati[5] = "🔴 Occupato";                           // Stato con emoji
-			} else {
-				rigaDati[2] = "-";                                    // Nome Paziente
-				rigaDati[3] = "-";                                    // Codice Fiscale
-				rigaDati[5] = "🟢 Libero";                             // Stato con emoji
-			}
-			datiFiltrati.add(rigaDati);
 		}
 		return datiFiltrati.toArray(new Object[0][0]);
 	}

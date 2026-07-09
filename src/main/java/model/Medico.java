@@ -26,16 +26,6 @@ public class Medico extends Utente {
         super(matricola, nome, cognome, login);
     }
 
-    /**
-     * Imposta la data di iscrizione all'albo alla data corrente e la restituisce.
-     * @deprecated Questo metodo imposta la data al momento corrente.
-     * @return La data di iscrizione impostata.
-     */
-    @Deprecated
-    public LocalDate setIscrizioneAlbo() {
-        this.iscrizioneAlbo = LocalDate.now(ZoneId.systemDefault());
-        return this.iscrizioneAlbo;
-    }
 
     /**
      * Imposta la data di iscrizione all'albo.

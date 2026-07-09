@@ -15,8 +15,8 @@ public final class ConnessioneDatabase {
     private static Connection connection = null;
 
     private static final Logger LOGGER = Logger.getLogger(ConnessioneDatabase.class.getName());
-    private static final String URL = "jdbc:postgresql://aws-0-eu-west-1.pooler.supabase.com:6543/postgres?prepareThreshold=0";
-    private static final String USER = "postgres.nyvvdoqwgsxhjwqtgafi";
+    private static final String URL = "jdbc:postgresql://localhost:5432/OspedaleOOP";
+    private static final String USER = "postgres";
     private static final String PASSWORD = System.getenv("DB_PASSWORD");
     /**
      * Costruttore privato per impedire l'istanziazione diretta della classe dall'esterno.

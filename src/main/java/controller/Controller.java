@@ -70,12 +70,17 @@ public class Controller {
 		prestazioneDAO = new PrestazionePostgresDao();
 
 		// Test di connessione al database all'avvio
-		try (Connection conn = ConnessioneDatabase.getConnection()) {
-			if (conn != null && !conn.isClosed()) {
-				LOGGER.info("CONNESSIONE AL DB RIUSCITA!");
+		Connection conn = ConnessioneDatabase.getInstance();
+		if (conn != null) {
+			try {
+				if (!conn.isClosed()) {
+					LOGGER.info("CONNESSIONE AL DB RIUSCITA!");
+				}
+			} catch (SQLException e) {
+				LOGGER.log(java.util.logging.Level.SEVERE, "Errore nel controllo dello stato della connessione", e);
 			}
-		} catch (SQLException e) {
-			LOGGER.log(java.util.logging.Level.SEVERE, "Connessione al database fallita all'avvio", e);
+		} else {
+			LOGGER.severe("Connessione al database fallita all'avvio. Riprova più tardi.");
 		}
 	}
 

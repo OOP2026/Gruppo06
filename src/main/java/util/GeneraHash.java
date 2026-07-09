@@ -16,7 +16,7 @@ package util;
  */
 public class GeneraHash {
     public static void main(String[] args) {
-        String stringa = "scriviQui";
+        String stringa = "ScriviQui";
         System.out.println(PasswordHasher.hash(stringa));
     }
 }

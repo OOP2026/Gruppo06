@@ -8,7 +8,6 @@ public class Utente {
 
     protected String login;
     protected String matricola;
-    protected String ruolo;
     protected String nome;
     protected String cognome;
 
@@ -20,14 +19,12 @@ public class Utente {
      * @param nome      the nome
      * @param cognome   the cognome
      * @param login     the login
-     * @param ruolo     the ruolo
      */
-    public Utente(String matricola, String nome, String cognome, String login, String ruolo) {
+    public Utente(String matricola, String nome, String cognome, String login) {
         this.matricola = matricola;
         this.nome = nome;
         this.cognome = cognome;
         this.login = login;
-        this.ruolo = ruolo;
     }
 
     /**
@@ -45,12 +42,6 @@ public class Utente {
         return this.matricola;
     }
     /**
-     * Restituisce il ruolo dell'utente.
-     * @return il ruolo dell'utente.
-     */
-    public String getRuolo(){
-        return this.ruolo;
-    }
 
     /**
      * Restituisce il nome dell'utente.
@@ -66,6 +57,40 @@ public class Utente {
      */
     public String getCognome() {
         return cognome;
+    }
+
+    /**
+     * Imposta il login dell'utente.
+     * @param login il nuovo login
+     */
+    public void setLogin(String login) {
+        this.login = login;
+    }
+
+    /**
+     * Imposta la matricola dell'utente.
+     * @param matricola la nuova matricola
+     */
+    public void setMatricola(String matricola) {
+        this.matricola = matricola;
+    }
+
+
+
+    /**
+     * Imposta il nome dell'utente.
+     * @param nome il nuovo nome
+     */
+    public void setNome(String nome) {
+        this.nome = nome;
+    }
+
+    /**
+     * Imposta il cognome dell'utente.
+     * @param cognome il nuovo cognome
+     */
+    public void setCognome(String cognome) {
+        this.cognome = cognome;
     }
 
 }

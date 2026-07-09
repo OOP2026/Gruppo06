@@ -11,10 +11,9 @@ public class Assenza {
     private LocalDate dataFineAssenza;
     private String motivoAssenza;
     private boolean approvazione;
-
-    //Richiamo classi
     private Medico medico;
     private Turno_Lavoro turnoLavoro;
+
 
     /**
      * Costruisce un nuovo oggetto Assenza.
@@ -43,13 +42,6 @@ public class Assenza {
         return dataInizioAssenza;
     }
 
-    /**
-     * Imposta la data di inizio dell'assenza.
-     * @param dataInizioAssenza La nuova data di inizio.
-     */
-    public void setDataInizioAssenza(LocalDate dataInizioAssenza) {
-        this.dataInizioAssenza = dataInizioAssenza;
-    }
 
     /**
      * Restituisce la data di fine dell'assenza.
@@ -60,14 +52,6 @@ public class Assenza {
     }
 
     /**
-     * Imposta la data di fine dell'assenza.
-     * @param dataFineAssenza La nuova data di fine.
-     */
-    public void setDataFineAssenza(LocalDate dataFineAssenza) {
-        this.dataFineAssenza = dataFineAssenza;
-    }
-
-    /**
      * Restituisce la motivazione dell'assenza.
      * @return La motivazione.
      */
@@ -75,29 +59,6 @@ public class Assenza {
         return motivoAssenza;
     }
 
-    /**
-     * Imposta la motivazione dell'assenza.
-     * @param motivoAssenza La nuova motivazione.
-     */
-    public void setMotivoAssenza(String motivoAssenza) {
-        this.motivoAssenza = motivoAssenza;
-    }
-
-    /**
-     * Verifica se l'assenza è stata approvata.
-     * @return {@code true} se approvata, altrimenti {@code false}.
-     */
-    public boolean isApprovazione() {
-        return approvazione;
-    }
-
-    /**
-     * Imposta lo stato di approvazione dell'assenza.
-     * @param approvazione {@code true} per approvare, {@code false} altrimenti.
-     */
-    public void setApprovazione(boolean approvazione) {
-        this.approvazione = approvazione;
-    }
 
     /**
      * Restituisce l'oggetto Medico associato all'assenza.
@@ -115,19 +76,4 @@ public class Assenza {
         this.medico = medico;
     }
 
-    /**
-     * Restituisce il turno di lavoro associato all'assenza.
-     * @return Il turno di lavoro.
-     */
-    public Turno_Lavoro getTurnoLavoro() {
-        return turnoLavoro;
-    }
-
-    /**
-     * Associa un nuovo turno di lavoro a questa assenza.
-     * @param turnoLavoro Il nuovo turno di lavoro.
-     */
-    public void setTurnoLavoro(Turno_Lavoro turnoLavoro) {
-        this.turnoLavoro = turnoLavoro;
-    }
 }

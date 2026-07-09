@@ -31,7 +31,4 @@ public class Ricovero {
         this.giorniPrognosi = giorniPrognosi;
     }
 
-    public void checkRicovero(){
-        //System.out.println("Controllo ricovero...");
-    }
 }

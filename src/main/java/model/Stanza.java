@@ -1,6 +1,6 @@
 package model;
 
-import java.util.ArrayList;
+
 
 /**
  * Rappresenta una stanza di degenza in un ospedale.
@@ -8,21 +8,17 @@ import java.util.ArrayList;
  */
 public class Stanza {
     public int numero_stanza;
-    public Letto[][] numero_letti;
+    public int numero_letti;
 
     /**
      * Costruisce un nuovo oggetto Stanza.
      *
      * @param numero_stanza Il numero della stanza.
-     * @param righe         Il numero di righe di letti nella stanza.
-     * @param colonne       Il numero di colonne di letti nella stanza.
+     * @param numero_letti  Il numero di letti nella stanza.
      */
-    public Stanza(int numero_stanza, int righe, int colonne){
+    public Stanza(int numero_stanza, int numero_letti){
         this.numero_stanza = numero_stanza;
-        this.numero_letti = new Letto[righe][colonne];
+        this.numero_letti =  numero_letti;
     }
 
-    public void checkPosti(){
-        //
-    }
 }

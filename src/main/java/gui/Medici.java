@@ -32,7 +32,7 @@ public class Medici extends JFrame {
     //Assegnazione campi presso: JTable mediciTable
     private static final String[] COLONNE = {
             "Matricola", "Cognome e Nome", "Specializzazione",
-            "Reparto Assegnato", "Stato", "Note/Contatto"
+            "Reparto Assegnato", "Stato"
     };
     
     private Object[][] datiMedici = new Object[0][0];

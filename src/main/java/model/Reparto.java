@@ -30,7 +30,4 @@ public class Reparto {
         this.ricovero = ricovero;
     }
 
-     public void getNumPazienti(){
-
-     }
 }

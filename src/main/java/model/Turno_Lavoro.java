@@ -10,7 +10,6 @@ public class Turno_Lavoro{
     public Date data_turno;
     public Date ora_inizio;
     public Date ora_fine;
-    public Medico medico;
 
     /**
      * Costruisce un nuovo oggetto Turno_Lavoro.
@@ -23,9 +22,5 @@ public class Turno_Lavoro{
         this.data_turno = data_turno;
         this.ora_inizio = ora_inizio;
         this.ora_fine = ora_fine;
-    }
-
-    public void checkTurno(){
-        System.out.println("Controllo turno...");
     }
 }

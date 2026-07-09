@@ -21,28 +21,32 @@ public class Medico extends Utente {
      * @param nome      Il nome del medico.
      * @param cognome   Il cognome del medico.
      * @param login     L'username per l'accesso al sistema.
-     * @param ruolo     Il ruolo dell'utente, tipicamente "medico".
      */
-    public Medico(String matricola, String nome, String cognome, String login, String ruolo) {
-        super(matricola, nome, cognome, login, ruolo);
+    public Medico(String matricola, String nome, String cognome, String login) {
+        super(matricola, nome, cognome, login);
     }
 
     /**
      * Imposta la data di iscrizione all'albo alla data corrente e la restituisce.
+     * @deprecated Questo metodo imposta la data al momento corrente. Usare {@link #setIscrizioneAlbo(LocalDate)} per impostare una data specifica.
      * @return La data di iscrizione impostata.
      */
-    public LocalDate setIscrizionAlbo() {
+    @Deprecated
+    public LocalDate setIscrizioneAlbo() {
         this.iscrizioneAlbo = LocalDate.now(ZoneId.systemDefault()); // Imposta la data di iscrizione all'albo al momento della creazione del medico
         return this.iscrizioneAlbo;
     }
 
     /**
-     * Restituisce la data di iscrizione all'albo.
-     * @return La data di iscrizione.
+     * Imposta la data di iscrizione all'albo.
+     * @param iscrizioneAlbo La nuova data di iscrizione.
      */
-    public LocalDate getIscrizioneAlbo(){
-        return iscrizioneAlbo;
+    public LocalDate setIscrizioneAlbo(LocalDate iscrizioneAlbo) {
+        this.iscrizioneAlbo = LocalDate.now(ZoneId.systemDefault());
+        return this.iscrizioneAlbo;
     }
+
+
 
     /**
      * Imposta la specializzazione del medico.
@@ -51,13 +55,7 @@ public class Medico extends Utente {
     public void setSpecializzazione(String specializzazione) {
         this.specializzazione = specializzazione;
     }
-    /**
-     * Restituisce la specializzazione del medico.
-     * @return La specializzazione.
-     */
-    public String getSpecializzazione() {
-        return specializzazione;
-    }
+
 
     /**
      * Imposta il reparto di appartenenza del medico.
@@ -66,12 +64,6 @@ public class Medico extends Utente {
     public void setRepartoDiAppartenenza(String repartoDiAppartenenza) {
         this.repartoDiAppartenenza = repartoDiAppartenenza;
     }
-    /**
-     * Restituisce il reparto di appartenenza del medico.
-     * @return Il reparto di appartenenza.
-     */
-    public String getRepartoDiAppartenenza() {
-        return repartoDiAppartenenza;
-    }
+
 
 }

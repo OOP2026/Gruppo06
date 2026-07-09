@@ -3,11 +3,11 @@ package dao;
 import java.util.ArrayList;
 
 public interface AssenzaDAO {
-    boolean aggiungiAssenza(String matricola, String dataInizio, String dataFine, String motivazione, boolean approvazione);
+    boolean aggiungiAssenza(String matricola, String dataInizio, String dataFine, String motivazione);
     
     ArrayList<String> getAssenza(String matricola, String dataInizio);
     ArrayList<ArrayList<String>> getAssenzeByMedico(String matricola);
     
-    boolean aggiornaAssenza(String matricola, String dataInizio, String dataFine, String motivazione, boolean approvazione);
+    boolean aggiornaAssenza(String matricola, String dataInizio, String dataFine, String motivazione);
     boolean eliminaAssenza(String matricola, String dataInizio);
 }

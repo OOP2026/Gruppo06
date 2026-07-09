@@ -6,7 +6,6 @@ import implementazioneDao.*;
 import model.*;
 
 import java.time.Clock;
-import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
@@ -141,7 +140,7 @@ public class Controller {
 			String nome = datiAmministratore.get(0);
 			String cognome = datiAmministratore.get(1);
 			String matricola = datiAmministratore.get(4);
-			this.utenteLoggato = new Amministratore(matricola, nome, cognome, login, "amministratore");
+			this.utenteLoggato = new Amministratore(matricola, nome, cognome, login);
 			LOGGER.info("Accesso Amministratore confermato per " + login);
 			return true;
 		}
@@ -152,7 +151,7 @@ public class Controller {
 			String nome = datiMedico.get(0);
 			String cognome = datiMedico.get(1);
 			String matricola = datiMedico.get(4);
-			this.utenteLoggato = new Medico(matricola, nome, cognome, login, "medico");
+			this.utenteLoggato = new Medico(matricola, nome, cognome, login);
 			LOGGER.info("Accesso Medico confermato per " + login);
 			return true;
 		}
@@ -254,7 +253,7 @@ public class Controller {
 	// METODI PER LA GESTIONE DELLE ASSENZE
 	// =========================================================
 
-	public boolean aggiungiAssenza(String matricola, String dataInizio, String dataFine, String motivazione, boolean approvazione) {
+	public boolean aggiungiAssenza(String matricola, String dataInizio, String dataFine, String motivazione) {
 		// Validazione input
 		if (isNullOrEmpty(matricola) || isNullOrEmpty(dataInizio) || isNullOrEmpty(dataFine)) {
 			LOGGER.warning("Errore: Dati dell'assenza incompleti (matricola e date sono obbligatorie).");
@@ -267,7 +266,7 @@ public class Controller {
 			LOGGER.warning(() -> "Errore: Esiste già una richiesta di assenza registrata a partire dal " + dataInizio + " per il medico " + matricola);
 			return false;
 		}
-		return assenzaDAO.aggiungiAssenza(matricola, dataInizio, dataFine, motivazione, approvazione);
+		return assenzaDAO.aggiungiAssenza(matricola, dataInizio, dataFine, motivazione);
 	}
 
 	public List<String> getAssenza(String matricola, String dataInizio) {
@@ -278,8 +277,8 @@ public class Controller {
 		return assenzaDAO.getAssenzeByMedico(matricola);
 	}
 
-	public boolean aggiornaAssenza(String matricola, String dataInizio, String dataFine, String motivazione, boolean approvazione) {
-		return assenzaDAO.aggiornaAssenza(matricola, dataInizio, dataFine, motivazione, approvazione);
+	public boolean aggiornaAssenza(String matricola, String dataInizio, String dataFine, String motivazione) {
+		return assenzaDAO.aggiornaAssenza(matricola, dataInizio, dataFine, motivazione);
 	}
 
 	public boolean eliminaAssenza(String matricola, String dataInizio) {
@@ -489,16 +488,11 @@ public class Controller {
 		String tipoDimissione = dimissioniFrame.getTipoDimissioneSelezionato();
 		java.util.Date data = dimissioniFrame.getDataSelezionata();
 
-		// Qui dovresti chiamare un metodo del DAO che supporti i filtri.
-		// Poiché ricoveroDAO.getAllDimissioni() non accetta parametri,
-		// per ora simuliamo un filtraggio lato client o assumiamo che il DAO venga esteso.
-		// In un'applicazione reale, estenderesti RicoveroDAO con un metodo tipo:
-		// ricercaDimissioni(cf, nomeCognome, reparto, tipoDimissione, data);
-		List<ArrayList<String>> risultati = ricercaDimissioni(); // Usiamo il metodo esistente
-
-		// Esempio di come potresti filtrare i risultati qui se il DAO non lo fa
-		// (non è l'approccio ideale per performance, meglio farlo a livello DB)
-
+		// La logica di ricerca è ora implementata nel controller,
+		// anche se per performance sarebbe meglio eseguirla a livello di database.
+		// Il metodo ricercaDimissioni con parametri esegue un filtraggio lato client.
+		List<ArrayList<String>> risultati = ricercaDimissioni(cf, nomeCognome, reparto, tipoDimissione, data);
+		
 		dimissioniFrame.aggiornaTabella(formattaDatiDimissioni(risultati));
 
 		if (risultati.isEmpty()) {
@@ -680,6 +674,64 @@ public class Controller {
 		return dimissioniDAO.getAllDimissioni();
 	}
 
+	public List<ArrayList<String>> ricercaDimissioni(String cf, String nomeCognome, String reparto, String tipoDimissione, java.util.Date data) {
+		List<ArrayList<String>> tutteDimissioni = dimissioniDAO.getAllDimissioni();
+		if (tutteDimissioni == null) {
+			return new ArrayList<>();
+		}
+
+		// Se tutti i filtri sono vuoti, restituisci tutto
+		if (isNullOrEmpty(cf) && isNullOrEmpty(nomeCognome) && isNullOrEmpty(reparto) && isNullOrEmpty(tipoDimissione) && data == null) {
+			return tutteDimissioni;
+		}
+
+		List<ArrayList<String>> risultatiFiltrati = new java.util.ArrayList<>();
+		java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+		String dataFiltro = (data != null) ? sdf.format(data) : null;
+
+		for (ArrayList<String> dimissione : tutteDimissioni) {
+			boolean match = true;
+
+			String cfPaziente = dimissione.size() > 1 ? dimissione.get(1) : "";
+			String repartoDimissione = dimissione.size() > 3 ? dimissione.get(3) : "";
+			String dataDimissioneStr = dimissione.size() > 5 ? dimissione.get(5) : "";
+			String esitoDimissione = dimissione.size() > 8 ? dimissione.get(8) : "";
+
+			if (match && !isNullOrEmpty(cf) && !cfPaziente.toLowerCase().contains(cf.toLowerCase())) {
+				match = false;
+			}
+
+			if (match && !isNullOrEmpty(reparto) && !repartoDimissione.equalsIgnoreCase(reparto)) {
+				match = false;
+			}
+
+			if (match && !isNullOrEmpty(tipoDimissione) && !esitoDimissione.equalsIgnoreCase(tipoDimissione)) {
+				match = false;
+			}
+
+			if (match && dataFiltro != null && (dataDimissioneStr == null || !dataDimissioneStr.startsWith(dataFiltro))) {
+				match = false;
+			}
+
+			if (match && !isNullOrEmpty(nomeCognome)) {
+				List<String> paziente = pazienteDAO.getPazienteByCf(cfPaziente);
+				if (paziente != null && !paziente.isEmpty()) {
+					String nome = paziente.size() > 1 ? paziente.get(1).toLowerCase() : "";
+					String cognome = paziente.size() > 2 ? paziente.get(2).toLowerCase() : "";
+					String searchStr = nomeCognome.trim().toLowerCase();
+					if (!((nome + " " + cognome).contains(searchStr) || (cognome + " " + nome).contains(searchStr))) {
+						match = false;
+					}
+				} else {
+					match = false;
+				}
+			}
+
+			if (match) risultatiFiltrati.add(dimissione);
+		}
+		return risultatiFiltrati;
+	}
+
 	public boolean checkDisponibilitaLetto(String idLetto, String reparto) {
 		// Un letto è disponibile se esiste e non ha un ricovero attivo associato.
 		// Questa è la "source of truth", la stessa usata per visualizzare lo stato nella tabella.
@@ -765,19 +817,17 @@ public class Controller {
 		JTextField cognomeInput = new JTextField();
 		JTextField loginInput = new JTextField();
 		JPasswordField passwordInput = new JPasswordField();
-		JTextField matricolaInput = new JTextField();
 		JTextField iscrizioneInput = new JTextField(); // YYYY-MM-DD
 		JTextField specializzazioneInput = new JTextField();
 		JComboBox<String> repartoInput = new JComboBox<>(new String[]{
-				 "Chirurgia generale", "Ortopedia", "Cardiologia"
+				 "Chirurgia Generale", "Ortopedia", "Cardiologia"
 		});
 
-		JPanel panel = new JPanel(new GridLayout(8, 2, 10, 10));
+		JPanel panel = new JPanel(new GridLayout(7, 2, 10, 10));
 		panel.add(new JLabel(LABEL_NOME)); panel.add(nomeInput);
 		panel.add(new JLabel(LABEL_COGNOME)); panel.add(cognomeInput);
 		panel.add(new JLabel("Username (Login):")); panel.add(loginInput);
 		panel.add(new JLabel("Password:")); panel.add(passwordInput);
-		panel.add(new JLabel("Matricola:")); panel.add(matricolaInput);
 		panel.add(new JLabel("Data Iscrizione Albo (AAAA-MM-GG):")); panel.add(iscrizioneInput);
 		panel.add(new JLabel("Specializzazione:")); panel.add(specializzazioneInput);
 		panel.add(new JLabel("Reparto:")); panel.add(repartoInput);
@@ -789,7 +839,7 @@ public class Controller {
 			String cognome = cognomeInput.getText().trim();
 			String login = loginInput.getText().trim();
 			String password = new String(passwordInput.getPassword()).trim();
-			String matricola = matricolaInput.getText().trim();
+			String matricola = "M" + (int)(Math.random() * 1000); // Calcolata automaticamente
 			String iscrizioneAlbo = iscrizioneInput.getText().trim();
 			String specializzazione = specializzazioneInput.getText().trim();
 			String reparto = (String) repartoInput.getSelectedItem();
@@ -1453,59 +1503,100 @@ public class Controller {
 	}
 
 	public boolean gestisciCreazioneNuovaPrestazione() {
-		// 1. Recupero automatico ID Agenda in base al medico loggato
 		String matricolaMedico = utenteLoggato != null ? utenteLoggato.getMatricola() : "";
 		boolean isMedico = utenteLoggato instanceof Medico;
-		String idAgenda = "";
-
-		if (isMedico) {
-			List<ArrayList<String>> eventi = agendaDAO.getEventiByMatricola(matricolaMedico);
-			if (eventi == null || eventi.isEmpty()) {
-				agendaDAO.creaAgendaPerMedico(matricolaMedico);
-				eventi = agendaDAO.getEventiByMatricola(matricolaMedico);
-			}
-			
-			if (eventi != null && !eventi.isEmpty()) {
-				idAgenda = eventi.get(0).get(0); // Prende il primo id_agenda associato al medico
-			} else {
-				JOptionPane.showMessageDialog(null, "Errore: Impossibile recuperare o creare un'agenda per questo medico.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
-				return false;
-			}
-		}
 
 		JComboBox<String> tipoProceduraInput = new JComboBox<>(new String[]{
 				"Risonanza Magnetica", "Tomografia Computerizzata (TAC)", "Ecografia",
 				"Elettrocardiogramma (ECG)", "Endoscopia", "Radiografia"
 		});
-		// Rende il menù a tendina "scrivibile", permettendo l'inserimento libero di un esame personalizzato
 		tipoProceduraInput.setEditable(true); 
 
 		JComboBox<String> esitoInput = new JComboBox<>(new String[]{
 				"Erogata", "Non erogata"
 		});
 
-		// 2. Tendina dinamica dei Turni del Medico odierni
-		String[] turniOdierni;
+		JComboBox<String> matricolaInput = new JComboBox<>();
+		JComboBox<String> turnoInput = new JComboBox<>();
+		JComboBox<String> idAgendaInput = new JComboBox<>();
+
 		if (isMedico) {
-			turniOdierni = ottieniTurniOggiPerMedico(matricolaMedico);
+			matricolaInput.addItem(matricolaMedico);
+			matricolaInput.setEnabled(false);
 		} else {
-			turniOdierni = new String[]{"Inserimento manuale per Admin"};
+			List<ArrayList<String>> tuttiMedici = medicoDAO.getAllMedici();
+			if (tuttiMedici != null) {
+				for (List<String> m : tuttiMedici) {
+					if (m.size() > 4) matricolaInput.addItem(m.get(4));
+				}
+			}
 		}
 
-		JComponent turnoInput;
-		if (isMedico) {
-			turnoInput = new JComboBox<>(turniOdierni);
-		} else {
-			turnoInput = new JTextField();
+		if (!isMedico) {
+			java.util.Set<String> agende = new java.util.HashSet<>();
+			List<ArrayList<String>> medici = medicoDAO.getAllMedici();
+			if (medici != null) {
+				for (List<String> med : medici) {
+					if (med.size() > 4) {
+						List<ArrayList<String>> evs = agendaDAO.getEventiByMatricola(med.get(4));
+						if (evs != null && !evs.isEmpty() && evs.get(0).size() > 0) {
+							agende.add(evs.get(0).get(0));
+						}
+					}
+				}
+			}
+			for (String ag : agende) {
+				idAgendaInput.addItem(ag);
+			}
+			if (idAgendaInput.getItemCount() == 0) {
+				idAgendaInput.addItem("Nessuna agenda");
+			}
 		}
 
-		// Popola la tendina per la selezione del paziente
+		java.awt.event.ActionListener aggiornaTurniEAgenda = e -> {
+			String matSelezionata = (String) matricolaInput.getSelectedItem();
+			turnoInput.removeAllItems();
+			if (matSelezionata != null && !matSelezionata.isEmpty()) {
+				List<ArrayList<String>> turni = turnoDAO.getTurniByMedico(matSelezionata);
+				if (turni != null && !turni.isEmpty()) {
+					for (ArrayList<String> t : turni) {
+						if (t.size() > 2) {
+							turnoInput.addItem(t.get(0) + " (Data: " + t.get(2) + ")"); 
+						}
+					}
+				}
+				if (turnoInput.getItemCount() == 0) {
+					turnoInput.addItem("Nessun turno trovato");
+				}
+
+				if (isMedico) {
+					idAgendaInput.removeAllItems();
+					List<ArrayList<String>> eventi = agendaDAO.getEventiByMatricola(matSelezionata);
+					if (eventi == null || eventi.isEmpty()) {
+						agendaDAO.creaAgendaPerMedico(matSelezionata);
+						eventi = agendaDAO.getEventiByMatricola(matSelezionata);
+					}
+					if (eventi != null && !eventi.isEmpty() && eventi.get(0).size() > 0) {
+						idAgendaInput.addItem(eventi.get(0).get(0));
+					} else {
+						idAgendaInput.addItem("Errore caricamento agenda");
+					}
+				}
+			}
+		};
+
+		matricolaInput.addActionListener(aggiornaTurniEAgenda);
+		
+		if (matricolaInput.getItemCount() > 0) {
+			matricolaInput.setSelectedIndex(0);
+			aggiornaTurniEAgenda.actionPerformed(null);
+		}
+
 		List<ArrayList<String>> tuttiPazienti = pazienteDAO.getAllPazienti();
 		List<String> pazientiNomi = new ArrayList<>();
 		List<String> pazientiCf = new ArrayList<>();
 		if (tuttiPazienti != null) {
 			for (List<String> datiPaziente : tuttiPazienti) {
-				// Formato DAO: cf, nome, cognome, ...
 				if (datiPaziente.size() >= 3) {
 					String cf = datiPaziente.get(0);
 					String nome = datiPaziente.get(1);
@@ -1516,21 +1607,14 @@ public class Controller {
 			}
 		}
 		JComboBox<String> cfPazienteInput = new JComboBox<>(pazientiNomi.toArray(new String[0]));
-		JTextField matricolaInput = new JTextField(matricolaMedico);
-		matricolaInput.setEditable(!isMedico);
-		JTextField idAgendaInput = new JTextField(idAgenda);
-		idAgendaInput.setEditable(!isMedico);
 
-		JPanel panel = new JPanel(new GridLayout(isMedico ? 4 : 6, 2, 10, 10));
+		JPanel panel = new JPanel(new GridLayout(6, 2, 10, 10));
 		panel.add(new JLabel("Tipo Esame/Prestazione:")); panel.add(tipoProceduraInput);
 		panel.add(new JLabel("Esito Prestazione:")); panel.add(esitoInput);
-		panel.add(new JLabel("ID Turno (Oggi):")); panel.add(turnoInput);
 		panel.add(new JLabel("CF Paziente:")); panel.add(cfPazienteInput);
-
-		if (!isMedico) {
-			panel.add(new JLabel("Matricola Medico:")); panel.add(matricolaInput);
-			panel.add(new JLabel("ID Agenda:")); panel.add(idAgendaInput);
-		}
+		panel.add(new JLabel("Matricola Medico:")); panel.add(matricolaInput);
+		panel.add(new JLabel("ID Turno:")); panel.add(turnoInput);
+		panel.add(new JLabel("ID Agenda:")); panel.add(idAgendaInput);
 
 		int result = JOptionPane.showConfirmDialog(null, panel, "Nuova Prestazione", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 
@@ -1544,22 +1628,26 @@ public class Controller {
 				}
 				
 				String esito = (String) esitoInput.getSelectedItem();
-				String idTurno;
-				if (isMedico) {
-					idTurno = (String) ((JComboBox<?>) turnoInput).getSelectedItem();
-				} else {
-					idTurno = ((JTextField) turnoInput).getText().trim();
+				String turnoSel = (String) turnoInput.getSelectedItem();
+				String idTurno = "";
+				if (turnoSel != null && !turnoSel.equals("Nessun turno trovato")) {
+					idTurno = turnoSel.split(" ")[0];
 				}
+				
 				String cfPaziente = "";
 				int selectedPatientIndex = cfPazienteInput.getSelectedIndex();
 				if (selectedPatientIndex != -1) {
 					cfPaziente = pazientiCf.get(selectedPatientIndex);
 				}
-				String matricolaFinale = matricolaInput.getText().trim();
-				String idAgendaFinale = idAgendaInput.getText().trim();
+				String matricolaFinale = (String) matricolaInput.getSelectedItem();
+				String idAgendaFinale = (String) idAgendaInput.getSelectedItem();
 
-				if (isMedico && (idTurno == null || idTurno.equals("Nessun turno odierno trovato"))) {
-					JOptionPane.showMessageDialog(null, "Devi selezionare un turno valido (odierno).", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+				if (idTurno == null || idTurno.equals("Nessun turno trovato") || idTurno.trim().isEmpty()) {
+					JOptionPane.showMessageDialog(null, "Devi selezionare un turno valido.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+					return false;
+				}
+				if (idAgendaFinale == null || idAgendaFinale.equals("Nessuna agenda") || idAgendaFinale.equals("Errore caricamento agenda") || idAgendaFinale.trim().isEmpty()) {
+					JOptionPane.showMessageDialog(null, "Devi selezionare un'agenda valida.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
 					return false;
 				}
 
@@ -1568,7 +1656,6 @@ public class Controller {
 					return false;
 				}
 
-				// 4. Salvataggio della prestazione collegata
 				boolean successo = prestazioneDAO.aggiungiPrestazione(tipologiaPrestazione, esito, idTurno, cfPaziente, matricolaFinale, idAgendaFinale);
 				if (successo) {
 					JOptionPane.showMessageDialog(null, "Prestazione aggiunta con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
@@ -1583,27 +1670,65 @@ public class Controller {
 		return false;
 	}
 
-	// HELPER: Metodo per prelevare i turni di oggi per il JComboBox
-	private String[] ottieniTurniOggiPerMedico(String matricola) {
-		java.util.List<String> turniOggi = new java.util.ArrayList<>();
-		java.util.List<ArrayList<String>> turni = turnoDAO.getTurniByMedico(matricola);
-		String today = java.time.LocalDate.now().toString(); // Formato YYYY-MM-DD
+	public boolean gestisciModificaPrestazione(String idPrestazione) {
+		// NOTA: Questo metodo richiede l'aggiunta di `getPrestazioneById` e `updatePrestazione` al PrestazioneDAO.
+		// Esempio: ArrayList<String> prestazione = prestazioneDAO.getPrestazioneById(idPrestazione);
+		// Esempio: boolean successo = prestazioneDAO.updatePrestazione(id, esito, descrizione);
 		
-		if (turni != null) {
-			for (ArrayList<String> t : turni) {
-				if (t.size() > 2) {
-					String dataTurno = t.get(2);
-					if (dataTurno.startsWith(today)) {
-						turniOggi.add(t.get(0)); // Aggiunge l'ID del turno
-					}
-				}
-			}
+		// Dati Fittizi per la dimostrazione (DA SOSTITUIRE CON CHIAMATA DAO REALE)
+		ArrayList<String> prestazione = new ArrayList<>();
+		prestazione.add(idPrestazione); // 0:id
+		prestazione.add("Visita di controllo"); // 1:tipologia
+		prestazione.add("In attesa"); // 2:esito
+		prestazione.add("2024-05-20"); // 3:data
+		prestazione.add("RSSMRA80A01H501U"); // 4:cf
+		prestazione.add("M123"); // 5:matricola
+		prestazione.add(""); // 6:descrizione
+
+		if (prestazione.isEmpty()) {
+			JOptionPane.showMessageDialog(null, "Dettagli prestazione non trovati.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+			return false;
 		}
-		
-		if (turniOggi.isEmpty()) {
-			return new String[]{"Nessun turno odierno trovato"};
+
+		// DAO dovrebbe ritornare: 0:id, 1:tipologia, 2:esito, 3:data, 4:cf, 5:matricola, 6:descrizione
+		String tipologia = prestazione.size() > 1 ? prestazione.get(1) : "";
+		String esitoAttuale = prestazione.size() > 2 ? prestazione.get(2) : "Erogata";
+		String cfPaziente = prestazione.size() > 4 ? prestazione.get(4) : "";
+		String descrizioneAttuale = prestazione.size() > 6 ? prestazione.get(6) : "";
+
+		JComboBox<String> esitoInput = new JComboBox<>(new String[]{"Erogata", "Non erogata", "In attesa"});
+		esitoInput.setSelectedItem(esitoAttuale);
+
+		JComboBox<String> tipoProceduraInput = new JComboBox<>(new String[]{
+				"Risonanza Magnetica", "Tomografia Computerizzata (TAC)", "Ecografia",
+				"Elettrocardiogramma (ECG)", "Endoscopia", "Radiografia"
+		});
+		tipoProceduraInput.setEditable(true); // Permette comunque inserimenti personalizzati
+		tipoProceduraInput.setSelectedItem(tipologia);
+
+		JTextArea refertoInput = new JTextArea(descrizioneAttuale, 4, 30);
+		refertoInput.setLineWrap(true);
+		refertoInput.setWrapStyleWord(true);
+		JScrollPane scrollPane = new JScrollPane(refertoInput);
+
+		JPanel panel = new JPanel(new java.awt.BorderLayout(10, 10));
+		JPanel topPanel = new JPanel(new GridLayout(3, 2, 10, 10));
+		topPanel.add(new JLabel("Paziente (CF):")); topPanel.add(new JLabel(" " + cfPaziente));
+		topPanel.add(new JLabel("Tipo Prestazione:")); topPanel.add(tipoProceduraInput);
+		topPanel.add(new JLabel("Esito:")); topPanel.add(esitoInput);
+		panel.add(topPanel, java.awt.BorderLayout.NORTH);
+		JPanel bottomPanel = new JPanel(new java.awt.BorderLayout(5, 5));
+		bottomPanel.add(new JLabel("Referto:"), java.awt.BorderLayout.NORTH);
+		bottomPanel.add(scrollPane, java.awt.BorderLayout.CENTER);
+		panel.add(bottomPanel, java.awt.BorderLayout.CENTER);
+
+		int result = JOptionPane.showConfirmDialog(null, panel, "Gestisci Prestazione #" + idPrestazione, JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+
+		if (result == JOptionPane.OK_OPTION) {
+			JOptionPane.showMessageDialog(null, "Prestazione aggiornata con successo! (Logica DAO da implementare)", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
+			return true;
 		}
-		return turniOggi.toArray(new String[0]);
+		return false;
 	}
 
 	public void apriSchermataPrestazioni(JFrame frameDaChiudere) {
@@ -1613,6 +1738,17 @@ public class Controller {
 		prestazioniFrame.addNuovaPrestazioneListener(e -> {
 			if (gestisciCreazioneNuovaPrestazione()) {
 				caricaDatiPrestazioni(prestazioniFrame);
+			}
+		});
+
+		prestazioniFrame.addGestisciPrestazioneListener(e -> {
+			String idSelezionato = prestazioniFrame.getIdPrestazioneSelezionata();
+			if (idSelezionato != null) {
+				if (gestisciModificaPrestazione(idSelezionato)) {
+					caricaDatiPrestazioni(prestazioniFrame);
+				}
+			} else {
+				JOptionPane.showMessageDialog(prestazioniFrame, "Seleziona una prestazione dalla tabella per gestirla.", INFO_TITLE, JOptionPane.WARNING_MESSAGE);
 			}
 		});
 
@@ -1791,27 +1927,32 @@ public class Controller {
 			String[] datiSelezionati = mediciFrame.getDatiMedicoSelezionato();
 			if (datiSelezionati != null && datiSelezionati.length > 0) {
 				String matricola = datiSelezionati[0];
-				List<ArrayList<String>> assenze = assenzaDAO.getAssenzeByMedico(matricola);
-				List<String> assenzaCorrente = null;
+				List<ArrayList<String>> assenzeDb = assenzaDAO.getAssenzeByMedico(matricola);
+				Assenza assenzaCorrente = null;
 				java.time.LocalDate oggi = java.time.LocalDate.now();
-				for(List<String> a : assenze) {
-					if ("true".equalsIgnoreCase(a.get(4))) {
+				if (assenzeDb != null) {
+					for (List<String> a : assenzeDb) {
+						// Rimosso il controllo sull'approvazione. Un'assenza registrata è considerata attiva se le date corrispondono.
 						try {
 							java.time.LocalDate dataInizio = java.time.LocalDate.parse(a.get(1));
 							java.time.LocalDate dataFine = java.time.LocalDate.parse(a.get(2));
 							if (!oggi.isBefore(dataInizio) && !oggi.isAfter(dataFine)) {
-								assenzaCorrente = a;
+								// Istanzio l'oggetto Assenza per usare i suoi metodi, migliorando la leggibilità e l'incapsulamento.
+								// Passo 'true' per l'approvazione e 'null' per gli oggetti non disponibili in questo contesto.
+								assenzaCorrente = new Assenza(dataInizio, dataFine, a.get(3), true, null, null);
 								break;
 							}
-						} catch(Exception ex) {}
+						} catch (Exception ex) {
+							LOGGER.warning("Errore nel parsing dei dati di assenza per la matricola " + matricola + ": " + ex.getMessage());
+						}
 					}
 				}
 				
 				if (assenzaCorrente != null) {
 					String messaggio = "Il medico è attualmente assente.\n" +
-									   "Data Inizio: " + assenzaCorrente.get(1) + "\n" +
-									   "Data Fine: " + assenzaCorrente.get(2) + "\n" +
-									   "Motivazione: " + assenzaCorrente.get(3);
+									   "Data Inizio: " + assenzaCorrente.getDataInizioAssenza() + "\n" +
+									   "Data Fine: " + assenzaCorrente.getDataFineAssenza() + "\n" +
+									   "Motivazione: " + assenzaCorrente.getMotivoAssenza();
 					Object[] options = {"Chiudi", "Revoca Assenza", "Aggiungi Nuova Assenza"};
 					int choice = JOptionPane.showOptionDialog(mediciFrame, messaggio, "Dettagli Assenza Approvata",
 							JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, options[0]);
@@ -1819,7 +1960,7 @@ public class Controller {
 					if (choice == 1) { // Revoca Assenza
 						int conferma = JOptionPane.showConfirmDialog(mediciFrame, "Sei sicuro di voler revocare questa assenza?", "Conferma Revoca", JOptionPane.YES_NO_OPTION);
 						if (conferma == JOptionPane.YES_OPTION) {
-							if (eliminaAssenza(matricola, assenzaCorrente.get(1))) {
+							if (eliminaAssenza(matricola, assenzaCorrente.getDataInizioAssenza().toString())) {
 								JOptionPane.showMessageDialog(mediciFrame, "Assenza revocata con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
 								mediciFrame.aggiornaTabella(formattaDatiMedici(medicoDAO.getAllMedici()));
 							} else {
@@ -1901,7 +2042,7 @@ public class Controller {
 		SwingWorker<Object[][], Void> worker = new SwingWorker<Object[][], Void>() {
 			@Override
 			protected Object[][] doInBackground() throws Exception {
-				return formattaDatiDimissioni(ricercaDimissioni());
+				return formattaDatiDimissioni(dimissioniDAO.getAllDimissioni());
 			}
 			@Override
 			protected void done() {
@@ -2201,10 +2342,29 @@ public class Controller {
 
 		if (result == JOptionPane.OK_OPTION) {
 			try {
-				boolean successo = aggiornaMedico(nomeInput.getText().trim(), cognomeInput.getText().trim(), matricola, iscrizioneInput.getText().trim(), specializzazioneInput.getText().trim(), (String) repartoInput.getSelectedItem());
+				String nuovoNome = nomeInput.getText().trim();
+				String nuovoCognome = cognomeInput.getText().trim();
+				String nuovaIscrizione = iscrizioneInput.getText().trim();
+				String nuovaSpecializzazione = specializzazioneInput.getText().trim();
+				String nuovoReparto = (String) repartoInput.getSelectedItem();
+
+				boolean successo = aggiornaMedico(nuovoNome, nuovoCognome, matricola, nuovaIscrizione, nuovaSpecializzazione, nuovoReparto);
 				if (successo) {
 					JOptionPane.showMessageDialog(null, "Profilo aggiornato con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
-					this.utenteLoggato = new Medico(matricola, nomeInput.getText().trim(), cognomeInput.getText().trim(), loginInput.getText().trim(), "medico");
+					utenteLoggato.setNome(nuovoNome);
+					utenteLoggato.setCognome(nuovoCognome);
+					if (utenteLoggato instanceof Medico) {
+						Medico medicoLoggato = (Medico) utenteLoggato;
+						medicoLoggato.setSpecializzazione(nuovaSpecializzazione);
+						medicoLoggato.setRepartoDiAppartenenza(nuovoReparto);
+						try {
+							if (!nuovaIscrizione.isEmpty()) {
+								medicoLoggato.setIscrizioneAlbo(java.time.LocalDate.parse(nuovaIscrizione));
+							}
+						} catch (java.time.format.DateTimeParseException e) {
+							LOGGER.warning("Formato data iscrizione non valido (" + nuovaIscrizione + ") per aggiornamento oggetto Medico in memoria.");
+						}
+					}
 					return true;
 				} else {
 					JOptionPane.showMessageDialog(null, "Errore durante l'aggiornamento. Controlla la validità dei dati.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
@@ -2244,7 +2404,8 @@ public class Controller {
 				if (successo) {
 					JOptionPane.showMessageDialog(null, "Profilo aggiornato con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
 					// Aggiorna localmente l'utente loggato per riflettere le modifiche nell'app
-					this.utenteLoggato = new Amministratore(matricola, nuovoNome, nuovoCognome, loginInput.getText().trim(), "amministratore");
+					utenteLoggato.setNome(nuovoNome);
+					utenteLoggato.setCognome(nuovoCognome);
 					return true;
 				} else {
 					JOptionPane.showMessageDialog(null, "Errore durante l'aggiornamento. Controlla la validità dei dati.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
@@ -2311,7 +2472,6 @@ public class Controller {
 		JTextField dataInizioInput = new JTextField(DEFAULT_DATE);
 		JTextField dataFineInput = new JTextField(DEFAULT_DATE);
 		JTextField motivazioneInput = new JTextField();
-		JCheckBox approvataCheckbox = new JCheckBox("Approvata", true);
 
 		JPanel panel = new JPanel(new GridLayout(5, 2, 10, 10));
 		panel.add(new JLabel(LABEL_MATRICOLA_MEDICO));
@@ -2319,7 +2479,6 @@ public class Controller {
 		panel.add(new JLabel("Data Inizio (AAAA-MM-GG):")); panel.add(dataInizioInput);
 		panel.add(new JLabel("Data Fine (AAAA-MM-GG):")); panel.add(dataFineInput);
 		panel.add(new JLabel("Motivazione:")); panel.add(motivazioneInput);
-		panel.add(new JLabel("")); panel.add(approvataCheckbox);
 
 		int result = JOptionPane.showConfirmDialog(null, panel, "Registra Nuova Assenza", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 
@@ -2327,10 +2486,10 @@ public class Controller {
 			String dataInizio = dataInizioInput.getText().trim();
 			String dataFine = dataFineInput.getText().trim();
 			String motivazione = motivazioneInput.getText().trim();
-			boolean approvata = approvataCheckbox.isSelected();
+
 
 			try {
-				boolean successo = aggiungiAssenza(matricola, dataInizio, dataFine, motivazione, approvata);
+				boolean successo = aggiungiAssenza(matricola, dataInizio, dataFine, motivazione);
 
 				if (successo) {
 					JOptionPane.showMessageDialog(null, "Assenza aggiunta con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
@@ -2389,18 +2548,59 @@ public class Controller {
 				
 				String stato = "Attivo";
 				if (!"-".equals(matricola)) {
-					List<ArrayList<String>> assenze = assenzaDAO.getAssenzeByMedico(matricola);
-					for (List<String> assenza : assenze) {
-						if ("true".equalsIgnoreCase(assenza.get(4))) { // Approvata
+					// 1. Controlla prima se il medico è assente
+					List<ArrayList<String>> assenzeDb = assenzaDAO.getAssenzeByMedico(matricola);
+					if (assenzeDb != null) {
+						for (List<String> datiAssenza : assenzeDb) {
 							try {
-								java.time.LocalDate dataInizio = java.time.LocalDate.parse(assenza.get(1));
-								java.time.LocalDate dataFine = java.time.LocalDate.parse(assenza.get(2));
-								if (!oggi.isBefore(dataInizio) && !oggi.isAfter(dataFine)) {
+								// Uso l'oggetto Assenza per coerenza, anche se qui basterebbe il controllo sulle date.
+								Assenza assenza = new Assenza(
+									java.time.LocalDate.parse(datiAssenza.get(1)),
+									java.time.LocalDate.parse(datiAssenza.get(2)),
+									null, true, null, null // Dettagli non necessari per questo controllo
+								);
+								if (!oggi.isBefore(assenza.getDataInizioAssenza()) && !oggi.isAfter(assenza.getDataFineAssenza())) {
 									stato = "Assente";
 									break;
 								}
 							} catch (Exception ex) {
 								LOGGER.warning("Errore parsing date assenza: " + ex.getMessage());
+							}
+						}
+					}
+
+					// 2. Se non è assente, controlla se è occupato in una prestazione
+					if (stato.equals("Attivo")) {
+						List<ArrayList<String>> turniMedico = turnoDAO.getTurniByMedico(matricola);
+						List<ArrayList<String>> prestazioniMedico = prestazioneDAO.getPrestazioniByMedico(matricola);
+
+						if (turniMedico != null && prestazioniMedico != null && !prestazioniMedico.isEmpty()) {
+							java.util.Set<String> dateConPrestazioni = new java.util.HashSet<>();
+							for (ArrayList<String> p : prestazioniMedico) {
+								if (p.size() > 3 && p.get(3) != null) {
+									String dataTurnoPrestazione = p.get(3).split(" ")[0];
+									dateConPrestazioni.add(dataTurnoPrestazione);
+								}
+							}
+
+							if (!dateConPrestazioni.isEmpty()) {
+								java.time.LocalTime oraCorrente = java.time.LocalTime.now(java.time.ZoneId.of("Europe/Rome"));
+								for (ArrayList<String> turno : turniMedico) {
+									if (turno.size() > 4 && dateConPrestazioni.contains(turno.get(2))) {
+										try {
+											if (java.time.LocalDate.parse(turno.get(2)).equals(oggi)) {
+												java.time.LocalTime oraInizio = java.time.LocalTime.parse(turno.get(3));
+												java.time.LocalTime oraFine = java.time.LocalTime.parse(turno.get(4));
+												if (!oraCorrente.isBefore(oraInizio) && oraCorrente.isBefore(oraFine)) {
+													stato = "Occupato";
+													break;
+												}
+											}
+										} catch (java.time.format.DateTimeParseException e) {
+											LOGGER.warning("Errore parsing data/ora turno per stato 'Occupato': " + e.getMessage());
+										}
+									}
+								}
 							}
 						}
 					}
@@ -2636,14 +2836,17 @@ public class Controller {
 		// Usiamo una lista temporanea per i dati filtrati, poi la convertiamo in array
 		java.util.List<Object[]> datiFiltrati = new java.util.ArrayList<>();
 
-		for (List<String> letto : datiLetti) {
+		for (List<String> datiSingoloLetto : datiLetti) {
 			
-			String idLetto = letto.size() > 0 ? letto.get(0) : "-";
-			String repartoLetto = letto.size() > 1 ? letto.get(1) : "-";
-			String stanzaLetto = letto.size() > 3 ? letto.get(3) : "-";
+			String idLetto = datiSingoloLetto.size() > 0 ? datiSingoloLetto.get(0) : "-";
+			String repartoLetto = datiSingoloLetto.size() > 1 ? datiSingoloLetto.get(1) : "-";
+			String stanzaLetto = datiSingoloLetto.size() > 3 ? datiSingoloLetto.get(3) : "-";
+
+			// Creazione dell'oggetto Letto per incapsulare i dati e la logica, usando i suoi getter e setter.
+			Letto letto = new Letto(repartoLetto, false); // Inizializzato come libero, lo stato verrà aggiornato dopo.
 
 			// Applica i filtri
-			if (repartoFilter != null && !repartoFilter.isEmpty() && !repartoLetto.equalsIgnoreCase(repartoFilter)) {
+			if (repartoFilter != null && !repartoFilter.isEmpty() && !letto.getReparto().equalsIgnoreCase(repartoFilter)) {
 				continue; // Salta questo letto se non corrisponde al reparto
 			}
 			
@@ -2652,8 +2855,9 @@ public class Controller {
 			}
 
 			// 2. Si determina lo stato controllando la chiave composta (id_reparto)
-			boolean isOccupato = ricoveriMap.containsKey(idLetto + "_" + repartoLetto);
-			String statoCorrente = isOccupato ? "Occupato" : "Libero";
+			boolean isOccupato = ricoveriMap.containsKey(idLetto + "_" + letto.getReparto());
+			letto.setOccupato(isOccupato);
+			String statoCorrente = letto.isOccupato() ? "Occupato" : "Libero";
 
 			if (statoFilter != null && !statoFilter.equals("Tutti") && !statoCorrente.equalsIgnoreCase(statoFilter)) {
 				continue; // Salta questo letto se non corrisponde allo stato filtrato
@@ -2662,8 +2866,8 @@ public class Controller {
 			String nomePaziente = "-";
 			String cfPaziente = "-";
 
-			if (isOccupato) {
-				String[] infoPaziente = ricoveriMap.get(idLetto + "_" + repartoLetto); // Recupera info paziente dal ricovero
+			if (letto.isOccupato()) {
+				String[] infoPaziente = ricoveriMap.get(idLetto + "_" + letto.getReparto()); // Recupera info paziente dal ricovero
 				nomePaziente = infoPaziente[0];
 				cfPaziente = infoPaziente[1];
 			}
@@ -2680,10 +2884,10 @@ public class Controller {
 			// Popolamento dati fissi del letto
 			rigaDati[0] = idLetto;                                    // Numero Letto (ID)
 			rigaDati[1] = stanzaLetto;                                // Stanza
-			rigaDati[4] = repartoLetto;                               // Reparto
+			rigaDati[4] = letto.getReparto();                         // Reparto
 
 			// Popolamento dati variabili in base allo stato di occupazione
-			if (isOccupato) {
+			if (letto.isOccupato()) {
 				rigaDati[2] = nomePaziente;                           // Nome Paziente
 				rigaDati[3] = cfPaziente;                             // Codice Fiscale
 				rigaDati[5] = "🔴 Occupato";                           // Stato con emoji

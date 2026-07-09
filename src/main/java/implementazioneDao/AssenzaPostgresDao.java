@@ -15,10 +15,10 @@ public class AssenzaPostgresDao implements AssenzaDAO {
 
     private static final Logger LOGGER = Logger.getLogger(AssenzaPostgresDao.class.getName());
     
-    private static final String AGGIUNGI_ASSENZA_QUERY = "INSERT INTO assenza (matricola, data_inizio, data_fine, motivazione, approvazione) VALUES (?, ?, ?, ?, ?)";
-    private static final String GET_ASSENZA_QUERY = "SELECT * FROM assenza WHERE matricola = ? AND data_inizio = ?";
-    private static final String GET_ASSENZE_BY_MEDICO_QUERY = "SELECT * FROM assenza WHERE matricola = ? ORDER BY data_inizio ASC";
-    private static final String AGGIORNA_ASSENZA_QUERY = "UPDATE assenza SET data_fine = ?, motivazione = ?, approvazione = ? WHERE matricola = ? AND data_inizio = ?";
+    private static final String AGGIUNGI_ASSENZA_QUERY = "INSERT INTO assenza (matricola, data_inizio, data_fine, motivazione) VALUES (?, ?, ?, ?)";
+    private static final String GET_ASSENZA_QUERY = "SELECT matricola, data_inizio, data_fine, motivazione FROM assenza WHERE matricola = ? AND data_inizio = ?";
+    private static final String GET_ASSENZE_BY_MEDICO_QUERY = "SELECT matricola, data_inizio, data_fine, motivazione FROM assenza WHERE matricola = ? ORDER BY data_inizio ASC";
+    private static final String AGGIORNA_ASSENZA_QUERY = "UPDATE assenza SET data_fine = ?, motivazione = ? WHERE matricola = ? AND data_inizio = ?";
     private static final String ELIMINA_ASSENZA_QUERY = "DELETE FROM assenza WHERE matricola = ? AND data_inizio = ?";
 
     // Costanti per i nomi delle colonne
@@ -26,10 +26,9 @@ public class AssenzaPostgresDao implements AssenzaDAO {
     private static final String COL_DATA_INIZIO = "data_inizio";
     private static final String COL_DATA_FINE = "data_fine";
     private static final String COL_MOTIVAZIONE = "motivazione";
-    private static final String COL_APPROVAZIONE = "approvazione";
 
     @Override
-    public boolean aggiungiAssenza(String matricola, String dataInizio, String dataFine, String motivazione, boolean approvazione) {
+    public boolean aggiungiAssenza(String matricola, String dataInizio, String dataFine, String motivazione) {
         try (Connection conn = ConnessioneDatabase.getConnection();
              PreparedStatement stmt = conn.prepareStatement(AGGIUNGI_ASSENZA_QUERY)) {
              
@@ -37,8 +36,7 @@ public class AssenzaPostgresDao implements AssenzaDAO {
             stmt.setDate(2, java.sql.Date.valueOf(dataInizio));
             stmt.setDate(3, java.sql.Date.valueOf(dataFine));
             stmt.setString(4, motivazione);
-            stmt.setBoolean(5, approvazione);
-            
+
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Errore durante l'aggiunta dell'assenza", e);
@@ -65,7 +63,6 @@ public class AssenzaPostgresDao implements AssenzaDAO {
                 assenza.add(dataFineDb != null ? dataFineDb.toString() : "");
 
                 assenza.add(rs.getString(COL_MOTIVAZIONE));
-                assenza.add(String.valueOf(rs.getBoolean(COL_APPROVAZIONE)));
 
                 return assenza;
             }
@@ -94,7 +91,6 @@ public class AssenzaPostgresDao implements AssenzaDAO {
                 assenza.add(dataFineDb != null ? dataFineDb.toString() : "");
 
                 assenza.add(rs.getString(COL_MOTIVAZIONE));
-                assenza.add(String.valueOf(rs.getBoolean(COL_APPROVAZIONE)));
 
                 assenze.add(assenza);
             }
@@ -105,14 +101,13 @@ public class AssenzaPostgresDao implements AssenzaDAO {
     }
 
     @Override
-    public boolean aggiornaAssenza(String matricola, String dataInizio, String dataFine, String motivazione, boolean approvazione) {
+    public boolean aggiornaAssenza(String matricola, String dataInizio, String dataFine, String motivazione) {
         try (Connection conn = ConnessioneDatabase.getConnection();
              PreparedStatement stmt = conn.prepareStatement(AGGIORNA_ASSENZA_QUERY)) {
             stmt.setDate(1, java.sql.Date.valueOf(dataFine));
             stmt.setString(2, motivazione);
-            stmt.setBoolean(3, approvazione);
-            stmt.setString(4, matricola);
-            stmt.setDate(5, java.sql.Date.valueOf(dataInizio));
+            stmt.setString(3, matricola);
+            stmt.setDate(4, java.sql.Date.valueOf(dataInizio));
             return stmt.executeUpdate() > 0;
         } catch (SQLException e) {
             LOGGER.log(Level.SEVERE, "Errore durante l'aggiornamento dell'assenza", e);

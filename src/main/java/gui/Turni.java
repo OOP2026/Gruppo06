@@ -20,7 +20,7 @@ public class Turni extends JFrame {
     private JTextField idTurnoField;
 
     private static final String[] COLONNE = {
-            "ID Turno", "Data", "Matricola", "Dipendente", "Ruolo", "Reparto", "Orario Effettivo" // Aggiornato a 7 colonne
+            "ID Turno", "Data", "Matricola", "Dipendente", "Ruolo", "Reparto", "Orario Effettivo"
     };
 
     private static final String[] TIPOLOGIA_DATA = {
@@ -32,19 +32,32 @@ public class Turni extends JFrame {
             "Pediatria", "Terapia Intensiva", "Pronto Soccorso",
             "Bariatria", "Radiologia Interventistica", "Nessuno"
     };
-    
+
     private transient Object[][] datiTurni = new Object[0][0];
-    
+
     public Turni() {
         initComponents();
         setupStyles();
+
+        // Setup Spinner Data
+        SpinnerDateModel dateModel = new SpinnerDateModel(new Date(), null, null, Calendar.DAY_OF_MONTH);
+        dataSpinner.setModel(dateModel);
+        dataSpinner.setEditor(new JSpinner.DateEditor(dataSpinner, "yyyy-MM-dd"));
+
+        // Dichiarazione campi JList
+        tipologiaList.setListData(TIPOLOGIA_DATA);
+        repartoList.setListData(REPARTI_DATA);
+
+        // Inizializzazione modello tabella
+        turniTable.setModel(new DefaultTableModel(COLONNE, 0) { @Override public boolean isCellEditable(int row, int column) { return false; } });
+
         setupListeners();
-        loadTableData(null, null, null, null, null, null); // Chiamata con 6 parametri
+        loadTableData(null, null, null, null, null, null);
     }
 
     public void aggiornaTabella(Object[][] dati) {
         this.datiTurni = dati != null ? dati : new Object[0][0];
-        loadTableData(null, null, null, null, null, null); // Chiamata con 6 parametri
+        loadTableData(null, null, null, null, null, null);
     }
 
     public void addNuovoTurnoListener(java.awt.event.ActionListener listener) {
@@ -59,76 +72,69 @@ public class Turni extends JFrame {
         int selectedRow = turniTable.getSelectedRow();
         if (selectedRow >= 0) {
             DefaultTableModel model = (DefaultTableModel) turniTable.getModel();
-            String data = (String) model.getValueAt(selectedRow, 1); // Data è ora la colonna 1
-            String matricola = (String) model.getValueAt(selectedRow, 2); // Matricola è ora la colonna 2
-            String orarioEffettivo = (String) model.getValueAt(selectedRow, 6); // Orario Effettivo è ora la colonna 6
+            String data = (String) model.getValueAt(selectedRow, 1);
+            String matricola = (String) model.getValueAt(selectedRow, 2);
+            String orarioEffettivo = (String) model.getValueAt(selectedRow, 6);
             return new String[]{data, matricola, orarioEffettivo};
         }
         return new String[0];
     }
 
     private void initComponents() {
-        // Setup Spinner Data
-        SpinnerDateModel dateModel = new SpinnerDateModel(new Date(), null, null, Calendar.DAY_OF_MONTH);
-        dataSpinner.setModel(dateModel);
-        dataSpinner.setEditor(new JSpinner.DateEditor(dataSpinner, "yyyy-MM-dd")); // Formato data YYYY-MM-DD
-
-        //Dichiarazione campi JList
-        tipologiaList.setListData(TIPOLOGIA_DATA);
-        //Dichiarazione campi JList
-        repartoList.setListData(REPARTI_DATA);
-        
-        DefaultTableModel model = new DefaultTableModel(COLONNE, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-        turniTable.setModel(model);
+        // Questo metodo è mantenuto per compatibilità con il GUI Designer, ma la logica è stata spostata.
     }
-    //Set di stili visivi per le componenti GUI
+
     private void setupStyles() {
         Login.styleList(tipologiaList);
         Login.styleList(repartoList);
         Login.setupTableStyle(turniTable);
-        if(cercaButton != null) Login.applicaStilePulsantiCentrali(cercaButton);
-        if(resetButton != null) Login.applicaStilePulsantiCentrali(resetButton);
-        if(nuovoTurnoButton1 != null) Login.applicaStilePulsantiCentrali(nuovoTurnoButton1);
-        if(modificaTurno != null) Login.applicaStilePulsantiCentrali(modificaTurno);
+        Login.applicaStilePulsantiCentrali(cercaButton);
+        Login.applicaStilePulsantiCentrali(resetButton);
+        Login.applicaStilePulsantiCentrali(nuovoTurnoButton1);
+        Login.applicaStilePulsantiCentrali(modificaTurno);
     }
 
     private void setupListeners() {
-        cercaButton.addActionListener(e -> {
-            String idTurnoInput = idTurnoField.getText().trim(); // Ottieni ID Turno
-            String nomeInput = nomeField.getText().toLowerCase().trim();
-            String ruoloSelezionato = tipologiaList.getSelectedValue();
-            String repartoSelezionato = repartoList.getSelectedValue();
-            String dataInput = new JSpinner.DateEditor(dataSpinner, "yyyy-MM-dd").getFormat().format(dataSpinner.getValue()); // Ottieni data formattata
+        if (cercaButton != null) {
+            cercaButton.addActionListener(e -> {
+                String idTurnoInput = idTurnoField.getText() != null ? idTurnoField.getText().trim() : "";
+                String nomeText = nomeField.getText();
+                String nomeInput = nomeText != null ? nomeText.toLowerCase().trim() : "";
 
-            // Se l'utente cerca per ID Turno specifico, ignoriamo il filtro della data (che di default punta a oggi)
-            if (!idTurnoInput.isEmpty()) {
-                dataInput = "";
-            }
+                String ruoloSelezionato = tipologiaList.getSelectedValue();
+                String repartoSelezionato = repartoList.getSelectedValue();
 
-            loadTableData(idTurnoInput, nomeInput, null, ruoloSelezionato, repartoSelezionato, dataInput);
-        });
+                String dataInput = "";
+                if (dataSpinner.getValue() != null) {
+                    dataInput = new JSpinner.DateEditor(dataSpinner, "yyyy-MM-dd").getFormat().format(dataSpinner.getValue());
+                }
 
-        resetButton.addActionListener(e -> {
-            idTurnoField.setText(""); // Reset campo ID Turno
-            nomeField.setText("");
-            tipologiaList.clearSelection();
-            repartoList.clearSelection();
-            dataSpinner.setValue(new Date());
+                if (!idTurnoInput.isEmpty()) {
+                    dataInput = "";
+                }
 
-            loadTableData(null, null, null, null, null, null); // Reset filtri
-        });
+                loadTableData(idTurnoInput, nomeInput, null, ruoloSelezionato, repartoSelezionato, dataInput);
+            });
+        }
+
+        if (resetButton != null) {
+            resetButton.addActionListener(e -> {
+                idTurnoField.setText("");
+                nomeField.setText("");
+                tipologiaList.clearSelection();
+                repartoList.clearSelection();
+                dataSpinner.setValue(new Date());
+
+                loadTableData(null, null, null, null, null, null);
+            });
+        }
     }
 
     private boolean isTurnoCorrispondente(Object[] row, String filtroIdTurno, String filtroNome, String filtroMatricola, String filtroRuolo, String filtroReparto, String filtroData) {
         String rIdTurno = row[0] != null ? ((String) row[0]).toLowerCase() : "";
         String rData = row[1] != null ? ((String) row[1]).toLowerCase() : "";
         String rMatricola = row[2] != null ? ((String) row[2]).toLowerCase() : "";
-        String rNome = row[3] != null ? ((String) row[3]).toLowerCase() : ""; // Dipendente
+        String rNome = row[3] != null ? ((String) row[3]).toLowerCase() : "";
         String rRuolo = row[4] != null ? (String) row[4] : "";
         String rReparto = row[5] != null ? ((String) row[5]).toLowerCase() : "";
 
@@ -152,5 +158,4 @@ public class Turni extends JFrame {
             }
         }
     }
-
 }

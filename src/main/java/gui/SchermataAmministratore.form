@@ -62,7 +62,7 @@
               </grid>
             </constraints>
             <properties>
-              <font size="40"/>
+              <font size="48"/>
               <text value="Dimissioni"/>
             </properties>
           </component>
@@ -87,7 +87,7 @@
               </grid>
             </constraints>
             <properties>
-              <font size="40"/>
+              <font size="48"/>
               <text value="Letti"/>
             </properties>
           </component>
@@ -112,7 +112,7 @@
               </grid>
             </constraints>
             <properties>
-              <font size="40"/>
+              <font size="48"/>
               <text value="Ricovero"/>
             </properties>
           </component>

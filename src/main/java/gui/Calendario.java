@@ -206,22 +206,14 @@ public class Calendario extends JFrame {
         int colonna = settimanaTable.getSelectedColumn();
 
         if (riga == -1 || colonna <= 0) {
-            return null; // Nessuna cella valida selezionata
+            return null;
         }
 
-        LocalDate dataSelezionata = lunediCorrente.plusDays(colonna - 1);
+        LocalDate dataSelezionata = lunediCorrente.plusDays(colonna - 1L);
+
         return LocalDateTime.of(dataSelezionata, java.time.LocalTime.of(riga, 0));
     }
 
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            Calendario frame = new Calendario();
-            controller.Controller.impostaSchermata(frame, frame.mainPanel, "Calendario Settimanale", JFrame.EXIT_ON_CLOSE);
-            frame.setVisible(true);
-        });
-    }
-
-    // Classe interna per personalizzare il rendering della colonna degli orari
     private static class OrarioCellRenderer extends DefaultTableCellRenderer {
         private final Color nonSelectedBackground = new Color(240, 240, 240);
 
@@ -232,10 +224,8 @@ public class Calendario extends JFrame {
 
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-            // Chiama il metodo della superclasse per impostare testo, colori di selezione, ecc.
             super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
 
-            // Se la cella non è selezionata, applica il nostro sfondo personalizzato.
             if (!isSelected) {
                 setBackground(nonSelectedBackground);
             }

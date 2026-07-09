@@ -40,10 +40,26 @@ public class Medici extends JFrame {
     
     private Object[][] datiMedici = new Object[0][0];
     
-    //Dichiarazione Costruttore
     public Medici() {
         initComponents();
         setupStyles();
+
+        specializzazioneList.setListData(SPECIALIZZAZIONI_DATA);
+
+        repartoList.setListData(REPARTI_DATA);
+
+        // Raggruppa i radio button per consentire una sola selezione
+        ButtonGroup statoGroup = new ButtonGroup();
+        statoGroup.add(tuttiRadioButton);
+        statoGroup.add(attivoRadioButton);
+        statoGroup.add(assenteRadioButton);
+        statoGroup.add(occupatoRadioButton);
+        tuttiRadioButton.setSelected(true);
+
+        DefaultTableModel model = new DefaultTableModel(COLONNE, 0) {
+            @Override public boolean isCellEditable(int row, int column) { return false; }
+        };
+        mediciTable.setModel(model);
         setupListeners();
         loadTableData(null, null, null, null);
     }
@@ -68,32 +84,13 @@ public class Medici extends JFrame {
     public String getMatricolaMedicoSelezionato() {
         int selectedRow = mediciTable.getSelectedRow();
         if (selectedRow == -1) {
-            return null; // Nessuna riga selezionata
+            return null;
         }
-        // La matricola è nella prima colonna (indice 0)
         return (String) mediciTable.getValueAt(selectedRow, 0);
     }
-    //Inserimento parametri list e definizione modelli Table
+
     private void initComponents() {
-        specializzazioneList.setListData(SPECIALIZZAZIONI_DATA);
-
-        repartoList.setListData(REPARTI_DATA);
-
-        // Raggruppa i radio button per consentire una sola selezione
-        ButtonGroup statoGroup = new ButtonGroup();
-        statoGroup.add(tuttiRadioButton);
-        statoGroup.add(attivoRadioButton);
-        statoGroup.add(assenteRadioButton);
-        statoGroup.add(occupatoRadioButton);
-        tuttiRadioButton.setSelected(true);
-
-        DefaultTableModel model = new DefaultTableModel(COLONNE, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-        mediciTable.setModel(model);
+        // Questo metodo è mantenuto per compatibilità con il GUI Designer, ma la logica è stata spostata.
     }
     //Setup degli stili visivi per le componenti GUI
     private void setupStyles() {

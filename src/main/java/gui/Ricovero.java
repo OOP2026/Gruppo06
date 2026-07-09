@@ -37,6 +37,23 @@ public class Ricovero extends JFrame {
     public Ricovero() {
         initComponents();
         setupStyles();
+
+        SpinnerDateModel dateModel = new SpinnerDateModel(new Date(), null, null, Calendar.DAY_OF_MONTH);
+        dataSpinner.setModel(dateModel);
+        dataSpinner.setEditor(new JSpinner.DateEditor(dataSpinner, "yyyy-MM-dd"));
+        dataSpinner.addChangeListener(e -> dataModificata = true);
+        ((JSpinner.DateEditor) dataSpinner.getEditor()).getTextField().getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { dataModificata = true; }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { dataModificata = true; }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { dataModificata = true; }
+        });
+
+        repartoList.setListData(new String[]{"Chirurgia generale", "Ortopedia", "Cardiologia"});
+
+        DefaultTableModel model = new DefaultTableModel(new Object[0][0], COLONNE) {
+            @Override public boolean isCellEditable(int row, int column) { return false; }
+        };
+        ricoveriTable.setModel(model);
     }
 
     public void aggiornaTabella(Object[][] dati) {
@@ -136,25 +153,7 @@ public class Ricovero extends JFrame {
     }
 
     private void initComponents() {
-        SpinnerDateModel dateModel = new SpinnerDateModel(new Date(), null, null, Calendar.DAY_OF_MONTH);
-        dataSpinner.setModel(dateModel);
-        dataSpinner.setEditor(new JSpinner.DateEditor(dataSpinner, "yyyy-MM-dd"));
-        dataSpinner.addChangeListener(e -> dataModificata = true);
-        ((JSpinner.DateEditor) dataSpinner.getEditor()).getTextField().getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            public void insertUpdate(javax.swing.event.DocumentEvent e) { dataModificata = true; }
-            public void removeUpdate(javax.swing.event.DocumentEvent e) { dataModificata = true; }
-            public void changedUpdate(javax.swing.event.DocumentEvent e) { dataModificata = true; }
-        });
-
-        repartoList.setListData(new String[]{"Chirurgia generale", "Ortopedia", "Cardiologia"});
-
-        DefaultTableModel model = new DefaultTableModel(new Object[0][0], COLONNE) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-        ricoveriTable.setModel(model);
+        // Questo metodo è mantenuto per compatibilità con il GUI Designer, ma la logica è stata spostata.
     }
 
     private void setupStyles() {

@@ -28,39 +28,48 @@ public class Prestazioni {
     public Prestazioni() {
         initComponents();
         setupStyles();
+        setupComponents();
     }
 
     private void initComponents() {
-        dataSpinner.setModel(new SpinnerDateModel(new Date(), null, null, java.util.Calendar.DAY_OF_MONTH));
-        JSpinner.DateEditor dateEditor = new JSpinner.DateEditor(dataSpinner, "yyyy-MM-dd");
-        dataSpinner.setEditor(dateEditor);
+        // Questo metodo è mantenuto per compatibilità con il GUI Designer, ma la logica è stata spostata.
+    }
 
-        DefaultTableModel model = new DefaultTableModel(ALL_COLUMNS, 0) {
-            @Override
-            public boolean isCellEditable(int row, int column) {
-                return false;
-            }
-        };
-        prestazioniTable.setModel(model);
+    private void setupComponents() {
+        if (dataSpinner != null) {
+            dataSpinner.setModel(new SpinnerDateModel(new Date(), null, null, java.util.Calendar.DAY_OF_MONTH));
+            JSpinner.DateEditor dateEditor = new JSpinner.DateEditor(dataSpinner, "yyyy-MM-dd");
+            dataSpinner.setEditor(dateEditor);
+        }
 
-        // Nascondi la colonna dell'ID (indice 6) impostando la sua larghezza a 0
-        javax.swing.table.TableColumn idColumn = prestazioniTable.getColumnModel().getColumn(6);
-        idColumn.setMinWidth(0);
-        idColumn.setMaxWidth(0);
-        idColumn.setWidth(0);
+        if (prestazioniTable != null) {
+            DefaultTableModel model = new DefaultTableModel(ALL_COLUMNS, 0) {
+                @Override
+                public boolean isCellEditable(int row, int column) {
+                    return false;
+                }
+            };
+            prestazioniTable.setModel(model);
 
-        // Popola la lista delle tipologie di prestazione
-        DefaultListModel<String> tipologiaModel = new DefaultListModel<>();
-        tipologiaModel.addElement("Visita Oculistica");
-        tipologiaModel.addElement("Visita Anestesiologica");
-        tipologiaModel.addElement("Visita Cardiologica");
-        tipologiaModel.addElement("Risonanza Magnetica");
-        tipologiaModel.addElement("Tomografia Computerizzata (TAC)");
-        tipologiaModel.addElement("Ecografia");
-        tipologiaModel.addElement("Elettrocardiogramma (ECG)");
-        tipologiaModel.addElement("Endoscopia");
-        tipologiaModel.addElement("Radiografia");
-        tipologiaList.setModel(tipologiaModel);
+            javax.swing.table.TableColumn idColumn = prestazioniTable.getColumnModel().getColumn(6);
+            idColumn.setMinWidth(0);
+            idColumn.setMaxWidth(0);
+            idColumn.setWidth(0);
+        }
+
+        if (tipologiaList != null) {
+            DefaultListModel<String> tipologiaModel = new DefaultListModel<>();
+            tipologiaModel.addElement("Visita Oculistica");
+            tipologiaModel.addElement("Visita Anestesiologica");
+            tipologiaModel.addElement("Visita Cardiologica");
+            tipologiaModel.addElement("Risonanza Magnetica");
+            tipologiaModel.addElement("Tomografia Computerizzata (TAC)");
+            tipologiaModel.addElement("Ecografia");
+            tipologiaModel.addElement("Elettrocardiogramma (ECG)");
+            tipologiaModel.addElement("Endoscopia");
+            tipologiaModel.addElement("Radiografia");
+            tipologiaList.setModel(tipologiaModel);
+        }
     }
 
     private void setupStyles() {

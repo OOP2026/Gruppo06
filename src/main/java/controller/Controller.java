@@ -55,6 +55,7 @@ public class Controller {
 	private static final String NESSUN_TURNO_TROVATO = "Nessun turno trovato";
 
 	private static final Logger LOGGER = Logger.getLogger(Controller.class.getName());
+	private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
 	/**
 	 * Instantiates a new Controller.
@@ -182,8 +183,7 @@ public class Controller {
 	 */
 	public boolean registrazione(String login, String password, String nome, String cognome, String pin, boolean isAdmin) {
 		// La logica di generazione della matricola dovrebbe essere più robusta
-		SecureRandom random = new SecureRandom();
-		String matricola = (isAdmin ? "A" : "M") + (100000 + random.nextInt(900000)); // Genera un numero a 6 cifre
+		String matricola = (isAdmin ? "A" : "M") + (100000 + SECURE_RANDOM.nextInt(900000)); // Genera un numero a 6 cifre
 
 		if (isAdmin) {
 			if (amministratoreDAO.checkLoginEsistente(login)) {
@@ -902,8 +902,7 @@ public class Controller {
 			String cognome = cognomeInput.getText().trim();
 			String login = loginInput.getText().trim();
 			String password = new String(passwordInput.getPassword()).trim();
-			SecureRandom random = new SecureRandom();
-			String matricola = "M" + (100000 + random.nextInt(900000)); // Genera un numero a 6 cifre
+			String matricola = "M" + (100000 + SECURE_RANDOM.nextInt(900000)); // Genera un numero a 6 cifre
 			String iscrizioneAlbo = iscrizioneInput.getText().trim();
 			String specializzazione = specializzazioneInput.getText().trim();
 			String reparto = (String) repartoInput.getSelectedItem();

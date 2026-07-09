@@ -10,13 +10,7 @@ import java.util.logging.Logger;
  * Implementa il pattern Singleton per garantire la presenza di un'unica connessione attiva
  * globale in tutto il ciclo di vita dell'applicazione, ottimizzando il riuso delle risorse.
  */
-<<<<<<< Updated upstream
 public final class ConnessioneDatabase {
-    private static final String URL = "jdbc:postgresql://localhost:5432/OspedaleOOP";
-    private static final String USER = "postgres";
-    private static final String PASSWORD = "191123";
-=======
-public class ConnessioneDatabase {
 
     private static Connection connection = null;
 
@@ -30,7 +24,6 @@ public class ConnessioneDatabase {
      */
     private ConnessioneDatabase() {
     }
->>>>>>> Stashed changes
 
     /**
      * Restituisce l'istanza corrente della connessione al database.

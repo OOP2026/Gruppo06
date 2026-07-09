@@ -1,12 +1,14 @@
 package gui;
 
 import javax.swing.*;
+import javax.swing.DefaultListModel;
 import javax.swing.table.DefaultTableModel;
 import java.awt.event.ActionListener;
 import java.text.SimpleDateFormat;
+import java.util.List;
 import java.util.Date;
 
-public class Prestazioni extends JFrame {
+public class Prestazioni {
     public JPanel mainPanel;
     private JTable prestazioniTable;
     private JButton gestisciPrestazioneButton;
@@ -50,6 +52,19 @@ public class Prestazioni extends JFrame {
         idColumn.setMinWidth(0);
         idColumn.setMaxWidth(0);
         idColumn.setWidth(0);
+
+        // Popola la lista delle tipologie di prestazione
+        DefaultListModel<String> tipologiaModel = new DefaultListModel<>();
+        tipologiaModel.addElement("Visita Oculistica");
+        tipologiaModel.addElement("Visita Anestesiologica");
+        tipologiaModel.addElement("Visita Cardiologica");
+        tipologiaModel.addElement("Risonanza Magnetica");
+        tipologiaModel.addElement("Tomografia Computerizzata (TAC)");
+        tipologiaModel.addElement("Ecografia");
+        tipologiaModel.addElement("Elettrocardiogramma (ECG)");
+        tipologiaModel.addElement("Endoscopia");
+        tipologiaModel.addElement("Radiografia");
+        tipologiaList.setModel(tipologiaModel);
     }
 
     private void setupStyles() {
@@ -97,9 +112,28 @@ public class Prestazioni extends JFrame {
         return prestazioniTable.getModel().getValueAt(selectedRow, 6).toString();
     }
 
+    public void setRepartiListData(List<String> reparti) {
+        DefaultListModel<String> model = new DefaultListModel<>();
+        for (String reparto : reparti) {
+            model.addElement(reparto);
+        }
+        repartoList.setModel(model);
+    }
+
+    public String getRepartoSelezionato() {
+        return (String) repartoList.getSelectedValue();
+    }
+
+    public String getTipologiaSelezionata() {
+        return (String) tipologiaList.getSelectedValue();
+    }
+
     public String getCodPrestazione() {
+        // Aggiunto controllo per evitare NullPointerException se il campo non è inizializzato dal designer
+        if (codiceField == null) return "";
         return codiceField.getText().trim();
     }
+
 
     public String getNomeCognome() {
         return nomeField.getText().trim();
@@ -113,8 +147,8 @@ public class Prestazioni extends JFrame {
     }
 
     public void resetCampiRicerca() {
-        nomeField.setText("");
-        codiceField.setText("");
+        if (codiceField != null) codiceField.setText("");
+        if (nomeField != null) nomeField.setText("");
         dataSpinner.setValue(new Date());
         repartoList.clearSelection();
         tipologiaList.clearSelection();

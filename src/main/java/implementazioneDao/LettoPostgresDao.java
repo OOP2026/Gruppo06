@@ -8,6 +8,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -19,6 +20,7 @@ public class LettoPostgresDao implements LettoDAO {
     private static final String GET_LETTO_BY_ID_QUERY = "SELECT numero_letto, reparto_di_appartenenza, is_libero, num_stanza FROM letto WHERE numero_letto = ? AND reparto_di_appartenenza = ?";
     private static final String GET_ALL_LETTI_QUERY = "SELECT numero_letto, reparto_di_appartenenza, is_libero, num_stanza FROM letto ORDER BY reparto_di_appartenenza, num_stanza, numero_letto";
     private static final String AGGIORNA_STATO_LETTO_QUERY = "UPDATE letto SET is_libero = ? WHERE numero_letto = ? AND reparto_di_appartenenza = ?";
+    private static final String GET_ALL_REPARTI_QUERY = "SELECT DISTINCT reparto_di_appartenenza FROM letto WHERE reparto_di_appartenenza IS NOT NULL AND reparto_di_appartenenza <> '' ORDER BY reparto_di_appartenenza ASC";
 
     // Costanti per i nomi delle colonne
     private static final String COL_NUMERO_LETTO = "numero_letto";
@@ -101,5 +103,21 @@ public class LettoPostgresDao implements LettoDAO {
             LOGGER.log(Level.SEVERE, "Errore durante l'aggiornamento dello stato del letto", e);
         }
         return false;
+    }
+
+    @Override
+    public List<String> getAllReparti() {
+        List<String> reparti = new ArrayList<>();
+        try (Connection conn = ConnessioneDatabase.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(GET_ALL_REPARTI_QUERY);
+             ResultSet rs = stmt.executeQuery()) {
+
+            while (rs.next()) {
+                reparti.add(rs.getString(COL_REPARTO_APPARTENENZA));
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Errore durante il recupero dei reparti", e);
+        }
+        return reparti;
     }
 }

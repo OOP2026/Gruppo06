@@ -1519,6 +1519,11 @@ public class Controller {
 		JComboBox<String> matricolaInput = new JComboBox<>();
 		JComboBox<String> turnoInput = new JComboBox<>();
 		JComboBox<String> idAgendaInput = new JComboBox<>();
+		final java.util.Map<String, String> turnoDisplayToIdMap = new java.util.HashMap<>();
+
+		JSpinner oraInizioPrestazioneSpinner = new JSpinner(new SpinnerDateModel());
+		oraInizioPrestazioneSpinner.setEditor(new JSpinner.DateEditor(oraInizioPrestazioneSpinner, "HH:mm"));
+
 
 		if (isMedico) {
 			matricolaInput.addItem(matricolaMedico);
@@ -1556,12 +1561,19 @@ public class Controller {
 		java.awt.event.ActionListener aggiornaTurniEAgenda = e -> {
 			String matSelezionata = (String) matricolaInput.getSelectedItem();
 			turnoInput.removeAllItems();
+			turnoDisplayToIdMap.clear();
 			if (matSelezionata != null && !matSelezionata.isEmpty()) {
 				List<ArrayList<String>> turni = turnoDAO.getTurniByMedico(matSelezionata);
 				if (turni != null && !turni.isEmpty()) {
 					for (ArrayList<String> t : turni) {
-						if (t.size() > 2) {
-							turnoInput.addItem(t.get(0) + " (Data: " + t.get(2) + ")"); 
+						if (t.size() > 4) { // Assicura che ci siano dati fino all'ora di fine
+							String idTurno = t.get(0);
+							String data = t.get(2);
+							String oraInizio = t.get(3);
+							String oraFine = t.get(4);
+							String displayText = data + " (" + oraInizio + " - " + oraFine + ")";
+							turnoInput.addItem(displayText);
+							turnoDisplayToIdMap.put(displayText, idTurno);
 						}
 					}
 				}
@@ -1608,12 +1620,13 @@ public class Controller {
 		}
 		JComboBox<String> cfPazienteInput = new JComboBox<>(pazientiNomi.toArray(new String[0]));
 
-		JPanel panel = new JPanel(new GridLayout(6, 2, 10, 10));
+		JPanel panel = new JPanel(new GridLayout(7, 2, 10, 10));
 		panel.add(new JLabel("Tipo Esame/Prestazione:")); panel.add(tipoProceduraInput);
 		panel.add(new JLabel("Esito Prestazione:")); panel.add(esitoInput);
 		panel.add(new JLabel("CF Paziente:")); panel.add(cfPazienteInput);
 		panel.add(new JLabel("Matricola Medico:")); panel.add(matricolaInput);
 		panel.add(new JLabel("ID Turno:")); panel.add(turnoInput);
+		panel.add(new JLabel("Ora Inizio Prestazione:")); panel.add(oraInizioPrestazioneSpinner);
 		panel.add(new JLabel("ID Agenda:")); panel.add(idAgendaInput);
 
 		int result = JOptionPane.showConfirmDialog(null, panel, "Nuova Prestazione", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
@@ -1631,7 +1644,7 @@ public class Controller {
 				String turnoSel = (String) turnoInput.getSelectedItem();
 				String idTurno = "";
 				if (turnoSel != null && !turnoSel.equals("Nessun turno trovato")) {
-					idTurno = turnoSel.split(" ")[0];
+					idTurno = turnoDisplayToIdMap.get(turnoSel);
 				}
 				
 				String cfPaziente = "";
@@ -1659,6 +1672,29 @@ public class Controller {
 				boolean successo = prestazioneDAO.aggiungiPrestazione(tipologiaPrestazione, esito, idTurno, cfPaziente, matricolaFinale, idAgendaFinale);
 				if (successo) {
 					JOptionPane.showMessageDialog(null, "Prestazione aggiunta con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
+
+					// Auto-inserimento in agenda
+					try {
+						String turnoSelezionato = (String) turnoInput.getSelectedItem();
+						String dataTurno = turnoSelezionato.split(" ")[0];
+
+						java.util.Date oraInizioSelezionata = (java.util.Date) oraInizioPrestazioneSpinner.getValue();
+						java.text.SimpleDateFormat timeFormat = new java.text.SimpleDateFormat("HH:mm:ss");
+						String oraInizioPrestazione = timeFormat.format(oraInizioSelezionata);
+
+						String inizioTimestampStr = dataTurno + " " + oraInizioPrestazione;
+						java.sql.Timestamp tsInizio = java.sql.Timestamp.valueOf(inizioTimestampStr);
+
+						// Durata di default: 30 minuti
+						java.util.Calendar cal = java.util.Calendar.getInstance();
+						cal.setTime(tsInizio);
+						cal.add(java.util.Calendar.MINUTE, 30);
+						java.sql.Timestamp tsFine = new java.sql.Timestamp(cal.getTimeInMillis());
+
+						addEvento(matricolaFinale, "Prestazione: " + tipologiaPrestazione, "Paziente: " + cfPaziente, tsInizio, tsFine);
+					} catch (Exception ex) {
+						LOGGER.log(java.util.logging.Level.WARNING, "Impossibile auto-inserire la prestazione in agenda.", ex);
+					}
 					return true;
 				} else {
 					JOptionPane.showMessageDialog(null, ERRORE_AGGIUNTA_DATI, ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
@@ -1757,34 +1793,39 @@ public class Controller {
 	}
 
 	public void apriSchermataPrestazioni(JFrame frameDaChiudere) {
-		gui.Prestazioni prestazioniFrame = new gui.Prestazioni();
-		impostaSchermata(prestazioniFrame, prestazioniFrame.mainPanel, "Ricerca Prestazioni Mediche", WindowConstants.DISPOSE_ON_CLOSE);
+		gui.Prestazioni prestazioniPanel = new gui.Prestazioni();
+		JFrame prestazioniFrame = new JFrame();
+		impostaSchermata(prestazioniFrame, prestazioniPanel.mainPanel, "Ricerca Prestazioni Mediche", WindowConstants.DISPOSE_ON_CLOSE);
 		
-		prestazioniFrame.addNuovaPrestazioneListener(e -> {
+		prestazioniPanel.addNuovaPrestazioneListener(e -> {
 			if (gestisciCreazioneNuovaPrestazione()) {
-				caricaDatiPrestazioni(prestazioniFrame);
+				caricaDatiPrestazioni(prestazioniPanel);
 			}
 		});
 
-		prestazioniFrame.addGestisciPrestazioneListener(e -> {
-			String idSelezionato = prestazioniFrame.getIdPrestazioneSelezionata();
+		prestazioniPanel.addGestisciPrestazioneListener(e -> {
+			String idSelezionato = prestazioniPanel.getIdPrestazioneSelezionata();
 			if (idSelezionato != null) {
 				if (gestisciModificaPrestazione(idSelezionato)) {
-					caricaDatiPrestazioni(prestazioniFrame);
+					caricaDatiPrestazioni(prestazioniPanel);
 				}
 			} else {
-				JOptionPane.showMessageDialog(prestazioniFrame, "Seleziona una prestazione dalla tabella per gestirla.", INFO_TITLE, JOptionPane.WARNING_MESSAGE);
+				JOptionPane.showMessageDialog(prestazioniPanel.mainPanel, "Seleziona una prestazione dalla tabella per gestirla.", INFO_TITLE, JOptionPane.WARNING_MESSAGE);
 			}
 		});
 
 		// Aggiunta logica di ricerca e reset
-		prestazioniFrame.addCercaListener(e -> gestisciRicercaPrestazioni(prestazioniFrame));
-		prestazioniFrame.addResetListener(e -> {
-			prestazioniFrame.resetCampiRicerca();
-			caricaDatiPrestazioni(prestazioniFrame);
+		prestazioniPanel.addCercaListener(e -> gestisciRicercaPrestazioni(prestazioniPanel));
+		prestazioniPanel.addResetListener(e -> {
+			prestazioniPanel.resetCampiRicerca();
+			caricaDatiPrestazioni(prestazioniPanel);
 		});
 
 		mostraFinestraSecondaria(prestazioniFrame, frameDaChiudere);
+
+		// Popola la lista dei reparti per il filtro
+		List<String> reparti = lettoDAO.getAllReparti();
+		prestazioniPanel.setRepartiListData(reparti);
 
 		// Utilizzo di SwingWorker per non bloccare la GUI durante il caricamento dati
 		prestazioniFrame.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
@@ -1801,79 +1842,133 @@ public class Controller {
 			}
 			@Override
 			protected void done() {
-				try { prestazioniFrame.aggiornaTabella(get()); } catch (Exception e) { LOGGER.warning("Errore caricamento prestazioni"); }
+				try { prestazioniPanel.aggiornaTabella(get()); } catch (Exception e) { LOGGER.warning("Errore caricamento prestazioni"); }
 				prestazioniFrame.setCursor(java.awt.Cursor.getDefaultCursor());
 			}
 		};
 		worker.execute();
 	}
 
-	private void caricaDatiPrestazioni(gui.Prestazioni prestazioniFrame) {
+	private void caricaDatiPrestazioni(gui.Prestazioni prestazioniPanel) {
 		List<ArrayList<String>> prestazioni;
 		if (utenteLoggato instanceof Medico) {
 			prestazioni = prestazioneDAO.getPrestazioniByMedico(utenteLoggato.getMatricola());
 		} else {
 			prestazioni = prestazioneDAO.getAllPrestazioni();
 		}
-		prestazioniFrame.aggiornaTabella(formattaDatiPrestazioni(prestazioni));
+		prestazioniPanel.aggiornaTabella(formattaDatiPrestazioni(prestazioni));
 	}
 
-	public void gestisciRicercaPrestazioni(gui.Prestazioni prestazioniFrame) {
-		String idRicerca = prestazioniFrame.getCodPrestazione();
-		String nomeCognomeRicerca = prestazioniFrame.getNomeCognome();
-		String dataRicerca = prestazioniFrame.getData();
+	public void gestisciRicercaPrestazioni(gui.Prestazioni prestazioniPanel) {
+		// Leggi i filtri dalla GUI nel thread principale
+		String idRicerca = prestazioniPanel.getCodPrestazione();
+		String nomeCognomeRicerca = prestazioniPanel.getNomeCognome();
+		String dataRicerca = prestazioniPanel.getData();
+		String repartoRicerca = prestazioniPanel.getRepartoSelezionato();
+		String tipologiaRicerca = prestazioniPanel.getTipologiaSelezionata();
 
-		List<ArrayList<String>> prestazioni;
-		if (utenteLoggato instanceof Medico) {
-			prestazioni = prestazioneDAO.getPrestazioniByMedico(utenteLoggato.getMatricola());
-		} else {
-			prestazioni = prestazioneDAO.getAllPrestazioni();
-		}
+		// Mostra un cursore di attesa per dare un feedback all'utente
+		prestazioniPanel.mainPanel.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
 
-		List<ArrayList<String>> risultati = new ArrayList<>();
-		for (ArrayList<String> p : prestazioni) {
-			boolean matchId = true;
-			boolean matchNome = true;
-			boolean matchData = true;
-
-			if (idRicerca != null && !idRicerca.trim().isEmpty()) {
-				matchId = p.get(0).equals(idRicerca.trim());
-			}
-
-			// La GUI Prestazioni usa un JSpinner, che ha sempre un valore.
-			// A differenza di un JTextField con placeholder, qui il filtro per data è sempre attivo.
-			// Rimuoviamo il check sul placeholder "AAAA-MM-GG".
-			if (dataRicerca != null && !dataRicerca.trim().isEmpty()) {
-				String dataTurno = p.size() > 3 && p.get(3) != null ? p.get(3) : "";
-				matchData = dataTurno.startsWith(dataRicerca.trim());
-			}
-
-			if (nomeCognomeRicerca != null && !nomeCognomeRicerca.trim().isEmpty()) {
-				String cf = p.size() > 4 ? p.get(4) : "";
-				List<String> paziente = pazienteDAO.getPazienteByCf(cf);
-				if (paziente != null && !paziente.isEmpty()) {
-					String nome = paziente.size() > 1 ? paziente.get(1).toLowerCase() : "";
-					String cognome = paziente.size() > 2 ? paziente.get(2).toLowerCase() : "";
-					String searchStr = nomeCognomeRicerca.trim().toLowerCase();
-					
-					matchNome = (nome + " " + cognome).contains(searchStr) || 
-								(cognome + " " + nome).contains(searchStr) || 
-								cf.toLowerCase().contains(searchStr);
+		SwingWorker<Object[][], Void> worker = new SwingWorker<Object[][], Void>() {
+			@Override
+			protected Object[][] doInBackground() throws Exception {
+				// Esegui le query e il filtraggio in background per non bloccare la GUI
+				List<ArrayList<String>> prestazioni;
+				if (utenteLoggato instanceof Medico) {
+					prestazioni = prestazioneDAO.getPrestazioniByMedico(utenteLoggato.getMatricola());
 				} else {
-					matchNome = false;
+					prestazioni = prestazioneDAO.getAllPrestazioni();
+				}
+
+				// Ottimizzazione: Pre-carica le mappe per evitare query N+1 nel ciclo
+				java.util.Map<String, List<String>> pazientiMap = new java.util.HashMap<>();
+				List<ArrayList<String>> tuttiPazienti = pazienteDAO.getAllPazienti();
+				if (tuttiPazienti != null) {
+					for(List<String> pz : tuttiPazienti) {
+						if (pz != null && !pz.isEmpty()) pazientiMap.put(pz.get(0), pz);
+					}
+				}
+				java.util.Map<String, List<String>> mediciMap = new java.util.HashMap<>();
+				List<ArrayList<String>> tuttiMedici = medicoDAO.getAllMedici();
+				if (tuttiMedici != null) {
+					for(List<String> m : tuttiMedici) {
+						if (m != null && m.size() > 4) mediciMap.put(m.get(4), m);
+					}
+				}
+
+				List<ArrayList<String>> risultati = new ArrayList<>();
+				for (ArrayList<String> p : prestazioni) {
+					boolean matchId = true;
+					boolean matchNome = true;
+					boolean matchData = true;
+					boolean matchReparto = true;
+					boolean matchTipologia = true;
+
+					if (idRicerca != null && !idRicerca.trim().isEmpty()) {
+						matchId = p.get(0).equals(idRicerca.trim());
+					}
+
+					if (dataRicerca != null && !dataRicerca.trim().isEmpty()) {
+						String dataTurno = p.size() > 3 && p.get(3) != null ? p.get(3) : "";
+						matchData = dataTurno.startsWith(dataRicerca.trim());
+					}
+
+					if (nomeCognomeRicerca != null && !nomeCognomeRicerca.trim().isEmpty()) {
+						String cf = p.size() > 4 ? p.get(4) : "";
+						List<String> paziente = pazientiMap.get(cf);
+						if (paziente != null && !paziente.isEmpty()) {
+							String nome = paziente.size() > 1 ? paziente.get(1).toLowerCase() : "";
+							String cognome = paziente.size() > 2 ? paziente.get(2).toLowerCase() : "";
+							String searchStr = nomeCognomeRicerca.trim().toLowerCase();
+							matchNome = (nome + " " + cognome).contains(searchStr) || (cognome + " " + nome).contains(searchStr) || cf.toLowerCase().contains(searchStr);
+						} else {
+							matchNome = false;
+						}
+					}
+
+					if (repartoRicerca != null && !repartoRicerca.trim().isEmpty()) {
+						String matricola = p.size() > 5 && p.get(5) != null ? p.get(5) : "";
+						String repartoErogante = "-";
+						if (!matricola.trim().isEmpty()) {
+							List<String> medico = mediciMap.get(matricola);
+							if (medico != null && medico.size() > 7 && medico.get(7) != null && !medico.get(7).trim().isEmpty()) {
+								repartoErogante = medico.get(7);
+							}
+						}
+						matchReparto = repartoErogante.equalsIgnoreCase(repartoRicerca);
+					}
+
+					if (tipologiaRicerca != null && !tipologiaRicerca.trim().isEmpty()) {
+						String tipologiaPrestazione = p.size() > 1 ? p.get(1) : "";
+						matchTipologia = tipologiaPrestazione.equalsIgnoreCase(tipologiaRicerca);
+					}
+
+					if (matchId && matchNome && matchData && matchReparto && matchTipologia) {
+						risultati.add(p);
+					}
+				}
+				return formattaDatiPrestazioni(risultati);
+			}
+
+			@Override
+			protected void done() {
+				try {
+					Object[][] datiFiltrati = get();
+					prestazioniPanel.aggiornaTabella(datiFiltrati);
+					if (datiFiltrati.length == 0) {
+						JOptionPane.showMessageDialog(prestazioniPanel.mainPanel, "Nessuna prestazione trovata con i criteri specificati.", INFO_TITLE, JOptionPane.INFORMATION_MESSAGE);
+					}
+				} catch (Exception e) {
+					LOGGER.log(java.util.logging.Level.SEVERE, "Errore durante la ricerca delle prestazioni", e);
+					JOptionPane.showMessageDialog(prestazioniPanel.mainPanel, "Si è verificato un errore durante la ricerca.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+				} finally {
+					// Ripristina il cursore predefinito in ogni caso
+					prestazioniPanel.mainPanel.setCursor(java.awt.Cursor.getDefaultCursor());
 				}
 			}
-
-			if (matchId && matchNome && matchData) {
-				risultati.add(p);
-			}
-		}
-
-		prestazioniFrame.aggiornaTabella(formattaDatiPrestazioni(risultati));
-		
-		if (risultati.isEmpty()) {
-			JOptionPane.showMessageDialog(prestazioniFrame, "Nessuna prestazione trovata con i criteri specificati.", INFO_TITLE, JOptionPane.INFORMATION_MESSAGE);
-		}
+		};
+		worker.execute();
 	}
 
 	public void avviaSchermataMedico(String nomeUtente) {
@@ -2681,6 +2776,25 @@ public class Controller {
 		if (prestazioniDb == null) return new Object[0][0];
 		// Colonne GUI: Paziente, CF Paziente, Tipo, Esito, Data, Reparto. Colonne dati: 7 (con ID nascosto).
 		Object[][] dati = new Object[prestazioniDb.size()][7];
+
+		// Per efficienza, carichiamo una volta sola la lista dei reparti validi e le mappe di medici e pazienti
+		// per evitare di interrogare il DB all'interno del ciclo (problema N+1).
+		java.util.Set<String> repartiValidi = new java.util.HashSet<>(lettoDAO.getAllReparti());
+		java.util.Map<String, List<String>> pazientiMap = new java.util.HashMap<>();
+		List<ArrayList<String>> tuttiPazienti = pazienteDAO.getAllPazienti();
+		if (tuttiPazienti != null) {
+			for(List<String> p : tuttiPazienti) {
+				if (p != null && !p.isEmpty()) pazientiMap.put(p.get(0), p);
+			}
+		}
+		java.util.Map<String, List<String>> mediciMap = new java.util.HashMap<>();
+		List<ArrayList<String>> tuttiMedici = medicoDAO.getAllMedici();
+		if (tuttiMedici != null) {
+			for(List<String> m : tuttiMedici) {
+				if (m != null && m.size() > 4) mediciMap.put(m.get(4), m);
+			}
+		}
+
 		for (int i = 0; i < prestazioniDb.size(); i++) {
 			List<String> p = prestazioniDb.get(i);
 			try {
@@ -2690,7 +2804,7 @@ public class Controller {
 
 				String nomePaziente = "Sconosciuto";
 				if (!"-".equals(cfPaziente)) {
-					List<String> paziente = pazienteDAO.getPazienteByCf(cfPaziente);
+					List<String> paziente = pazientiMap.get(cfPaziente);
 					if (paziente != null && !paziente.isEmpty()) {
 						nomePaziente = (paziente.size() > 2 ? paziente.get(2) : "") + " " + (paziente.size() > 1 ? paziente.get(1) : "");
 					}
@@ -2718,9 +2832,13 @@ public class Controller {
 				String matricola = p.size() > 5 && p.get(5) != null ? p.get(5) : "";
 				String repartoErogante = "-";
 				if (!matricola.trim().isEmpty()) {
-					List<String> medico = medicoDAO.getMedicoByMatricola(matricola);
+					List<String> medico = mediciMap.get(matricola);
 					if (medico != null && medico.size() > 7 && medico.get(7) != null && !medico.get(7).trim().isEmpty()) {
-						repartoErogante = medico.get(7);
+						String repartoPotenziale = medico.get(7);
+						// Mostra il reparto solo se è uno di quelli validi presenti nel DB
+						if (repartiValidi.contains(repartoPotenziale)) {
+							repartoErogante = repartoPotenziale;
+						}
 					}
 				}
 				dati[i][5] = repartoErogante; // Reparto Erogante
@@ -3051,7 +3169,7 @@ public class Controller {
 	}
 
 	public void avvia() {
-		avviaSchermataRegistrazione();
+		avviaSchermataLogin();
 	}
 
 	private void avviaSchermataLogin() {

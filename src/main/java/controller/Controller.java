@@ -88,6 +88,82 @@ public class Controller {
 		return str == null || str.trim().isEmpty();
 	}
 
+	private String formattaDataPrestazione(String timestampStr) {
+		try {
+			java.sql.Timestamp ts = java.sql.Timestamp.valueOf(timestampStr);
+			return new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm").format(ts);
+		} catch (Exception ex) {
+			return null;
+		}
+	}
+
+	private String formattaTimestampString(String timestampStr) {
+		if (timestampStr != null && !timestampStr.equals("-") && !timestampStr.equals("In corso") && !timestampStr.isEmpty()) {
+			try {
+				java.sql.Timestamp ts = java.sql.Timestamp.valueOf(timestampStr);
+				return new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(ts);
+			} catch (Exception ex) {
+				if (timestampStr.contains(".")) return timestampStr.substring(0, timestampStr.indexOf('.'));
+			}
+		}
+		return timestampStr;
+	}
+
+	private void autoInserisciPrestazioneInAgenda(String turnoSelezionato, String oraInizioSelezionataStr, String matricolaFinale, String tipologiaPrestazione, String cfPaziente) {
+		try {
+			String dataTurno = turnoSelezionato.split(" ")[0];
+			String oraInizioPrestazione = oraInizioSelezionataStr + ":00"; // Aggiunge i secondi
+			String inizioTimestampStr = dataTurno + " " + oraInizioPrestazione;
+			java.sql.Timestamp tsInizio = java.sql.Timestamp.valueOf(inizioTimestampStr);
+
+			java.util.Calendar cal = java.util.Calendar.getInstance();
+			cal.setTime(tsInizio);
+			cal.add(java.util.Calendar.MINUTE, 30);
+			java.sql.Timestamp tsFine = new java.sql.Timestamp(cal.getTimeInMillis());
+
+			addEvento(matricolaFinale, "Prestazione: " + tipologiaPrestazione, "Paziente: " + cfPaziente, tsInizio, tsFine);
+		} catch (Exception ex) {
+			LOGGER.log(java.util.logging.Level.WARNING, "Impossibile auto-inserire la prestazione in agenda.", ex);
+		}
+	}
+
+	private void aggiornaIscrizioneAlboInMemoria(Medico medicoLoggato, String nuovaIscrizione) {
+		try {
+			if (!nuovaIscrizione.isEmpty()) {
+				medicoLoggato.setIscrizioneAlbo(java.time.LocalDate.parse(nuovaIscrizione));
+			}
+		} catch (java.time.format.DateTimeParseException e) {
+			LOGGER.warning("Formato data iscrizione non valido (" + nuovaIscrizione + ") per aggiornamento oggetto Medico in memoria.");
+		}
+	}
+
+	private boolean isAssenzaAttiva(List<String> datiAssenza, java.time.LocalDate oggi) {
+		try {
+			Assenza assenza = new Assenza(
+				java.time.LocalDate.parse(datiAssenza.get(1)),
+				java.time.LocalDate.parse(datiAssenza.get(2)),
+				null, true, null, null
+			);
+			return !oggi.isBefore(assenza.getDataInizioAssenza()) && !oggi.isAfter(assenza.getDataFineAssenza());
+		} catch (Exception ex) {
+			LOGGER.warning("Errore parsing date assenza: " + ex.getMessage());
+			return false;
+		}
+	}
+
+	private boolean isTurnoOccupato(ArrayList<String> turno, java.time.LocalDate oggi, java.time.LocalTime oraCorrente) {
+		try {
+			if (java.time.LocalDate.parse(turno.get(2)).equals(oggi)) {
+				java.time.LocalTime oraInizio = java.time.LocalTime.parse(turno.get(3));
+				java.time.LocalTime oraFine = java.time.LocalTime.parse(turno.get(4));
+				return !oraCorrente.isBefore(oraInizio) && oraCorrente.isBefore(oraFine);
+			}
+		} catch (java.time.format.DateTimeParseException e) {
+			LOGGER.warning("Errore parsing data/ora turno per stato 'Occupato': " + e.getMessage());
+		}
+		return false;
+	}
+
 	/**
 	 * Registrazione boolean.
 	 *
@@ -105,22 +181,14 @@ public class Controller {
 				return false;
 			}
 			LOGGER.info("Tentativo di registrazione nuovo amministratore con matricola: " + matricola);
-			boolean successoAdmin = amministratoreDAO.aggiungiAmministratore(matricola, login, password, nome, cognome, pin);
-
-			// La registrazione ha successo solo se vengono creati sia l'utente che la sua agenda.
-			// L'istanza dell'agenda non viene più creata di default alla registrazione.
-			return successoAdmin;
+			return amministratoreDAO.aggiungiAmministratore(matricola, login, password, nome, cognome, pin);
 		} else {
 			if (medicoDAO.checkLoginEsistente(login)) {
 				LOGGER.warning("Tentativo di registrazione con login già esistente: " + login);
 				return false;
 			}
 			LOGGER.info("Tentativo di registrazione nuovo medico con matricola: " + matricola);
-			boolean successoMedico = medicoDAO.aggiungiMedico(nome, cognome, matricola, login, password, null, null, null);
-
-			// La registrazione ha successo solo se vengono creati sia l'utente che la sua agenda.
-			// L'istanza dell'agenda non viene più creata di default alla registrazione.
-			return successoMedico;
+			return medicoDAO.aggiungiMedico(nome, cognome, matricola, login, password, null, null, null);
 		}
 	}
 
@@ -860,74 +928,65 @@ public class Controller {
         return false;
 	}
 
-	private void impostaIdAgendaPerMatricola(String matricola, JTextField idAgendaInput) {
+	private String getIdAgendaPerMatricola(String matricola) {
 		if (matricola == null || matricola.isEmpty()) {
-			idAgendaInput.setText("");
-			return;
+			return null;
 		}
 		List<ArrayList<String>> eventi = agendaDAO.getEventiByMatricola(matricola);
 		if (eventi == null || eventi.isEmpty()) {
+			// Se l'agenda non esiste, la creiamo "on-demand"
 			if (matricola.toUpperCase().startsWith("A")) {
 				agendaDAO.creaAgendaPerAmministratore(matricola);
 			} else {
 				agendaDAO.creaAgendaPerMedico(matricola);
 			}
+			// E la rileggiamo per ottenere l'ID
 			eventi = agendaDAO.getEventiByMatricola(matricola);
 		}
 		if (eventi != null && !eventi.isEmpty()) {
-			idAgendaInput.setText(eventi.get(0).get(0));
-		} else {
-			idAgendaInput.setText("");
+			// L'ID dell'agenda è il primo campo del primo "evento" (che in realtà è l'agenda stessa)
+			return eventi.get(0).get(0);
 		}
+		return null;
 	}
 
 	public boolean gestisciCreazioneNuovoTurno() {
 		boolean isMedico = utenteLoggato instanceof Medico;
 		String matricolaDefault = isMedico ? utenteLoggato.getMatricola() : "";
 
-		List<ArrayList<String>> tuttiMedici = medicoDAO.getAllMedici();
+		List<ArrayList<String>> tuttiMedici = getAllMedici();
 		List<String> matricoleList = new ArrayList<>();
 		if (tuttiMedici != null) {
 			for (List<String> medico : tuttiMedici) {
-				if (medico.size() > 4) matricoleList.add(medico.get(4));
+				if (medico.size() > 4) matricoleList.add(medico.get(4)); // L'indice 4 è la matricola
 			}
 		}
 
 		JComboBox<String> matricolaComboBox = new JComboBox<>(matricoleList.toArray(new String[0]));
-		JTextField idAgendaInput = new JTextField();
-		idAgendaInput.setEditable(false); // L'ID Agenda si autodetermina
-
 		if (isMedico) {
 			matricolaComboBox.setSelectedItem(matricolaDefault);
 			matricolaComboBox.setEnabled(false);
-			impostaIdAgendaPerMatricola(matricolaDefault, idAgendaInput);
-		} else {
-			if (matricolaComboBox.getItemCount() > 0) {
-				impostaIdAgendaPerMatricola((String) matricolaComboBox.getSelectedItem(), idAgendaInput);
-			}
-			matricolaComboBox.addActionListener(e -> {
-				String selezionata = (String) matricolaComboBox.getSelectedItem();
-				impostaIdAgendaPerMatricola(selezionata, idAgendaInput);
-			});
 		}
 
 		JTextField dataInput = new JTextField(DEFAULT_DATE); // YYYY-MM-DD
 		JTextField inizioInput = new JTextField("08:00:00");
 		JTextField fineInput = new JTextField("14:00:00");
 
-		JPanel panel = new JPanel(new GridLayout(5, 2, 10, 10));
+		JPanel panel = new JPanel(new GridLayout(4, 2, 10, 10));
 		panel.add(new JLabel(LABEL_MATRICOLA_MEDICO)); panel.add(matricolaComboBox);
 		panel.add(new JLabel(LABEL_DATA)); panel.add(dataInput);
 		panel.add(new JLabel(LABEL_ORA_INIZIO)); panel.add(inizioInput);
 		panel.add(new JLabel(LABEL_ORA_FINE)); panel.add(fineInput);
-		panel.add(new JLabel("ID Agenda:")); panel.add(idAgendaInput);
 
 		int result = JOptionPane.showConfirmDialog(null, panel, "Registra Nuovo Turno", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 
 		if (result == JOptionPane.OK_OPTION) {
 			try {
 				String matricola = (String) matricolaComboBox.getSelectedItem();
-				boolean successo = aggiungiTurno(matricola, dataInput.getText().trim(), inizioInput.getText().trim(), fineInput.getText().trim(), idAgendaInput.getText().trim());
+				// L'ID dell'agenda viene recuperato in background senza mostrarlo all'utente
+				String idAgenda = getIdAgendaPerMatricola(matricola);
+
+				boolean successo = aggiungiTurno(matricola, dataInput.getText().trim(), inizioInput.getText().trim(), fineInput.getText().trim(), idAgenda);
 				if (successo) {
 					JOptionPane.showMessageDialog(null, "Turno aggiunto con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
 					return true;
@@ -935,7 +994,7 @@ public class Controller {
 					JOptionPane.showMessageDialog(null, ERRORE_AGGIUNTA_DATI, ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
 				}
 			} catch (NumberFormatException e) {
-				JOptionPane.showMessageDialog(null, "L'ID Agenda deve essere un numero intero valido.", "Errore di Parsing", JOptionPane.ERROR_MESSAGE);
+				JOptionPane.showMessageDialog(null, "Errore interno nel recupero dell'ID Agenda.", "Errore di Parsing", JOptionPane.ERROR_MESSAGE);
 			} catch (IllegalArgumentException ex) {
 				JOptionPane.showMessageDialog(null, "Formato data o ora non valido. Assicurati di usare AAAA-MM-GG e HH:MM:SS", "Errore di Parsing", JOptionPane.ERROR_MESSAGE);
 			}
@@ -1292,7 +1351,9 @@ public class Controller {
 			}
 			@Override
 			protected void done() {
-				try { pazientiFrame.aggiornaTabella(get()); } catch (Exception e) { LOGGER.warning("Errore caricamento pazienti"); }
+				try { pazientiFrame.aggiornaTabella(get()); }
+				catch (InterruptedException e) { Thread.currentThread().interrupt(); LOGGER.warning("Caricamento pazienti interrotto"); }
+				catch (Exception e) { LOGGER.warning("Errore caricamento pazienti"); }
 				pazientiFrame.setCursor(java.awt.Cursor.getDefaultCursor());
 			}
 		};
@@ -1315,25 +1376,11 @@ public class Controller {
 			dati[i][2] = r.size() > 2 ? r.get(2) : "";
 
 			String dataInizio = r.size() > 4 ? r.get(4) : "";
-			if (dataInizio != null && !dataInizio.isEmpty()) {
-				try {
-					java.sql.Timestamp ts = java.sql.Timestamp.valueOf(dataInizio);
-					dataInizio = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(ts);
-				} catch (Exception ex) {
-					if (dataInizio.contains(".")) dataInizio = dataInizio.substring(0, dataInizio.indexOf('.'));
-				}
-			}
+			dataInizio = formattaTimestampString(dataInizio);
 			dati[i][3] = dataInizio;
 
 			String dataFine = r.size() > 5 ? r.get(5) : "In corso";
-			if (dataFine != null && !dataFine.equals("In corso") && !dataFine.isEmpty()) {
-				try {
-					java.sql.Timestamp ts = java.sql.Timestamp.valueOf(dataFine);
-					dataFine = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(ts);
-				} catch (Exception ex) {
-					if (dataFine.contains(".")) dataFine = dataFine.substring(0, dataFine.indexOf('.'));
-				}
-			}
+			dataFine = formattaTimestampString(dataFine);
 			dati[i][4] = dataFine;
 			dati[i][5] = r.size() > 6 ? r.get(6) : "";
 			dati[i][6] = r.size() > 8 && r.get(8) != null ? r.get(8) : ""; // Evita null sull'esito
@@ -1431,7 +1478,9 @@ public class Controller {
 			}
 			@Override
 			protected void done() {
-				try { lettiFrame.aggiornaTabella(get()); } catch (Exception e) { LOGGER.warning("Errore caricamento letti"); }
+				try { lettiFrame.aggiornaTabella(get()); }
+				catch (InterruptedException e) { Thread.currentThread().interrupt(); LOGGER.warning("Caricamento letti interrotto"); }
+				catch (Exception e) { LOGGER.warning("Errore caricamento letti"); }
 				lettiFrame.setCursor(java.awt.Cursor.getDefaultCursor());
 			}
 		};
@@ -1467,25 +1516,11 @@ public class Controller {
 			dati[i][1] = nomePaziente.trim() + " (" + cfPaziente + ")"; // Paziente (CF)
 
 			String dataInizio = r.size() > 4 ? r.get(4) : "";
-			if (dataInizio != null && !dataInizio.isEmpty()) {
-				try {
-					java.sql.Timestamp ts = java.sql.Timestamp.valueOf(dataInizio);
-					dataInizio = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(ts);
-				} catch (Exception ex) {
-					if (dataInizio.contains(".")) dataInizio = dataInizio.substring(0, dataInizio.indexOf('.'));
-				}
-			}
+			dataInizio = formattaTimestampString(dataInizio);
 			dati[i][2] = dataInizio; // Data Inizio
 
 			String dataFine = r.size() > 5 ? r.get(5) : "In corso";
-			if (dataFine != null && !dataFine.equals("In corso") && !dataFine.isEmpty()) {
-				try {
-					java.sql.Timestamp ts = java.sql.Timestamp.valueOf(dataFine);
-					dataFine = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(ts);
-				} catch (Exception ex) {
-					if (dataFine.contains(".")) dataFine = dataFine.substring(0, dataFine.indexOf('.'));
-				}
-			}
+			dataFine = formattaTimestampString(dataFine);
 			dati[i][3] = dataFine; // Data Fine
 			dati[i][4] = r.size() > 6 ? r.get(6) : ""; // Motivo
 			dati[i][5] = r.size() > 8 && r.get(8) != null ? r.get(8) : ""; // Esito
@@ -1520,9 +1555,8 @@ public class Controller {
 		JComboBox<String> turnoInput = new JComboBox<>();
 		JComboBox<String> idAgendaInput = new JComboBox<>();
 		final java.util.Map<String, String> turnoDisplayToIdMap = new java.util.HashMap<>();
-
-		JSpinner oraInizioPrestazioneSpinner = new JSpinner(new SpinnerDateModel());
-		oraInizioPrestazioneSpinner.setEditor(new JSpinner.DateEditor(oraInizioPrestazioneSpinner, "HH:mm"));
+		JComboBox<String> oraInizioPrestazioneComboBox = new JComboBox<>();
+		oraInizioPrestazioneComboBox.setEnabled(false); // Inizialmente disabilitato
 
 
 		if (isMedico) {
@@ -1534,27 +1568,6 @@ public class Controller {
 				for (List<String> m : tuttiMedici) {
 					if (m.size() > 4) matricolaInput.addItem(m.get(4));
 				}
-			}
-		}
-
-		if (!isMedico) {
-			java.util.Set<String> agende = new java.util.HashSet<>();
-			List<ArrayList<String>> medici = medicoDAO.getAllMedici();
-			if (medici != null) {
-				for (List<String> med : medici) {
-					if (med.size() > 4) {
-						List<ArrayList<String>> evs = agendaDAO.getEventiByMatricola(med.get(4));
-						if (evs != null && !evs.isEmpty() && evs.get(0).size() > 0) {
-							agende.add(evs.get(0).get(0));
-						}
-					}
-				}
-			}
-			for (String ag : agende) {
-				idAgendaInput.addItem(ag);
-			}
-			if (idAgendaInput.getItemCount() == 0) {
-				idAgendaInput.addItem("Nessuna agenda");
 			}
 		}
 
@@ -1581,27 +1594,116 @@ public class Controller {
 					turnoInput.addItem("Nessun turno trovato");
 				}
 
-				if (isMedico) {
+				if (!isMedico) { // Amministratore: aggiorna l'agenda in base al medico selezionato
 					idAgendaInput.removeAllItems();
-					List<ArrayList<String>> eventi = agendaDAO.getEventiByMatricola(matSelezionata);
-					if (eventi == null || eventi.isEmpty()) {
-						agendaDAO.creaAgendaPerMedico(matSelezionata);
-						eventi = agendaDAO.getEventiByMatricola(matSelezionata);
-					}
-					if (eventi != null && !eventi.isEmpty() && eventi.get(0).size() > 0) {
-						idAgendaInput.addItem(eventi.get(0).get(0));
-					} else {
-						idAgendaInput.addItem("Errore caricamento agenda");
+					if (matSelezionata != null && !matSelezionata.isEmpty()) {
+						List<ArrayList<String>> eventi = agendaDAO.getEventiByMatricola(matSelezionata);
+						if (eventi == null || eventi.isEmpty()) {
+							agendaDAO.creaAgendaPerMedico(matSelezionata);
+							eventi = agendaDAO.getEventiByMatricola(matSelezionata);
+						}
+						if (eventi != null && !eventi.isEmpty() && eventi.get(0).size() > 0) {
+							idAgendaInput.addItem(eventi.get(0).get(0));
+						} else {
+							idAgendaInput.addItem("Errore agenda");
+						}
 					}
 				}
 			}
 		};
 
 		matricolaInput.addActionListener(aggiornaTurniEAgenda);
-		
+
+		// Questo listener cruciale popola il menu a tendina degli orari disponibili.
+		// Calcola gli slot liberi di 30 minuti all'interno del turno selezionato,
+		// escludendo quelli già occupati da altri eventi in agenda.
+		turnoInput.addActionListener(e -> {
+			String turnoSelezionato = (String) turnoInput.getSelectedItem();
+			String matSelezionata = (String) matricolaInput.getSelectedItem();
+			oraInizioPrestazioneComboBox.removeAllItems();
+
+			if (turnoSelezionato == null || turnoSelezionato.equals("Nessun turno trovato") || matSelezionata == null) {
+				oraInizioPrestazioneComboBox.setEnabled(false);
+				return;
+			}
+
+			try {
+				String dataStr = turnoSelezionato.substring(0, turnoSelezionato.indexOf(" ("));
+				String orariStr = turnoSelezionato.substring(turnoSelezionato.indexOf("(") + 1, turnoSelezionato.indexOf(")"));
+				String[] orari = orariStr.split(" - ");
+
+				java.time.LocalDate dataTurno = java.time.LocalDate.parse(dataStr);
+				java.time.LocalTime inizioTurno = java.time.LocalTime.parse(orari[0].trim());
+				java.time.LocalTime fineTurno = java.time.LocalTime.parse(orari[1].trim());
+
+				// Recupera tutti gli eventi del medico per quel giorno per controllare le sovrapposizioni.
+				List<ArrayList<String>> eventiDelGiorno = new ArrayList<>();
+				List<ArrayList<String>> eventiEsistenti = agendaDAO.getEventiByMatricola(matSelezionata);
+				if (eventiEsistenti != null) {
+					for (ArrayList<String> evento : eventiEsistenti) {
+						try {
+							java.sql.Timestamp tsInizio = java.sql.Timestamp.valueOf(evento.get(4));
+							if (tsInizio.toLocalDateTime().toLocalDate().equals(dataTurno)) {
+								eventiDelGiorno.add(evento);
+							}
+						} catch (Exception ignored) {}
+					}
+				}
+
+				final int DURATA_PRESTAZIONE = 30;
+				java.time.LocalTime slotCorrente = inizioTurno;
+
+				// Ciclo while che continua finché l'inizio dello slot corrente + la sua durata
+				// non supera l'orario di fine del turno. Questo garantisce che il calcolo parta
+				// sempre dall'inizio esatto del turno (es. 8:00).
+				while (!slotCorrente.plusMinutes(DURATA_PRESTAZIONE).isAfter(fineTurno)) {
+					
+					java.time.LocalDateTime inizioSlotDateTime = dataTurno.atTime(slotCorrente);
+					java.time.LocalDateTime fineSlotDateTime = inizioSlotDateTime.plusMinutes(DURATA_PRESTAZIONE);
+					
+					boolean sovrapposto = false;
+					// Per ogni slot, controlla se si sovrappone con uno degli eventi esistenti.
+					for (ArrayList<String> eventoEsistente : eventiDelGiorno) {
+						java.time.LocalDateTime inizioEsistente = java.sql.Timestamp.valueOf(eventoEsistente.get(4)).toLocalDateTime();
+						java.time.LocalDateTime fineEsistente = java.sql.Timestamp.valueOf(eventoEsistente.get(5)).toLocalDateTime();
+
+						// Logica di sovrapposizione: (StartA < EndB) and (EndA > StartB)
+						if (inizioSlotDateTime.isBefore(fineEsistente) && fineSlotDateTime.isAfter(inizioEsistente)) {
+							sovrapposto = true;
+							break; // Trovata una sovrapposizione, inutile continuare a controllare
+						}
+					}
+
+					if (!sovrapposto) {
+						// Se lo slot è libero, aggiungilo alla combobox.
+						oraInizioPrestazioneComboBox.addItem(slotCorrente.format(java.time.format.DateTimeFormatter.ofPattern("HH:mm")));
+					}
+					slotCorrente = slotCorrente.plusMinutes(DURATA_PRESTAZIONE);
+				}
+
+				if (oraInizioPrestazioneComboBox.getItemCount() > 0) {
+					oraInizioPrestazioneComboBox.setEnabled(true);
+				} else {
+					oraInizioPrestazioneComboBox.addItem("Nessuno slot libero");
+					oraInizioPrestazioneComboBox.setEnabled(false);
+				}
+
+			} catch (Exception ex) {
+				LOGGER.log(java.util.logging.Level.WARNING, "Errore nel calcolo degli slot orari disponibili.", ex);
+				oraInizioPrestazioneComboBox.setEnabled(false);
+			}
+		});
+
 		if (matricolaInput.getItemCount() > 0) {
 			matricolaInput.setSelectedIndex(0);
-			aggiornaTurniEAgenda.actionPerformed(null);
+			// La chiamata a `setSelectedIndex` scatena il primo listener (aggiornaTurniEAgenda),
+			// che popola la lista dei turni. Tuttavia, questo non scatena automaticamente il listener
+			// su `turnoInput`. Dobbiamo forzarlo manualmente per assicurare che lo spinner dell'orario
+			// venga configurato correttamente all'apertura della finestra, risolvendo il bug.
+			aggiornaTurniEAgenda.actionPerformed(null); // Popola i turni
+			if (turnoInput.getActionListeners().length > 0) {
+				turnoInput.getActionListeners()[0].actionPerformed(null); // Configura lo spinner
+			}
 		}
 
 		List<ArrayList<String>> tuttiPazienti = pazienteDAO.getAllPazienti();
@@ -1620,14 +1722,21 @@ public class Controller {
 		}
 		JComboBox<String> cfPazienteInput = new JComboBox<>(pazientiNomi.toArray(new String[0]));
 
-		JPanel panel = new JPanel(new GridLayout(7, 2, 10, 10));
+		JPanel panel;
+		if (isMedico) {
+			panel = new JPanel(new GridLayout(6, 2, 10, 10));
+		} else {
+			panel = new JPanel(new GridLayout(7, 2, 10, 10));
+		}
 		panel.add(new JLabel("Tipo Esame/Prestazione:")); panel.add(tipoProceduraInput);
 		panel.add(new JLabel("Esito Prestazione:")); panel.add(esitoInput);
 		panel.add(new JLabel("CF Paziente:")); panel.add(cfPazienteInput);
 		panel.add(new JLabel("Matricola Medico:")); panel.add(matricolaInput);
 		panel.add(new JLabel("ID Turno:")); panel.add(turnoInput);
-		panel.add(new JLabel("Ora Inizio Prestazione:")); panel.add(oraInizioPrestazioneSpinner);
-		panel.add(new JLabel("ID Agenda:")); panel.add(idAgendaInput);
+		panel.add(new JLabel("Ora Inizio Prestazione:")); panel.add(oraInizioPrestazioneComboBox);
+		if (!isMedico) {
+			panel.add(new JLabel("ID Agenda:")); panel.add(idAgendaInput);
+		}
 
 		int result = JOptionPane.showConfirmDialog(null, panel, "Nuova Prestazione", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
 
@@ -1653,14 +1762,30 @@ public class Controller {
 					cfPaziente = pazientiCf.get(selectedPatientIndex);
 				}
 				String matricolaFinale = (String) matricolaInput.getSelectedItem();
-				String idAgendaFinale = (String) idAgendaInput.getSelectedItem();
+				String idAgendaFinale;
+				if (isMedico) {
+					List<ArrayList<String>> eventi = agendaDAO.getEventiByMatricola(matricolaFinale);
+					if (eventi == null || eventi.isEmpty()) {
+						agendaDAO.creaAgendaPerMedico(matricolaFinale);
+						eventi = agendaDAO.getEventiByMatricola(matricolaFinale);
+					}
+					idAgendaFinale = (eventi != null && !eventi.isEmpty() && eventi.get(0).size() > 0) ? eventi.get(0).get(0) : null;
+				} else {
+					idAgendaFinale = (String) idAgendaInput.getSelectedItem();
+				}
 
 				if (idTurno == null || idTurno.equals("Nessun turno trovato") || idTurno.trim().isEmpty()) {
 					JOptionPane.showMessageDialog(null, "Devi selezionare un turno valido.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
 					return false;
 				}
-				if (idAgendaFinale == null || idAgendaFinale.equals("Nessuna agenda") || idAgendaFinale.equals("Errore caricamento agenda") || idAgendaFinale.trim().isEmpty()) {
+				if (idAgendaFinale == null || idAgendaFinale.equals("Nessuna agenda") || idAgendaFinale.equals("Errore caricamento agenda") || idAgendaFinale.equals("Errore agenda") || idAgendaFinale.trim().isEmpty()) {
 					JOptionPane.showMessageDialog(null, "Devi selezionare un'agenda valida.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+					return false;
+				}
+
+				String oraInizioSelezionataStr = (String) oraInizioPrestazioneComboBox.getSelectedItem();
+				if (oraInizioSelezionataStr == null || oraInizioSelezionataStr.equals("Nessuno slot libero")) {
+					JOptionPane.showMessageDialog(null, "È necessario selezionare uno slot orario valido.", ERRORE_TITLE, JOptionPane.WARNING_MESSAGE);
 					return false;
 				}
 
@@ -1674,27 +1799,8 @@ public class Controller {
 					JOptionPane.showMessageDialog(null, "Prestazione aggiunta con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
 
 					// Auto-inserimento in agenda
-					try {
-						String turnoSelezionato = (String) turnoInput.getSelectedItem();
-						String dataTurno = turnoSelezionato.split(" ")[0];
-
-						java.util.Date oraInizioSelezionata = (java.util.Date) oraInizioPrestazioneSpinner.getValue();
-						java.text.SimpleDateFormat timeFormat = new java.text.SimpleDateFormat("HH:mm:ss");
-						String oraInizioPrestazione = timeFormat.format(oraInizioSelezionata);
-
-						String inizioTimestampStr = dataTurno + " " + oraInizioPrestazione;
-						java.sql.Timestamp tsInizio = java.sql.Timestamp.valueOf(inizioTimestampStr);
-
-						// Durata di default: 30 minuti
-						java.util.Calendar cal = java.util.Calendar.getInstance();
-						cal.setTime(tsInizio);
-						cal.add(java.util.Calendar.MINUTE, 30);
-						java.sql.Timestamp tsFine = new java.sql.Timestamp(cal.getTimeInMillis());
-
-						addEvento(matricolaFinale, "Prestazione: " + tipologiaPrestazione, "Paziente: " + cfPaziente, tsInizio, tsFine);
-					} catch (Exception ex) {
-						LOGGER.log(java.util.logging.Level.WARNING, "Impossibile auto-inserire la prestazione in agenda.", ex);
-					}
+					String turnoSelezionato = (String) turnoInput.getSelectedItem();
+					autoInserisciPrestazioneInAgenda(turnoSelezionato, oraInizioSelezionataStr, matricolaFinale, tipologiaPrestazione, cfPaziente);
 					return true;
 				} else {
 					JOptionPane.showMessageDialog(null, ERRORE_AGGIUNTA_DATI, ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
@@ -1842,7 +1948,9 @@ public class Controller {
 			}
 			@Override
 			protected void done() {
-				try { prestazioniPanel.aggiornaTabella(get()); } catch (Exception e) { LOGGER.warning("Errore caricamento prestazioni"); }
+				try { prestazioniPanel.aggiornaTabella(get()); }
+				catch (InterruptedException e) { Thread.currentThread().interrupt(); LOGGER.warning("Caricamento prestazioni interrotto"); }
+				catch (Exception e) { LOGGER.warning("Errore caricamento prestazioni"); }
 				prestazioniFrame.setCursor(java.awt.Cursor.getDefaultCursor());
 			}
 		};
@@ -1959,6 +2067,9 @@ public class Controller {
 					if (datiFiltrati.length == 0) {
 						JOptionPane.showMessageDialog(prestazioniPanel.mainPanel, "Nessuna prestazione trovata con i criteri specificati.", INFO_TITLE, JOptionPane.INFORMATION_MESSAGE);
 					}
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+					LOGGER.log(java.util.logging.Level.SEVERE, "Ricerca prestazioni interrotta", e);
 				} catch (Exception e) {
 					LOGGER.log(java.util.logging.Level.SEVERE, "Errore durante la ricerca delle prestazioni", e);
 					JOptionPane.showMessageDialog(prestazioniPanel.mainPanel, "Si è verificato un errore durante la ricerca.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
@@ -2113,7 +2224,9 @@ public class Controller {
 			}
 			@Override
 			protected void done() {
-				try { mediciFrame.aggiornaTabella(get()); } catch (Exception e) { LOGGER.warning("Errore caricamento medici"); }
+				try { mediciFrame.aggiornaTabella(get()); }
+				catch (InterruptedException e) { Thread.currentThread().interrupt(); LOGGER.warning("Caricamento medici interrotto"); }
+				catch (Exception e) { LOGGER.warning("Errore caricamento medici"); }
 				mediciFrame.setCursor(java.awt.Cursor.getDefaultCursor());
 			}
 		};
@@ -2166,7 +2279,9 @@ public class Controller {
 			}
 			@Override
 			protected void done() {
-				try { dimissioniFrame.aggiornaTabella(get()); } catch (Exception e) { LOGGER.warning("Errore caricamento dimissioni"); }
+				try { dimissioniFrame.aggiornaTabella(get()); }
+				catch (InterruptedException e) { Thread.currentThread().interrupt(); LOGGER.warning("Caricamento dimissioni interrotto"); }
+				catch (Exception e) { LOGGER.warning("Errore caricamento dimissioni"); }
 				dimissioniFrame.setCursor(java.awt.Cursor.getDefaultCursor());
 			}
 		};
@@ -2258,7 +2373,9 @@ public class Controller {
 			}
 			@Override
 			protected void done() {
-				try { turniFrame.aggiornaTabella(get()); } catch (Exception e) { LOGGER.warning("Errore caricamento turni"); }
+				try { turniFrame.aggiornaTabella(get()); }
+				catch (InterruptedException e) { Thread.currentThread().interrupt(); LOGGER.warning("Caricamento turni interrotto"); }
+				catch (Exception e) { LOGGER.warning("Errore caricamento turni"); }
 				turniFrame.setCursor(java.awt.Cursor.getDefaultCursor());
 			}
 		};
@@ -2477,13 +2594,7 @@ public class Controller {
 						Medico medicoLoggato = (Medico) utenteLoggato;
 						medicoLoggato.setSpecializzazione(nuovaSpecializzazione);
 						medicoLoggato.setRepartoDiAppartenenza(nuovoReparto);
-						try {
-							if (!nuovaIscrizione.isEmpty()) {
-								medicoLoggato.setIscrizioneAlbo(java.time.LocalDate.parse(nuovaIscrizione));
-							}
-						} catch (java.time.format.DateTimeParseException e) {
-							LOGGER.warning("Formato data iscrizione non valido (" + nuovaIscrizione + ") per aggiornamento oggetto Medico in memoria.");
-						}
+						aggiornaIscrizioneAlboInMemoria(medicoLoggato, nuovaIscrizione);
 					}
 					return true;
 				} else {
@@ -2672,19 +2783,9 @@ public class Controller {
 					List<ArrayList<String>> assenzeDb = assenzaDAO.getAssenzeByMedico(matricola);
 					if (assenzeDb != null) {
 						for (List<String> datiAssenza : assenzeDb) {
-							try {
-								// Uso l'oggetto Assenza per coerenza, anche se qui basterebbe il controllo sulle date.
-								Assenza assenza = new Assenza(
-									java.time.LocalDate.parse(datiAssenza.get(1)),
-									java.time.LocalDate.parse(datiAssenza.get(2)),
-									null, true, null, null // Dettagli non necessari per questo controllo
-								);
-								if (!oggi.isBefore(assenza.getDataInizioAssenza()) && !oggi.isAfter(assenza.getDataFineAssenza())) {
-									stato = "Assente";
-									break;
-								}
-							} catch (Exception ex) {
-								LOGGER.warning("Errore parsing date assenza: " + ex.getMessage());
+							if (isAssenzaAttiva(datiAssenza, oggi)) {
+								stato = "Assente";
+								break;
 							}
 						}
 					}
@@ -2707,17 +2808,9 @@ public class Controller {
 								java.time.LocalTime oraCorrente = java.time.LocalTime.now(java.time.ZoneId.of("Europe/Rome"));
 								for (ArrayList<String> turno : turniMedico) {
 									if (turno.size() > 4 && dateConPrestazioni.contains(turno.get(2))) {
-										try {
-											if (java.time.LocalDate.parse(turno.get(2)).equals(oggi)) {
-												java.time.LocalTime oraInizio = java.time.LocalTime.parse(turno.get(3));
-												java.time.LocalTime oraFine = java.time.LocalTime.parse(turno.get(4));
-												if (!oraCorrente.isBefore(oraInizio) && oraCorrente.isBefore(oraFine)) {
-													stato = "Occupato";
-													break;
-												}
-											}
-										} catch (java.time.format.DateTimeParseException e) {
-											LOGGER.warning("Errore parsing data/ora turno per stato 'Occupato': " + e.getMessage());
+										if (isTurnoOccupato(turno, oggi, oraCorrente)) {
+											stato = "Occupato";
+											break;
 										}
 									}
 								}
@@ -2755,14 +2848,7 @@ public class Controller {
 				dati[i][4] = d.size() > 8 ? d.get(8) : "-"; // Tipo (Esito)
 				
 				String dataDimissione = d.size() > 5 ? d.get(5) : "-";
-				if (dataDimissione != null && !dataDimissione.equals("-") && !dataDimissione.isEmpty()) {
-					try {
-						java.sql.Timestamp ts = java.sql.Timestamp.valueOf(dataDimissione);
-						dataDimissione = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(ts);
-					} catch (Exception ex) {
-						if (dataDimissione.contains(".")) dataDimissione = dataDimissione.substring(0, dataDimissione.indexOf('.'));
-					}
-				}
+				dataDimissione = formattaTimestampString(dataDimissione);
 				dati[i][5] = dataDimissione; // Data
 			} catch (Exception e) {
 				final int riga = i;
@@ -2795,6 +2881,25 @@ public class Controller {
 			}
 		}
 
+		// Per evitare di associare lo stesso evento dell'agenda (e quindi lo stesso orario) a più righe di prestazioni
+		// nella tabella, usiamo un Set per tenere traccia degli ID degli eventi già abbinati. Questo risolve il bug
+		// per cui prestazioni diverse ma con lo stesso paziente/tipo/giorno mostravano tutte lo stesso orario
+		// (quello del primo evento trovato).
+		java.util.Set<String> idEventiAgendaAbbinati = new java.util.HashSet<>();
+
+		// Pre-carica tutti gli eventi per tutti i medici per evitare N+1 query dopo.
+		// NOTA: Questo può essere lento se ci sono molti medici e molti eventi.
+		java.util.Map<String, List<ArrayList<String>>> eventiPerMedicoMap = new java.util.HashMap<>();
+		if (tuttiMedici != null) {
+			for (List<String> medico : tuttiMedici) {
+				if (medico != null && medico.size() > 4) {
+					String matricola = medico.get(4);
+					List<ArrayList<String>> eventi = agendaDAO.getEventiByMatricola(matricola);
+					if (eventi != null) eventiPerMedicoMap.put(matricola, eventi);
+				}
+			}
+		}
+
 		for (int i = 0; i < prestazioniDb.size(); i++) {
 			List<String> p = prestazioniDb.get(i);
 			try {
@@ -2815,21 +2920,40 @@ public class Controller {
 				dati[i][2] = p.size() > 1 ? p.get(1) : "-"; // Tipo Prestazione
 				dati[i][3] = p.size() > 2 ? p.get(2) : "-"; // Esito
 				
-				String dataTurno = p.size() > 3 && p.get(3) != null ? p.get(3) : "-";
-				String turnoFormattato = "-";
-				if (!dataTurno.equals("-") && !dataTurno.trim().isEmpty()) {
-					try {
-						String soloData = dataTurno.contains(" ") ? dataTurno.split(" ")[0] : dataTurno;
-						java.time.LocalDate date = java.time.LocalDate.parse(soloData);
-						java.time.format.DateTimeFormatter formatter = java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd");
-						turnoFormattato = date.format(formatter);
-					} catch (Exception ex) {
-						turnoFormattato = dataTurno;
-					}
-				}
-				dati[i][4] = turnoFormattato; // Data Prestazione
+				// Logica per mostrare data e ora della prestazione
+				String dataTurno = p.size() > 3 && p.get(3) != null ? p.get(3) : "-"; // Formato yyyy-MM-dd
+				String dataOraPrestazione = dataTurno; // Default alla sola data del turno
 
 				String matricola = p.size() > 5 && p.get(5) != null ? p.get(5) : "";
+				String tipologia = p.size() > 1 ? p.get(1) : "";
+				List<ArrayList<String>> eventiMedico = eventiPerMedicoMap.get(matricola);
+				if (eventiMedico != null && !matricola.isEmpty()) {
+					for (ArrayList<String> evento : eventiMedico) {
+						String idEvento = evento.get(0);
+						String titoloEvento = evento.get(1);
+						String descEvento = evento.get(2);
+						String inizioEventoTimestampStr = evento.get(4);
+
+						// Se questo evento è già stato abbinato a un'altra prestazione, lo saltiamo.
+						if (idEventiAgendaAbbinati.contains(idEvento)) {
+							continue;
+						}
+
+						// Cerca l'evento corrispondente basandosi su data, tipo e paziente
+						if (inizioEventoTimestampStr.startsWith(dataTurno) &&
+								titoloEvento.equals("Prestazione: " + tipologia) &&
+								descEvento.equals("Paziente: " + cfPaziente)) {
+							String dataFormattata = formattaDataPrestazione(inizioEventoTimestampStr);
+							if (dataFormattata != null) {
+								dataOraPrestazione = dataFormattata;
+								idEventiAgendaAbbinati.add(idEvento); // Marca l'evento come abbinato per non riutilizzarlo
+							}
+							break; // Trovato, esci dal ciclo per questa prestazione
+						}
+					}
+				}
+				dati[i][4] = dataOraPrestazione; // Data e Ora Prestazione
+
 				String repartoErogante = "-";
 				if (!matricola.trim().isEmpty()) {
 					List<String> medico = mediciMap.get(matricola);
@@ -2906,14 +3030,7 @@ public class Controller {
 				String motivazione = r.get(5);
 				
 				// Formattazione esatta della data e ora (AAAA-MM-GG HH:mm:ss) per la tabella Ricovero
-				if (dataInizio != null && !dataInizio.isEmpty()) {
-					try {
-						java.sql.Timestamp ts = java.sql.Timestamp.valueOf(dataInizio);
-						dataInizio = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(ts);
-					} catch (Exception ex) {
-						if (dataInizio.contains(".")) dataInizio = dataInizio.substring(0, dataInizio.indexOf('.'));
-					}
-				}
+				dataInizio = formattaTimestampString(dataInizio);
 				
 				List<String> paziente = pazienteDAO.getPazienteByCf(cf);
 				String nomePaziente = "Sconosciuto";
@@ -3124,6 +3241,9 @@ public class Controller {
 					if (dati.length == 0) {
 						JOptionPane.showMessageDialog(ricoveroFrame, "Nessun ricovero trovato con i criteri specificati.", INFO_TITLE, JOptionPane.INFORMATION_MESSAGE);
 					}
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+					LOGGER.warning("Ricerca dei ricoveri interrotta: " + e.getMessage());
 				} catch (Exception e) {
 					LOGGER.warning("Errore durante la ricerca dei ricoveri: " + e.getMessage());
 				} finally {
@@ -3143,7 +3263,9 @@ public class Controller {
 			}
 			@Override
 			protected void done() {
-				try { ricoveroFrame.aggiornaTabella(get()); } catch (Exception e) { LOGGER.warning("Errore caricamento ricoveri"); }
+				try { ricoveroFrame.aggiornaTabella(get()); }
+				catch (InterruptedException e) { Thread.currentThread().interrupt(); LOGGER.warning("Caricamento ricoveri interrotto"); }
+				catch (Exception e) { LOGGER.warning("Errore caricamento ricoveri"); }
 				finally { ricoveroFrame.setCursor(java.awt.Cursor.getDefaultCursor()); }
 			}
 		};

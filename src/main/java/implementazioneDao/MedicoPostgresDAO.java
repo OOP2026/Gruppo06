@@ -11,6 +11,10 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Implementazione dell'interfaccia MedicoDAO per la gestione dei medici
+ * su un database PostgreSQL.
+ */
 public class MedicoPostgresDAO implements MedicoDAO {
 
     private static final Logger LOGGER = Logger.getLogger(MedicoPostgresDAO.class.getName());
@@ -30,6 +34,19 @@ public class MedicoPostgresDAO implements MedicoDAO {
     private static final String COL_SPECIALIZZAZIONE = "specializzazione";
     private static final String COL_REPARTO = "reparto";
 
+    /**
+     * Aggiunge un nuovo medico al database.
+     *
+     * @param nome             il nome del medico.
+     * @param cognome          il cognome del medico.
+     * @param matricola        la matricola del medico.
+     * @param login            l'username per l'accesso.
+     * @param password         la password per l'accesso.
+     * @param iscrizioneAlbo   la data di iscrizione all'albo (formato "AAAA-MM-GG").
+     * @param specializzazione la specializzazione del medico.
+     * @param reparto          il reparto di appartenenza.
+     * @return {@code true} se l'aggiunta ha avuto successo, altrimenti {@code false}.
+     */
     @Override
     public boolean aggiungiMedico(String nome, String cognome, String matricola, String login, String password, String iscrizioneAlbo, String specializzazione, String reparto) {
         try (Connection conn = ConnessioneDatabase.getInstance();
@@ -56,6 +73,12 @@ public class MedicoPostgresDAO implements MedicoDAO {
     }
 
 
+    /**
+     * Recupera un medico specifico dal database tramite la sua matricola.
+     *
+     * @param matricola la matricola del medico da cercare.
+     * @return un'ArrayList di stringhe con i dati del medico, o una lista vuota se non trovato.
+     */
     @Override
     public ArrayList<String> getMedicoByMatricola(String matricola) {
         try (Connection conn = ConnessioneDatabase.getInstance();
@@ -71,6 +94,12 @@ public class MedicoPostgresDAO implements MedicoDAO {
         }
         return new ArrayList<>();
     }
+
+    /**
+     * Recupera tutti i medici dal database.
+     *
+     * @return una lista di tutti i medici, dove ogni medico è rappresentato da un'ArrayList di stringhe.
+     */
     @Override
     public ArrayList<ArrayList<String>> getAllMedici() {
         ArrayList<ArrayList<String>> medici = new ArrayList<>();
@@ -87,6 +116,17 @@ public class MedicoPostgresDAO implements MedicoDAO {
         return medici;
     }
 
+    /**
+     * Aggiorna i dati di un medico esistente.
+     *
+     * @param nome             il nuovo nome del medico.
+     * @param cognome          il nuovo cognome del medico.
+     * @param matricola        la matricola del medico da aggiornare (usata come chiave).
+     * @param iscrizioneAlbo   la nuova data di iscrizione all'albo.
+     * @param specializzazione la nuova specializzazione.
+     * @param reparto          il nuovo reparto.
+     * @return {@code true} se l'aggiornamento ha avuto successo, altrimenti {@code false}.
+     */
     @Override
     public boolean aggiornaMedico(String nome, String cognome, String matricola, String iscrizioneAlbo, String specializzazione, String reparto) {
         try (Connection conn = ConnessioneDatabase.getInstance();
@@ -111,6 +151,15 @@ public class MedicoPostgresDAO implements MedicoDAO {
         return false;
     }
 
+    /**
+     * Elimina un medico dal database.
+     * <p>
+     * Nota: Attualmente non implementato. In un sistema reale, è preferibile
+     * disattivare un utente piuttosto che eliminarlo fisicamente per mantenere l'integrità storica.
+     *
+     * @param matricola la matricola del medico da eliminare.
+     * @return sempre {@code false}.
+     */
     @Override
     public boolean eliminaMedico(String matricola) {
         // Tipicamente è meglio disattivare l'utente piuttosto che eliminarlo fisicamente
@@ -142,7 +191,7 @@ public class MedicoPostgresDAO implements MedicoDAO {
 
             stmt.setString(1, login);
             try (ResultSet rs = stmt.executeQuery()) {
-                return rs.next(); // Ritorna true se trova una corrispondenza
+                return rs.next();
             }
 
         } catch (SQLException | NullPointerException e) {
@@ -151,6 +200,13 @@ public class MedicoPostgresDAO implements MedicoDAO {
         return false;
     }
 
+    /**
+     * Metodo helper per estrarre i dati di un medico da un ResultSet.
+     *
+     * @param rs il ResultSet da cui estrarre i dati.
+     * @return un'ArrayList di stringhe contenente i dati del medico.
+     * @throws SQLException se si verifica un errore durante l'accesso ai dati.
+     */
     private ArrayList<String> extractMedicoFromResultSet(ResultSet rs) throws SQLException {
         ArrayList<String> datiMedico = new ArrayList<>();
         datiMedico.add(rs.getString(COL_NOME));

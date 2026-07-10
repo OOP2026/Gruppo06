@@ -11,9 +11,12 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Implementazione dell'interfaccia PazienteDAO per la gestione dei pazienti
+ * su un database PostgreSQL.
+ */
 public class PazientePostgresDAO implements PazienteDAO {
 
-    // Centralizzazione delle query SQL come costanti
     private static final String COLUMNS = "cf, nome, cognome, data_nascita, sesso, residenza, diagnosi";
     private static final String AGGIUNGI_PAZIENTE_QUERY = "INSERT INTO paziente (nome, cognome, cf, data_nascita, sesso, residenza, diagnosi) VALUES (?, ?, ?, ?, ?, ?, ?)";
     private static final String GET_PAZIENTE_BY_CF_QUERY = "SELECT " + COLUMNS + " FROM paziente WHERE cf = ?";
@@ -22,6 +25,18 @@ public class PazientePostgresDAO implements PazienteDAO {
     private static final String ELIMINA_PAZIENTE_QUERY = "DELETE FROM paziente WHERE cf = ?";
     private static final Logger LOGGER = Logger.getLogger(PazientePostgresDAO.class.getName());
 
+    /**
+     * {@inheritDoc}
+     * Aggiunge un nuovo paziente al database.
+     *
+     * @param cf          Il codice fiscale del paziente (chiave primaria).
+     * @param nome        Il nome del paziente.
+     * @param cognome     Il cognome del paziente.
+     * @param dataNascita La data di nascita (formato "AAAA-MM-GG").
+     * @param sesso       Il sesso del paziente (es. 'M' o 'F').
+     * @param residenza   L'indirizzo di residenza.
+     * @param diagnosi    La diagnosi iniziale.
+     */
     @Override
     public boolean aggiungiPaziente(String cf, String nome, String cognome, String dataNascita, String sesso, String residenza, String diagnosi) {
         try (Connection conn = ConnessioneDatabase.getInstance();
@@ -42,6 +57,12 @@ public class PazientePostgresDAO implements PazienteDAO {
         return false;
     }
 
+    /**
+     * {@inheritDoc}
+     * Recupera un paziente specifico dal database tramite il suo codice fiscale.
+     *
+     * @param cf Il codice fiscale del paziente da cercare.
+     */
     @Override
     public ArrayList<String> getPazienteByCf(String cf) {
         try (Connection conn = ConnessioneDatabase.getInstance();
@@ -50,16 +71,7 @@ public class PazientePostgresDAO implements PazienteDAO {
             stmt.setString(1, cf);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    ArrayList<String> paziente = new ArrayList<>();
-                    paziente.add(rs.getString("cf"));
-                    paziente.add(rs.getString("nome"));
-                    paziente.add(rs.getString("cognome"));
-                    java.sql.Date dataDb = rs.getDate("data_nascita");
-                    paziente.add(dataDb != null ? dataDb.toString() : "");
-                    paziente.add(rs.getString("sesso"));
-                    paziente.add(rs.getString("residenza"));
-                    paziente.add(rs.getString("diagnosi"));
-                    return paziente;
+                    return extractPazienteFromResultSet(rs);
                 }
             }
         } catch (SQLException | NullPointerException e) {
@@ -68,6 +80,10 @@ public class PazientePostgresDAO implements PazienteDAO {
         return new ArrayList<>();
     }
 
+    /**
+     * {@inheritDoc}
+     * Recupera tutti i pazienti dal database, ordinati per cognome e nome.
+     */
     @Override
     public ArrayList<ArrayList<String>> getAllPazienti() {
         ArrayList<ArrayList<String>> paziente = new ArrayList<>();
@@ -76,23 +92,26 @@ public class PazientePostgresDAO implements PazienteDAO {
              ResultSet rs = stmt.executeQuery()) {
              
             while (rs.next()) {
-                ArrayList<String> datiPaziente = new ArrayList<>();
-                datiPaziente.add(rs.getString("cf"));
-                datiPaziente.add(rs.getString("nome"));
-                datiPaziente.add(rs.getString("cognome"));
-                java.sql.Date dataDb = rs.getDate("data_nascita");
-                datiPaziente.add(dataDb != null ? dataDb.toString() : "");
-                datiPaziente.add(rs.getString("sesso"));
-                datiPaziente.add(rs.getString("residenza"));
-                datiPaziente.add(rs.getString("diagnosi"));
-                paziente.add(datiPaziente);
+                paziente.add(extractPazienteFromResultSet(rs));
             }
         } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore nel recupero di tutti i pazienti dal database", e);
         }
         return paziente;
     }
-
+    
+    /**
+     * {@inheritDoc}
+     * Aggiorna i dati di un paziente esistente.
+     *
+     * @param cf          Il codice fiscale del paziente da aggiornare.
+     * @param nome        Il nuovo nome.
+     * @param cognome     Il nuovo cognome.
+     * @param dataNascita La nuova data di nascita.
+     * @param sesso       Il nuovo sesso.
+     * @param residenza   La nuova residenza.
+     * @param diagnosi    La nuova diagnosi.
+     */
     @Override
     public boolean aggiornaPaziente(String cf, String nome, String cognome, String dataNascita, String sesso, String residenza, String diagnosi) {
         try (Connection conn = ConnessioneDatabase.getInstance();
@@ -113,6 +132,12 @@ public class PazientePostgresDAO implements PazienteDAO {
         return false;
     }
 
+    /**
+     * {@inheritDoc}
+     * Elimina un paziente dal database.
+     *
+     * @param cf Il codice fiscale del paziente da eliminare.
+     */
     @Override
     public boolean eliminaPaziente(String cf) {
         try (Connection conn = ConnessioneDatabase.getInstance();
@@ -123,5 +148,25 @@ public class PazientePostgresDAO implements PazienteDAO {
             LOGGER.log(Level.SEVERE, "Errore durante l'eliminazione del paziente dal database", e);
         }
         return false;
+    }
+
+    /**
+     * Metodo helper per estrarre i dati di un paziente da un ResultSet.
+     *
+     * @param rs il ResultSet da cui estrarre i dati.
+     * @return un'ArrayList di stringhe contenente i dati del paziente.
+     * @throws SQLException se si verifica un errore durante l'accesso ai dati.
+     */
+    private ArrayList<String> extractPazienteFromResultSet(ResultSet rs) throws SQLException {
+        ArrayList<String> paziente = new ArrayList<>();
+        paziente.add(rs.getString("cf"));
+        paziente.add(rs.getString("nome"));
+        paziente.add(rs.getString("cognome"));
+        java.sql.Date dataDb = rs.getDate("data_nascita");
+        paziente.add(dataDb != null ? dataDb.toString() : "");
+        paziente.add(rs.getString("sesso"));
+        paziente.add(rs.getString("residenza"));
+        paziente.add(rs.getString("diagnosi"));
+        return paziente;
     }
 }

@@ -11,6 +11,10 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Implementazione dell'interfaccia DimissioniDAO per la gestione delle dimissioni dei pazienti
+ * su un database PostgreSQL.
+ */
 public class DimissioniPostgresDAO implements DimissioniDAO {
 
     private static final Logger LOGGER = Logger.getLogger(DimissioniPostgresDAO.class.getName());
@@ -30,6 +34,15 @@ public class DimissioniPostgresDAO implements DimissioniDAO {
     private static final String COL_PROGNOSI = "prognosi";
     private static final String COL_ESITO = "esito";
 
+    /**
+     * Crea una dimissione aggiornando un ricovero esistente con la data di fine e altri dettagli.
+     *
+     * @param idRicovero L'ID del ricovero da chiudere.
+     * @param dataFine   La data e l'ora di fine del ricovero.
+     * @param prognosi   La prognosi in giorni.
+     * @param esito      L'esito della dimissione (es. "Ordinaria", "Decesso").
+     * @return {@code true} se la dimissione è stata creata con successo, altrimenti {@code false}.
+     */
     @Override
     public boolean creaDimissione(String idRicovero, String dataFine, String prognosi, String esito) {
         try (Connection conn = ConnessioneDatabase.getInstance();
@@ -45,6 +58,11 @@ public class DimissioniPostgresDAO implements DimissioniDAO {
         return false;
     }
 
+    /**
+     * Recupera tutte le dimissioni (ricoveri chiusi) dal database.
+     *
+     * @return una lista di tutte le dimissioni, ordinate per data di fine decrescente.
+     */
     @Override
     public ArrayList<ArrayList<String>> getAllDimissioni() {
         ArrayList<ArrayList<String>> dimissioni = new ArrayList<>();
@@ -61,6 +79,12 @@ public class DimissioniPostgresDAO implements DimissioniDAO {
         return dimissioni;
     }
 
+    /**
+     * Recupera l'ultimo ricovero chiuso per un paziente specifico.
+     *
+     * @param cfPaziente Il codice fiscale del paziente.
+     * @return un'ArrayList di stringhe con i dati dell'ultima dimissione, o una lista vuota se non trovata.
+     */
     @Override
     public ArrayList<String> getUltimoRicoveroChiuso(String cfPaziente) {
         try (Connection conn = ConnessioneDatabase.getInstance();
@@ -76,6 +100,12 @@ public class DimissioniPostgresDAO implements DimissioniDAO {
         return new ArrayList<>();
     }
 
+    /**
+     * Elimina una dimissione (e il relativo ricovero) dal database.
+     *
+     * @param idRicovero L'ID del ricovero da eliminare.
+     * @return {@code true} se l'eliminazione ha avuto successo, altrimenti {@code false}.
+     */
     @Override
     public boolean eliminaDimissione(String idRicovero) {
         try (Connection conn = ConnessioneDatabase.getInstance();
@@ -88,6 +118,13 @@ public class DimissioniPostgresDAO implements DimissioniDAO {
         return false;
     }
 
+    /**
+     * Metodo helper per estrarre i dati di una dimissione da un ResultSet.
+     *
+     * @param rs il ResultSet da cui estrarre i dati.
+     * @return un'ArrayList di stringhe contenente i dati della dimissione.
+     * @throws SQLException se si verifica un errore durante l'accesso ai dati.
+     */
     private ArrayList<String> extractDimissioneFromResultSet(ResultSet rs) throws SQLException {
         ArrayList<String> ricovero = new ArrayList<>();
         ricovero.add(String.valueOf(rs.getInt(COL_ID_RICOVERO)));

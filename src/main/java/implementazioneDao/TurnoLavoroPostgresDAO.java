@@ -13,6 +13,11 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Implementazione dell'interfaccia TurnoLavoroDAO per la gestione dei turni di lavoro
+ * su un database PostgreSQL.
+ * Questa classe utilizza la nuova API java.time per la gestione di date e orari.
+ */
 public class TurnoLavoroPostgresDAO implements TurnoLavoroDAO {
 
     private static final Logger LOGGER = Logger.getLogger(TurnoLavoroPostgresDAO.class.getName());
@@ -28,6 +33,9 @@ public class TurnoLavoroPostgresDAO implements TurnoLavoroDAO {
     private static final String AGGIORNA_TURNO_QUERY = "UPDATE  turno_lavorativo SET ora_inizio = ?, ora_fine = ? WHERE matricola_medico = ? AND data_turno = ? AND ora_inizio = ?";
     private static final String ELIMINA_TURNO_QUERY = "DELETE FROM  turno_lavorativo WHERE matricola_medico = ? AND data_turno = ? AND ora_inizio = ?";
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean aggiungiTurno(String matricola, String data, String inizioTurno, String fineTurno, String idAgenda) {
         try (Connection conn = ConnessioneDatabase.getInstance();
@@ -46,6 +54,9 @@ public class TurnoLavoroPostgresDAO implements TurnoLavoroDAO {
         return false;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ArrayList<String> getTurno(String matricola, String data, String inizioTurno) {
         try (Connection conn = ConnessioneDatabase.getInstance();
@@ -56,20 +67,7 @@ public class TurnoLavoroPostgresDAO implements TurnoLavoroDAO {
             stmt.setObject(3, LocalTime.parse(inizioTurno));
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
-                ArrayList<String> turno = new ArrayList<>();
-                turno.add(rs.getString(COL_ID_TURNO));
-                turno.add(rs.getString(COL_MATRICOLA_MEDICO));
-
-                LocalDate dataDb = rs.getObject(COL_DATA_TURNO, LocalDate.class);
-                turno.add(dataDb != null ? dataDb.toString() : "");
-
-                LocalTime inizioDb = rs.getObject(COL_ORA_INIZIO, LocalTime.class);
-                turno.add(inizioDb != null ? inizioDb.toString() : "");
-
-                LocalTime fineDb = rs.getObject(COL_ORA_FINE, LocalTime.class);
-                turno.add(fineDb != null ? fineDb.toString() : "");
-
-                return turno;
+                return extractTurnoFromResultSet(rs);
             }
         } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante il recupero del turno", e);
@@ -77,6 +75,9 @@ public class TurnoLavoroPostgresDAO implements TurnoLavoroDAO {
         return new ArrayList<>();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public ArrayList<ArrayList<String>> getTurniByMedico(String matricola) {
         ArrayList<ArrayList<String>> turni = new ArrayList<>();
@@ -86,20 +87,7 @@ public class TurnoLavoroPostgresDAO implements TurnoLavoroDAO {
             stmt.setString(1, matricola);
             ResultSet rs = stmt.executeQuery();
             while (rs.next()) {
-                ArrayList<String> turno = new ArrayList<>();
-                turno.add(rs.getString(COL_ID_TURNO));
-                turno.add(rs.getString(COL_MATRICOLA_MEDICO));
-
-                LocalDate dataDb = rs.getObject(COL_DATA_TURNO, LocalDate.class);
-                turno.add(dataDb != null ? dataDb.toString() : "");
-
-                LocalTime inizioDb = rs.getObject(COL_ORA_INIZIO, LocalTime.class);
-                turno.add(inizioDb != null ? inizioDb.toString() : "");
-
-                LocalTime fineDb = rs.getObject(COL_ORA_FINE, LocalTime.class);
-                turno.add(fineDb != null ? fineDb.toString() : "");
-
-                turni.add(turno);
+                turni.add(extractTurnoFromResultSet(rs));
             }
         } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante il recupero dei turni per medico", e);
@@ -107,6 +95,9 @@ public class TurnoLavoroPostgresDAO implements TurnoLavoroDAO {
         return turni;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean aggiornaTurno(String matricola, String data, String vecchioInizio, String nuovoInizio, String nuovaFine) {
         try (Connection conn = ConnessioneDatabase.getInstance();
@@ -123,6 +114,9 @@ public class TurnoLavoroPostgresDAO implements TurnoLavoroDAO {
         return false;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean eliminaTurno(String matricola, String data, String inizioTurno) {
         try (Connection conn = ConnessioneDatabase.getInstance();
@@ -137,6 +131,9 @@ public class TurnoLavoroPostgresDAO implements TurnoLavoroDAO {
         return false; 
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public boolean aggiornaMedicoTurno(int idTurno, String nuovaMatricola) {
         final String UPDATE_QUERY = "UPDATE turno_lavorativo SET matricola_medico = ? WHERE id_turno = ?";
@@ -149,5 +146,28 @@ public class TurnoLavoroPostgresDAO implements TurnoLavoroDAO {
             LOGGER.log(Level.SEVERE, e, () -> "Errore durante l'aggiornamento del medico per il turno ID: " + idTurno);
         }
         return false;
+    }
+
+    /**
+     * Metodo helper per estrarre i dati di un turno da un ResultSet.
+     *
+     * @param rs il ResultSet da cui estrarre i dati.
+     * @return un'ArrayList di stringhe contenente i dati del turno.
+     * @throws SQLException se si verifica un errore durante l'accesso ai dati.
+     */
+    private ArrayList<String> extractTurnoFromResultSet(ResultSet rs) throws SQLException {
+        ArrayList<String> turno = new ArrayList<>();
+        turno.add(rs.getString(COL_ID_TURNO));
+        turno.add(rs.getString(COL_MATRICOLA_MEDICO));
+
+        LocalDate dataDb = rs.getObject(COL_DATA_TURNO, LocalDate.class);
+        turno.add(dataDb != null ? dataDb.toString() : "");
+
+        LocalTime inizioDb = rs.getObject(COL_ORA_INIZIO, LocalTime.class);
+        turno.add(inizioDb != null ? inizioDb.toString() : "");
+
+        LocalTime fineDb = rs.getObject(COL_ORA_FINE, LocalTime.class);
+        turno.add(fineDb != null ? fineDb.toString() : "");
+        return turno;
     }
 }

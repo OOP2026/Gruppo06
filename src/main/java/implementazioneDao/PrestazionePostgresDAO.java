@@ -11,6 +11,10 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Implementazione dell'interfaccia PrestazioneDAO per la gestione delle prestazioni mediche
+ * su un database PostgreSQL.
+ */
 public class PrestazionePostgresDAO implements PrestazioneDAO {
 
     private static final Logger LOGGER = Logger.getLogger(PrestazionePostgresDAO.class.getName());
@@ -29,6 +33,17 @@ public class PrestazionePostgresDAO implements PrestazioneDAO {
     private static final String COL_MATRICOLA_MEDICO = "matricola_medico";
     private static final String COL_REFERTO = "referto";
 
+    /**
+     * {@inheritDoc}
+     * Aggiunge una nuova prestazione medica al database.
+     * @param tipologiaPrestazione la descrizione della prestazione.
+     * @param esitoPrestazione l'esito della prestazione (es. "Erogata", "Non erogata").
+     * @param idTurno l'ID del turno lavorativo associato.
+     * @param cfPaziente il codice fiscale del paziente.
+     * @param matricolaMedico la matricola del medico che ha erogato la prestazione.
+     * @param idAgenda l'ID dell'agenda a cui la prestazione è collegata.
+     * @return {@code true} se l'aggiunta ha avuto successo, altrimenti {@code false}.
+     */
     @Override
     public boolean aggiungiPrestazione(String tipologiaPrestazione, String esitoPrestazione, String idTurno, String cfPaziente, String matricolaMedico, String idAgenda) {
         try (Connection conn = ConnessioneDatabase.getInstance();
@@ -46,6 +61,11 @@ public class PrestazionePostgresDAO implements PrestazioneDAO {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     * Recupera tutte le prestazioni mediche dal database.
+     * @return una lista di tutte le prestazioni.
+     */
     @Override
     public ArrayList<ArrayList<String>> getAllPrestazioni() {
         ArrayList<ArrayList<String>> prestazioni = new ArrayList<>();
@@ -61,6 +81,12 @@ public class PrestazionePostgresDAO implements PrestazioneDAO {
         return prestazioni;
     }
 
+    /**
+     * {@inheritDoc}
+     * Recupera tutte le prestazioni erogate da un medico specifico.
+     * @param matricola la matricola del medico.
+     * @return una lista delle prestazioni associate al medico.
+     */
     @Override
     public ArrayList<ArrayList<String>> getPrestazioniByMedico(String matricola) {
         ArrayList<ArrayList<String>> prestazioni = new ArrayList<>();
@@ -78,6 +104,12 @@ public class PrestazionePostgresDAO implements PrestazioneDAO {
         return prestazioni;
     }
 
+    /**
+     * {@inheritDoc}
+     * Recupera una singola prestazione tramite il suo ID.
+     * @param idPrestazione l'ID della prestazione da cercare.
+     * @return un'ArrayList con i dati della prestazione, o {@code null} se non trovata.
+     */
     @Override
     public ArrayList<String> getPrestazioneById(String idPrestazione) {
         ArrayList<String> prestazione = null;
@@ -95,6 +127,15 @@ public class PrestazionePostgresDAO implements PrestazioneDAO {
         return prestazione;
     }
 
+    /**
+     * {@inheritDoc}
+     * Aggiorna i dettagli di una prestazione esistente.
+     * @param idPrestazione l'ID della prestazione da aggiornare.
+     * @param tipologia la nuova tipologia della prestazione.
+     * @param esito il nuovo esito della prestazione.
+     * @param referto il nuovo testo del referto.
+     * @return {@code true} se l'aggiornamento ha avuto successo, altrimenti {@code false}.
+     */
     @Override
     public boolean updatePrestazione(int idPrestazione, String tipologia, String esito, String referto) {
         try (Connection conn = ConnessioneDatabase.getInstance();
@@ -110,6 +151,12 @@ public class PrestazionePostgresDAO implements PrestazioneDAO {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     * Elimina una prestazione dal database.
+     * @param idPrestazione l'ID della prestazione da eliminare.
+     * @return {@code true} se l'eliminazione ha avuto successo, altrimenti {@code false}.
+     */
     @Override
     public boolean eliminaPrestazione(int idPrestazione) {
         try (Connection conn = ConnessioneDatabase.getInstance();
@@ -122,6 +169,13 @@ public class PrestazionePostgresDAO implements PrestazioneDAO {
         }
     }
 
+    /**
+     * Metodo helper per estrarre i dati di una prestazione da un {@link ResultSet}.
+     *
+     * @param rs il ResultSet da cui estrarre i dati.
+     * @return un'ArrayList di stringhe contenente i dati della prestazione.
+     * @throws SQLException se si verifica un errore durante l'accesso ai dati.
+     */
     private ArrayList<String> extractPrestazioneFromResultSet(ResultSet rs) throws SQLException {
         ArrayList<String> p = new ArrayList<>();
         p.add(String.valueOf(rs.getInt(COL_ID_PRESTAZIONE)));

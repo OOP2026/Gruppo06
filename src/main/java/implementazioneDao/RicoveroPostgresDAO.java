@@ -12,6 +12,10 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Implementazione dell'interfaccia RicoveroDAO per la gestione dei ricoveri dei pazienti
+ * su un database PostgreSQL.
+ */
 public class RicoveroPostgresDAO implements RicoveroDAO {
 
     private static final Logger LOGGER = Logger.getLogger(RicoveroPostgresDAO.class.getName());
@@ -29,6 +33,16 @@ public class RicoveroPostgresDAO implements RicoveroDAO {
     private static final String COL_DATA_INIZIO = "data_inizio";
     private static final String COL_MOTIVAZIONE = "motivazione";
 
+    /**
+     * {@inheritDoc}
+     * Aggiunge un nuovo ricovero per un paziente nel database.
+     *
+     * @param cfPaziente  Il codice fiscale del paziente.
+     * @param idLetto     L'identificativo del letto assegnato.
+     * @param reparto     Il reparto in cui si trova il letto.
+     * @param dataInizio  La data e l'ora di inizio del ricovero.
+     * @param motivazione Il motivo del ricovero.
+     */
     @Override
     public boolean aggiungiRicovero(String cfPaziente, String idLetto, String reparto, String dataInizio, String motivazione) {
         try (Connection conn = ConnessioneDatabase.getInstance();
@@ -45,6 +59,12 @@ public class RicoveroPostgresDAO implements RicoveroDAO {
         return false;
     }
 
+    /**
+     * {@inheritDoc}
+     * Recupera il ricovero attualmente attivo per un paziente specifico.
+     *
+     * @param cfPaziente Il codice fiscale del paziente.
+     */
     @Override
     public ArrayList<String> getRicoveroAttivo(String cfPaziente) {
         try (Connection conn = ConnessioneDatabase.getInstance();
@@ -59,21 +79,36 @@ public class RicoveroPostgresDAO implements RicoveroDAO {
         return new ArrayList<>();
     }
 
+    /**
+     * Questo metodo non è implementato in questa classe. La logica di dimissione
+     * è gestita da {@link DimissioniPostgresDAO#creaDimissione(String, String, String, String)}.
+     *
+     * @return sempre {@code false}.
+     */
     @Override
     public boolean aggiornaRicoveroDimissione(String idRicovero, String dataFine, String prognosi, String esito) {
         return false;
     }
 
+    /**
+     * Questo metodo non è implementato. Utilizzare {@link DimissioniPostgresDAO#getUltimoRicoveroChiuso(String)}.
+     * @return una lista vuota.
+     */
     @Override
     public ArrayList<String> getUltimoRicoveroChiuso(String cfPaziente) {
         return new ArrayList<>();
     }
 
+    /**
+     * Questo metodo non è implementato. Utilizzare {@link DimissioniPostgresDAO#getAllDimissioni()}.
+     * @return una lista vuota.
+     */
     @Override
     public ArrayList<ArrayList<String>> getAllDimissioni() {
         return new ArrayList<>();
     }
 
+    /** {@inheritDoc} */
     @Override
     public ArrayList<ArrayList<String>> getStoricoRicoveri(String cfPaziente) {
         ArrayList<ArrayList<String>> storico = new ArrayList<>();
@@ -91,6 +126,7 @@ public class RicoveroPostgresDAO implements RicoveroDAO {
         return storico;
     }
 
+    /** {@inheritDoc} */
     @Override
     public List<ArrayList<String>> getAllRicoveriAttivi() {
         List<ArrayList<String>> ricoveri = new ArrayList<>();
@@ -107,6 +143,7 @@ public class RicoveroPostgresDAO implements RicoveroDAO {
         return ricoveri;
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean isLettoAttualmenteOccupato(String idLetto, String reparto) {
         try (Connection conn = ConnessioneDatabase.getInstance();
@@ -122,6 +159,7 @@ public class RicoveroPostgresDAO implements RicoveroDAO {
         }
     }
 
+    /** {@inheritDoc} */
     @Override
     public List<ArrayList<String>> getStoricoRicoveriByLetto(String idLetto, String reparto) {
         List<ArrayList<String>> storico = new ArrayList<>();
@@ -140,6 +178,7 @@ public class RicoveroPostgresDAO implements RicoveroDAO {
         return storico;
     }
 
+    /** {@inheritDoc} */
     @Override
     public boolean aggiornaLettoRicovero(String idRicovero, String nuovoLetto, String nuovoReparto) {
         try (Connection conn = ConnessioneDatabase.getInstance();
@@ -155,6 +194,13 @@ public class RicoveroPostgresDAO implements RicoveroDAO {
         return false;
     }
 
+    /**
+     * Metodo helper per estrarre i dati di un ricovero attivo da un ResultSet.
+     *
+     * @param rs il ResultSet da cui estrarre i dati.
+     * @return un'ArrayList di stringhe contenente i dati del ricovero.
+     * @throws SQLException se si verifica un errore durante l'accesso ai dati.
+     */
     private ArrayList<String> extractRicoveroAttivoFromResultSet(ResultSet rs) throws SQLException {
         ArrayList<String> ricovero = new ArrayList<>();
         ricovero.add(String.valueOf(rs.getInt(COL_ID_RICOVERO)));
@@ -167,6 +213,13 @@ public class RicoveroPostgresDAO implements RicoveroDAO {
         return ricovero;
     }
 
+    /**
+     * Metodo helper per estrarre i dati di un ricovero completo (anche chiuso) da un ResultSet.
+     *
+     * @param rs il ResultSet da cui estrarre i dati.
+     * @return un'ArrayList di stringhe contenente i dati completi del ricovero.
+     * @throws SQLException se si verifica un errore durante l'accesso ai dati.
+     */
     private ArrayList<String> extractRicoveroCompletoFromResultSet(ResultSet rs) throws SQLException {
         ArrayList<String> ricovero = extractRicoveroAttivoFromResultSet(rs);
         ricovero.remove(ricovero.size() - 1);

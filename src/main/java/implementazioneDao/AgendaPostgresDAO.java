@@ -8,11 +8,14 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * Implementazione dell'interfaccia AgendaDAO per la gestione degli eventi dell'agenda
+ * su un database PostgreSQL.
+ */
 public class AgendaPostgresDAO implements AgendaDAO {
 
     private static final Logger LOGGER = Logger.getLogger(AgendaPostgresDAO.class.getName());
 
-    // Centralizzazione delle query SQL come costanti per migliorare la leggibilità e la manutenibilità
     private static final String GET_EVENTI_BY_MATRICOLA_QUERY = "SELECT id_agenda, titolo, descrizione, matricola_medico, data_ora_inizio, data_ora_fine, matricola_amministratore FROM agenda WHERE matricola_medico = ? OR matricola_amministratore = ? ORDER BY data_ora_inizio DESC";
     private static final String ADD_EVENTO_ADMIN_QUERY = "INSERT INTO agenda (titolo, descrizione, data_ora_inizio, data_ora_fine, matricola_amministratore) VALUES (?, ?, ?, ?, ?)";
     private static final String ADD_EVENTO_MEDICO_QUERY = "INSERT INTO agenda (titolo, descrizione, data_ora_inizio, data_ora_fine, matricola_medico) VALUES (?, ?, ?, ?, ?)";
@@ -21,7 +24,6 @@ public class AgendaPostgresDAO implements AgendaDAO {
     private static final String CREA_AGENDA_QUERY = "INSERT INTO agenda (matricola_medico, titolo, descrizione, data_ora_inizio, data_ora_fine) VALUES (?, 'Agenda Principale', 'Agenda creata automaticamente', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
     private static final String CREA_AGENDA_ADMIN_QUERY = "INSERT INTO agenda (matricola_amministratore, titolo, descrizione, data_ora_inizio, data_ora_fine) VALUES (?, 'Agenda Principale', 'Agenda creata automaticamente', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)";
 
-    // Costanti per i nomi delle colonne
     private static final String COL_ID_AGENDA = "id_agenda";
     private static final String COL_MATRICOLA_MEDICO = "matricola_medico";
     private static final String COL_MATRICOLA_AMMINISTRATORE = "matricola_amministratore";
@@ -30,7 +32,12 @@ public class AgendaPostgresDAO implements AgendaDAO {
     private static final String COL_DATA_ORA_INIZIO = "data_ora_inizio";
     private static final String COL_DATA_ORA_FINE = "data_ora_fine";
 
-
+    /**
+     * Recupera tutti gli eventi associati a una specifica matricola (medico o amministratore).
+     *
+     * @param matricola la matricola dell'utente.
+     * @return una lista di eventi, dove ogni evento è rappresentato da un'ArrayList di stringhe.
+     */
     @Override
     public java.util.List<ArrayList<String>> getEventiByMatricola(String matricola) {
         ArrayList<ArrayList<String>> eventi = new ArrayList<>();
@@ -63,6 +70,16 @@ public class AgendaPostgresDAO implements AgendaDAO {
         return eventi;
     }
 
+    /**
+     * Aggiunge un nuovo evento all'agenda di un utente (medico o amministratore).
+     *
+     * @param titolo        il titolo dell'evento.
+     * @param matricola     la matricola dell'utente a cui associare l'evento.
+     * @param descrizione   una descrizione dell'evento.
+     * @param dataOraInizio il timestamp di inizio dell'evento.
+     * @param dataOraFine   il timestamp di fine dell'evento.
+     * @return {@code true} se l'evento è stato aggiunto con successo, altrimenti {@code false}.
+     */
     @Override
     public boolean addEvento(String titolo, String matricola, String descrizione, Timestamp dataOraInizio, Timestamp dataOraFine) {
         String query;
@@ -89,6 +106,16 @@ public class AgendaPostgresDAO implements AgendaDAO {
         }
     }
 
+    /**
+     * Aggiorna un evento esistente nel database.
+     *
+     * @param idEvento      l'ID dell'evento da aggiornare.
+     * @param titolo        il nuovo titolo dell'evento.
+     * @param descrizione   la nuova descrizione dell'evento.
+     * @param dataOraInizio il nuovo timestamp di inizio.
+     * @param dataOraFine   il nuovo timestamp di fine.
+     * @return {@code true} se l'aggiornamento ha avuto successo, altrimenti {@code false}.
+     */
     @Override
     public boolean updateEvento(int idEvento, String titolo, String descrizione, Timestamp dataOraInizio, Timestamp dataOraFine) {
         try (Connection conn = ConnessioneDatabase.getInstance();
@@ -107,6 +134,12 @@ public class AgendaPostgresDAO implements AgendaDAO {
         }
     }
 
+    /**
+     * Elimina un evento dal database.
+     *
+     * @param idEvento l'ID dell'evento da eliminare.
+     * @return {@code true} se l'eliminazione ha avuto successo, altrimenti {@code false}.
+     */
     @Override
     public boolean deleteEvento(int idEvento) {
         try (Connection conn = ConnessioneDatabase.getInstance();
@@ -119,6 +152,12 @@ public class AgendaPostgresDAO implements AgendaDAO {
         }
     }
 
+    /**
+     * Crea un'agenda di default per un nuovo medico.
+     *
+     * @param matricolaMedico la matricola del medico.
+     * @return {@code true} se la creazione ha avuto successo, altrimenti {@code false}.
+     */
     @Override
     public boolean creaAgendaPerMedico(String matricolaMedico) {
         try (Connection conn = ConnessioneDatabase.getInstance();
@@ -131,6 +170,12 @@ public class AgendaPostgresDAO implements AgendaDAO {
         }
     }
 
+    /**
+     * Crea un'agenda di default per un nuovo amministratore.
+     *
+     * @param matricolaAmministratore la matricola dell'amministratore.
+     * @return {@code true} se la creazione ha avuto successo, altrimenti {@code false}.
+     */
     @Override
     public boolean creaAgendaPerAmministratore(String matricolaAmministratore) {
         try (Connection conn = ConnessioneDatabase.getInstance();

@@ -2567,6 +2567,9 @@ public class Controller {
 			String titolo = titoloInput.getText().trim();
 			String descrizione = descrizioneInput.getText().trim();
 			
+			if (inizio.length() == 16) inizio += ":00";
+			if (fine.length() == 16) fine += ":00";
+
             try {
 			    java.sql.Timestamp tsInizio = java.sql.Timestamp.valueOf(inizio);
 			    java.sql.Timestamp tsFine = java.sql.Timestamp.valueOf(fine);
@@ -2640,12 +2643,17 @@ public class Controller {
 						JOptionPane.YES_NO_OPTION,
 						JOptionPane.WARNING_MESSAGE);
 				if (conferma == JOptionPane.YES_OPTION) {
-					boolean successo = deleteEvento(idEvento);
-					if (successo) {
-						JOptionPane.showMessageDialog(null, "Evento eliminato con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
-						return true;
-					} else {
-						JOptionPane.showMessageDialog(null, "Errore durante l'eliminazione dell'evento.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+					try {
+						boolean successo = deleteEvento(idEvento);
+						if (successo) {
+							JOptionPane.showMessageDialog(null, "Evento eliminato con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
+							return true;
+						} else {
+							JOptionPane.showMessageDialog(null, "Errore durante l'eliminazione dell'evento.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+						}
+					} catch (Exception ex) {
+						// Se Postgres blocca l'eliminazione a causa della foreign key, mostriamo il pop-up:
+						JOptionPane.showMessageDialog(null, "Impossibile eliminare l'evento: è ancora associato a una prestazione medica.\nElimina o modifica prima la prestazione.", "Impossibile Eliminare", JOptionPane.WARNING_MESSAGE);
 					}
 				}
 			}
@@ -3287,7 +3295,7 @@ public class Controller {
 			if (ev.size() > 2) {
 				descrizione = ev.get(2);
 			} else {
-				descrizione = "Evento #" + (ev.size() > 0 ? ev.get(0) : "");
+				descrizione = "Evento #" + (ev.isEmpty() ? 0 : ev.get(0));
 			}
 			dati[i][1] = descrizione;
 		}

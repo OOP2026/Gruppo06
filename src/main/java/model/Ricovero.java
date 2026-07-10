@@ -13,6 +13,7 @@ public class Ricovero {
     private String motivoDimissione;
     private int giorniPrognosi;
     private Paziente paziente;
+    private Letto lettoAssegnato;
 
     /**
      * Costruisce un nuovo oggetto Ricovero.
@@ -129,6 +130,16 @@ public class Ricovero {
         this.paziente = paziente;
     }
 
+    /** @return l'oggetto {@link Letto} occupato dal paziente */
+    public Letto getLettoAssegnato() {
+        return lettoAssegnato;
+    }
+
+    /** @param lettoAssegnato modifica o azzera il posto letto associato */
+    public void setLettoAssegnato(Letto lettoAssegnato) {
+        this.lettoAssegnato = lettoAssegnato;
+    }
+
     /**
      * Restituisce una rappresentazione testuale dell'oggetto Ricovero.
      * @return una stringa contenente i dettagli del ricovero.
@@ -142,6 +153,7 @@ public class Ricovero {
                 ", motivoDimissione='" + motivoDimissione + '\'' +
                 ", giorniPrognosi=" + giorniPrognosi +
                 ", paziente=" + (paziente != null ? paziente.getCf() : "null") +
+                ", lettoAssegnato=" + (lettoAssegnato != null ? lettoAssegnato.getReparto() : "nessuno") +
                 '}';
     }
 

@@ -20,7 +20,6 @@ public class PazientePostgresDao implements PazienteDAO {
     private static final String GET_ALL_PAZIENTI_QUERY = "SELECT " + COLUMNS + " FROM paziente ORDER BY cognome, nome";
     private static final String AGGIORNA_PAZIENTE_QUERY = "UPDATE paziente SET nome = ?, cognome = ?, data_nascita = ?, sesso = ?, residenza = ?, diagnosi = ? WHERE cf = ?";
     private static final String ELIMINA_PAZIENTE_QUERY = "DELETE FROM paziente WHERE cf = ?";
-
     private static final Logger LOGGER = Logger.getLogger(PazientePostgresDao.class.getName());
 
     @Override

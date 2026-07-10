@@ -4,7 +4,6 @@ import javax.swing.*;
 import javax.swing.table.*;
 
 public class Medici extends JFrame {
-    //Dichiarazione componenti GUI
     public JPanel mainPanel;
     private JTextField nomeField;
     private JTextField codiceField;
@@ -22,7 +21,6 @@ public class Medici extends JFrame {
     private JRadioButton occupatoRadioButton;
     private JRadioButton tuttiRadioButton;
 
-    //Assegnazione campi presso: JTable mediciTable
     private static final String[] COLONNE = {
             "Matricola", "Cognome e Nome", "Specializzazione",
             "Reparto Assegnato", "Stato"
@@ -43,23 +41,29 @@ public class Medici extends JFrame {
     public Medici() {
         initComponents();
         setupStyles();
+		if (specializzazioneList != null) {
+			specializzazioneList.setListData(SPECIALIZZAZIONI_DATA);
+		}
 
-        specializzazioneList.setListData(SPECIALIZZAZIONI_DATA);
+		if (repartoList != null) {
+			repartoList.setListData(REPARTI_DATA);
+		}
 
-        repartoList.setListData(REPARTI_DATA);
+		if (tuttiRadioButton != null && attivoRadioButton != null && assenteRadioButton != null && occupatoRadioButton != null) {
+			ButtonGroup statoGroup = new ButtonGroup();
+			statoGroup.add(tuttiRadioButton);
+			statoGroup.add(attivoRadioButton);
+			statoGroup.add(assenteRadioButton);
+			statoGroup.add(occupatoRadioButton);
+			tuttiRadioButton.setSelected(true);
+		}
 
-        // Raggruppa i radio button per consentire una sola selezione
-        ButtonGroup statoGroup = new ButtonGroup();
-        statoGroup.add(tuttiRadioButton);
-        statoGroup.add(attivoRadioButton);
-        statoGroup.add(assenteRadioButton);
-        statoGroup.add(occupatoRadioButton);
-        tuttiRadioButton.setSelected(true);
-
-        DefaultTableModel model = new DefaultTableModel(COLONNE, 0) {
-            @Override public boolean isCellEditable(int row, int column) { return false; }
-        };
-        mediciTable.setModel(model);
+		if (mediciTable != null) {
+			DefaultTableModel model = new DefaultTableModel(COLONNE, 0) {
+				@Override public boolean isCellEditable(int row, int column) { return false; }
+			};
+			mediciTable.setModel(model);
+		}
         setupListeners();
         loadTableData(null, null, null, null);
     }
@@ -104,7 +108,7 @@ public class Medici extends JFrame {
         Login.applicaStilePulsantiCentrali(assenzaButton);
     }
 
-    private void setupListeners() { //Setup Listener e operazioni di filtraggio su Matricola
+    private void setupListeners() {
         cercaButton.addActionListener(e -> {
             String nome = nomeField.getText().toLowerCase().trim();
             String matricola = codiceField.getText().toLowerCase().trim();//codiceField viene usato per il filtraggio
@@ -124,7 +128,7 @@ public class Medici extends JFrame {
             loadTableData(null, null, null, null);
         });
     }
-    //Popolazione JTable mediciTable e filtraggio
+
     private void loadTableData(String filtroNome, String filtroMatricola, String filtroSpec, String filtroReparto) {
         DefaultTableModel m = (DefaultTableModel) mediciTable.getModel();
         m.setRowCount(0);

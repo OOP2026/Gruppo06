@@ -21,8 +21,6 @@ public class LettoPostgresDao implements LettoDAO {
     private static final String GET_ALL_LETTI_QUERY = "SELECT numero_letto, reparto_di_appartenenza, is_libero, num_stanza FROM letto ORDER BY reparto_di_appartenenza, num_stanza, numero_letto";
     private static final String AGGIORNA_STATO_LETTO_QUERY = "UPDATE letto SET is_libero = ? WHERE numero_letto = ? AND reparto_di_appartenenza = ?";
     private static final String GET_ALL_REPARTI_QUERY = "SELECT DISTINCT reparto_di_appartenenza FROM letto WHERE reparto_di_appartenenza IS NOT NULL AND reparto_di_appartenenza <> '' ORDER BY reparto_di_appartenenza ASC";
-
-    // Costanti per i nomi delle colonne
     private static final String COL_NUMERO_LETTO = "numero_letto";
     private static final String COL_REPARTO_APPARTENENZA = "reparto_di_appartenenza";
     private static final String COL_IS_LIBERO = "is_libero";
@@ -44,7 +42,6 @@ public class LettoPostgresDao implements LettoDAO {
         return false;
     }
 
-    // NOTA: Aggiorna la firma in LettoDAO aggiungendo 'String reparto'
     @Override
     public ArrayList<String> getLettoById(String idLetto, String reparto) {
         try (Connection conn = ConnessioneDatabase.getInstance();

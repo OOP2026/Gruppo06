@@ -37,23 +37,28 @@ public class Ricovero extends JFrame {
     public Ricovero() {
         initComponents();
         setupStyles();
+		if (dataSpinner != null) {
+			SpinnerDateModel dateModel = new SpinnerDateModel(new Date(), null, null, Calendar.DAY_OF_MONTH);
+			dataSpinner.setModel(dateModel);
+			dataSpinner.setEditor(new JSpinner.DateEditor(dataSpinner, "yyyy-MM-dd"));
+			dataSpinner.addChangeListener(e -> dataModificata = true);
+			((JSpinner.DateEditor) dataSpinner.getEditor()).getTextField().getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+				public void insertUpdate(javax.swing.event.DocumentEvent e) { dataModificata = true; }
+				public void removeUpdate(javax.swing.event.DocumentEvent e) { dataModificata = true; }
+				public void changedUpdate(javax.swing.event.DocumentEvent e) { dataModificata = true; }
+			});
+		}
 
-        SpinnerDateModel dateModel = new SpinnerDateModel(new Date(), null, null, Calendar.DAY_OF_MONTH);
-        dataSpinner.setModel(dateModel);
-        dataSpinner.setEditor(new JSpinner.DateEditor(dataSpinner, "yyyy-MM-dd"));
-        dataSpinner.addChangeListener(e -> dataModificata = true);
-        ((JSpinner.DateEditor) dataSpinner.getEditor()).getTextField().getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-            public void insertUpdate(javax.swing.event.DocumentEvent e) { dataModificata = true; }
-            public void removeUpdate(javax.swing.event.DocumentEvent e) { dataModificata = true; }
-            public void changedUpdate(javax.swing.event.DocumentEvent e) { dataModificata = true; }
-        });
+		if (repartoList != null) {
+			repartoList.setListData(new String[]{"Chirurgia generale", "Ortopedia", "Cardiologia"});
+		}
 
-        repartoList.setListData(new String[]{"Chirurgia generale", "Ortopedia", "Cardiologia"});
-
-        DefaultTableModel model = new DefaultTableModel(new Object[0][0], COLONNE) {
-            @Override public boolean isCellEditable(int row, int column) { return false; }
-        };
-        ricoveriTable.setModel(model);
+		if (ricoveriTable != null) {
+			DefaultTableModel model = new DefaultTableModel(new Object[0][0], COLONNE) {
+				@Override public boolean isCellEditable(int row, int column) { return false; }
+			};
+			ricoveriTable.setModel(model);
+		}
     }
 
     public void aggiornaTabella(Object[][] dati) {
@@ -65,7 +70,6 @@ public class Ricovero extends JFrame {
                 if (riga != null && riga.length >= 7) {
                     idRicoveriNascosti.add((String) riga[0]); // Salva l'ID in memoria
                     
-                    // Mappiamo l'array dal vecchio formato del DAO al nuovo ordine visibile:
                     Object[] rigaVisibile = new Object[6];
                     rigaVisibile[0] = riga[3]; // Codice Fiscale
                     rigaVisibile[1] = riga[1]; // Paziente
@@ -80,7 +84,6 @@ public class Ricovero extends JFrame {
         }
     }
 
-    // Metodi per aggiungere i listener ai pulsanti
     public void addNuovoRicoveroListener(ActionListener listener) {
         nuovoRicoveroButton.addActionListener(listener);
     }
@@ -101,7 +104,6 @@ public class Ricovero extends JFrame {
         resetButton.addActionListener(listener);
     }
 
-    // Metodi per ottenere i valori dai campi di input
     public String getNome() {
         return nomeField.getText();
     }
@@ -123,6 +125,7 @@ public class Ricovero extends JFrame {
             dataSpinner.commitEdit();
         } catch (java.text.ParseException e) {
         }
+
         JSpinner.DateEditor editor = (JSpinner.DateEditor) dataSpinner.getEditor();
         String text = editor.getTextField().getText().trim();
         if (text.isEmpty() || !dataModificata) return "";

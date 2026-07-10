@@ -15,7 +15,6 @@ import java.util.logging.Logger;
 public class RicoveroPostgresDao implements RicoveroDAO {
 
     private static final Logger LOGGER = Logger.getLogger(RicoveroPostgresDao.class.getName());
-    
     private static final String AGGIUNGI_RICOVERO_QUERY = "INSERT INTO ricovero (cf, id_letto, reparto, data_inizio, motivazione) VALUES (?, ?, ?, ?, ?)";
     private static final String GET_RICOVERO_ATTIVO_QUERY = "SELECT id_ricovero, cf, id_letto, reparto, data_inizio, motivazione FROM ricovero WHERE cf = ? AND data_fine IS NULL ORDER BY data_inizio DESC LIMIT 1";
     private static final String GET_ALL_RICOVERI_ATTIVI_QUERY = "SELECT id_ricovero, cf, id_letto, reparto, data_inizio, motivazione FROM ricovero WHERE data_fine IS NULL";
@@ -23,8 +22,6 @@ public class RicoveroPostgresDao implements RicoveroDAO {
     private static final String GET_STORICO_RICOVERI_QUERY = "SELECT id_ricovero, cf, id_letto, reparto, data_inizio, data_fine, motivazione, prognosi, esito FROM ricovero WHERE cf = ? ORDER BY data_inizio DESC";
     private static final String GET_STORICO_RICOVERI_BY_LETTO_QUERY = "SELECT id_ricovero, cf, id_letto, reparto, data_inizio, data_fine, motivazione, prognosi, esito FROM ricovero WHERE id_letto = ? AND reparto = ? ORDER BY data_inizio DESC";
     private static final String AGGIORNA_LETTO_RICOVERO_QUERY = "UPDATE ricovero SET id_letto = ?, reparto = ? WHERE id_ricovero = ?";
-
-    // Costanti per i nomi delle colonne per evitare duplicazioni e code smells
     private static final String COL_ID_RICOVERO = "id_ricovero";
     private static final String COL_CF = "cf";
     private static final String COL_ID_LETTO = "id_letto";
@@ -32,7 +29,6 @@ public class RicoveroPostgresDao implements RicoveroDAO {
     private static final String COL_DATA_INIZIO = "data_inizio";
     private static final String COL_MOTIVAZIONE = "motivazione";
 
-    // NOTA: Aggiorna la firma in RicoveroDAO aggiungendo 'String reparto'
     @Override
     public boolean aggiungiRicovero(String cfPaziente, String idLetto, String reparto, String dataInizio, String motivazione) {
         try (Connection conn = ConnessioneDatabase.getInstance();
@@ -51,23 +47,11 @@ public class RicoveroPostgresDao implements RicoveroDAO {
 
     @Override
     public ArrayList<String> getRicoveroAttivo(String cfPaziente) {
-        // La query viene resa più robusta: in caso di dati corrotti (ricoveri multipli attivi per un paziente),
-        // seleziona solo il più recente. Questo assicura che operazioni come la dimissione
-        // agiscano sempre sull'ultimo ricovero valido.
         try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(GET_RICOVERO_ATTIVO_QUERY)) {
             stmt.setString(1, cfPaziente);
-            ResultSet rs = stmt.executeQuery();
-            if (rs.next()) {
-                ArrayList<String> ricovero = new ArrayList<>();
-                ricovero.add(String.valueOf(rs.getInt(COL_ID_RICOVERO)));
-                ricovero.add(rs.getString(COL_CF));
-                ricovero.add(rs.getString(COL_ID_LETTO));
-                ricovero.add(rs.getString(COL_REPARTO));
-                java.sql.Timestamp dataInizio = rs.getTimestamp(COL_DATA_INIZIO);
-                ricovero.add(dataInizio != null ? dataInizio.toString() : "");
-                ricovero.add(rs.getString(COL_MOTIVAZIONE));
-                return ricovero;
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) return extractRicoveroAttivoFromResultSet(rs);
             }
         } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante il recupero del ricovero attivo", e);
@@ -77,17 +61,17 @@ public class RicoveroPostgresDao implements RicoveroDAO {
 
     @Override
     public boolean aggiornaRicoveroDimissione(String idRicovero, String dataFine, String prognosi, String esito) {
-        return false; // Logica spostata in DimissioniDAO
+        return false;
     }
 
     @Override
     public ArrayList<String> getUltimoRicoveroChiuso(String cfPaziente) {
-        return new ArrayList<>(); // Logica spostata in DimissioniDAO
+        return new ArrayList<>();
     }
 
     @Override
     public ArrayList<ArrayList<String>> getAllDimissioni() {
-        return new ArrayList<>(); // Logica spostata in DimissioniDAO
+        return new ArrayList<>();
     }
 
     @Override
@@ -98,19 +82,7 @@ public class RicoveroPostgresDao implements RicoveroDAO {
             stmt.setString(1, cfPaziente);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    ArrayList<String> ricovero = new ArrayList<>();
-                    ricovero.add(String.valueOf(rs.getInt(COL_ID_RICOVERO)));
-                    ricovero.add(rs.getString(COL_CF));
-                    ricovero.add(rs.getString(COL_ID_LETTO));
-                    ricovero.add(rs.getString(COL_REPARTO));
-                    java.sql.Timestamp dataInizio = rs.getTimestamp(COL_DATA_INIZIO);
-                    ricovero.add(dataInizio != null ? dataInizio.toString() : "");
-                    java.sql.Timestamp dataFine = rs.getTimestamp("data_fine");
-                    ricovero.add(dataFine != null ? dataFine.toString() : "In corso");
-                    ricovero.add(rs.getString(COL_MOTIVAZIONE));
-                    ricovero.add(rs.getString("prognosi"));
-                    ricovero.add(rs.getString("esito"));
-                    storico.add(ricovero);
+                    storico.add(extractRicoveroCompletoFromResultSet(rs));
                 }
             }
         } catch (SQLException | NullPointerException e) {
@@ -122,21 +94,12 @@ public class RicoveroPostgresDao implements RicoveroDAO {
     @Override
     public List<ArrayList<String>> getAllRicoveriAttivi() {
         List<ArrayList<String>> ricoveri = new ArrayList<>();
-        // La query seleziona tutti i ricoveri che non hanno una data di fine
         try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(GET_ALL_RICOVERI_ATTIVI_QUERY);
              ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
-                ArrayList<String> ricovero = new ArrayList<>();
-                ricovero.add(String.valueOf(rs.getInt(COL_ID_RICOVERO)));
-                ricovero.add(rs.getString(COL_CF));
-                ricovero.add(rs.getString(COL_ID_LETTO));
-                ricovero.add(rs.getString(COL_REPARTO));
-                java.sql.Timestamp dataInizio = rs.getTimestamp(COL_DATA_INIZIO);
-                ricovero.add(dataInizio != null ? dataInizio.toString() : "");
-                ricovero.add(rs.getString(COL_MOTIVAZIONE));
-                ricoveri.add(ricovero);
+                ricoveri.add(extractRicoveroAttivoFromResultSet(rs));
             }
         } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante il recupero di tutti i ricoveri attivi", e);
@@ -144,7 +107,6 @@ public class RicoveroPostgresDao implements RicoveroDAO {
         return ricoveri;
     }
 
-    // NOTA: Aggiorna la firma in RicoveroDAO aggiungendo 'String reparto'
     @Override
     public boolean isLettoAttualmenteOccupato(String idLetto, String reparto) {
         try (Connection conn = ConnessioneDatabase.getInstance();
@@ -152,11 +114,10 @@ public class RicoveroPostgresDao implements RicoveroDAO {
             stmt.setString(1, idLetto);
             stmt.setString(2, reparto);
             try (ResultSet rs = stmt.executeQuery()) {
-                return rs.next(); // Se rs.next() è true, esiste un record, quindi il letto è occupato.
+                return rs.next();
             }
         } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante la verifica dello stato di occupazione del letto " + idLetto, e);
-            // Failsafe: se non posso controllare, assumo sia occupato per prevenire doppie assegnazioni.
             return true;
         }
     }
@@ -170,19 +131,7 @@ public class RicoveroPostgresDao implements RicoveroDAO {
             stmt.setString(2, reparto);
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
-                    ArrayList<String> ricovero = new ArrayList<>();
-                    ricovero.add(String.valueOf(rs.getInt(COL_ID_RICOVERO)));
-                    ricovero.add(rs.getString(COL_CF));
-                    ricovero.add(rs.getString(COL_ID_LETTO));
-                    ricovero.add(rs.getString(COL_REPARTO));
-                    java.sql.Timestamp dataInizio = rs.getTimestamp(COL_DATA_INIZIO);
-                    ricovero.add(dataInizio != null ? dataInizio.toString() : "");
-                    java.sql.Timestamp dataFine = rs.getTimestamp("data_fine");
-                    ricovero.add(dataFine != null ? dataFine.toString() : "In corso");
-                    ricovero.add(rs.getString(COL_MOTIVAZIONE));
-                    ricovero.add(rs.getString("prognosi"));
-                    ricovero.add(rs.getString("esito"));
-                    storico.add(ricovero);
+                    storico.add(extractRicoveroCompletoFromResultSet(rs));
                 }
             }
         } catch (SQLException | NullPointerException e) {
@@ -204,5 +153,28 @@ public class RicoveroPostgresDao implements RicoveroDAO {
             LOGGER.log(Level.SEVERE, "Errore durante l'aggiornamento del letto del ricovero", e);
         }
         return false;
+    }
+
+    private ArrayList<String> extractRicoveroAttivoFromResultSet(ResultSet rs) throws SQLException {
+        ArrayList<String> ricovero = new ArrayList<>();
+        ricovero.add(String.valueOf(rs.getInt(COL_ID_RICOVERO)));
+        ricovero.add(rs.getString(COL_CF));
+        ricovero.add(rs.getString(COL_ID_LETTO));
+        ricovero.add(rs.getString(COL_REPARTO));
+        java.sql.Timestamp dataInizio = rs.getTimestamp(COL_DATA_INIZIO);
+        ricovero.add(dataInizio != null ? dataInizio.toString() : "");
+        ricovero.add(rs.getString(COL_MOTIVAZIONE));
+        return ricovero;
+    }
+
+    private ArrayList<String> extractRicoveroCompletoFromResultSet(ResultSet rs) throws SQLException {
+        ArrayList<String> ricovero = extractRicoveroAttivoFromResultSet(rs);
+        ricovero.remove(ricovero.size() - 1);
+        java.sql.Timestamp dataFine = rs.getTimestamp("data_fine");
+        ricovero.add(dataFine != null ? dataFine.toString() : "In corso");
+        ricovero.add(rs.getString(COL_MOTIVAZIONE));
+        ricovero.add(rs.getString("prognosi"));
+        ricovero.add(rs.getString("esito"));
+        return ricovero;
     }
 }

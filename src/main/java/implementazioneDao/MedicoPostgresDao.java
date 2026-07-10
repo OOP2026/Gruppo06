@@ -21,8 +21,6 @@ public class MedicoPostgresDao implements MedicoDAO {
     private static final String GET_MEDICO_BY_LOGIN_AND_PASSWORD_QUERY = "SELECT nome, cognome, login, password, matricola, iscrizione_albo, specializzazione, reparto FROM medico WHERE login = ? AND password = ?";
     private static final String CHECK_LOGIN_ESISTENTE_QUERY = "SELECT 1 FROM medico WHERE login = ?";
     private static final String AGGIORNA_MEDICO_QUERY = "UPDATE medico SET nome = ?, cognome = ?, iscrizione_albo = ?, specializzazione = ?, reparto = ? WHERE matricola = ?";
-
-    // Costanti per i nomi delle colonne
     private static final String COL_NOME = "nome";
     private static final String COL_COGNOME = "cognome";
     private static final String COL_LOGIN = "login";
@@ -62,32 +60,17 @@ public class MedicoPostgresDao implements MedicoDAO {
     public ArrayList<String> getMedicoByMatricola(String matricola) {
         try (Connection conn = ConnessioneDatabase.getInstance();
              PreparedStatement stmt = conn.prepareStatement(GET_MEDICO_BY_MATRICOLA_QUERY)) {
-
             stmt.setString(1, matricola);
-            ResultSet rs = stmt.executeQuery();
-
-            if (rs.next()) {
-                ArrayList<String> datiMedico = new ArrayList<>();
-                datiMedico.add(rs.getString(COL_NOME));
-                datiMedico.add(rs.getString(COL_COGNOME));
-                datiMedico.add(rs.getString(COL_LOGIN));
-                datiMedico.add(rs.getString(COL_PASSWORD));
-                datiMedico.add(rs.getString(COL_MATRICOLA));
-
-                java.sql.Date dataIscrizione = rs.getDate(COL_ISCRIZIONE_ALBO);
-                datiMedico.add(dataIscrizione != null ? dataIscrizione.toString() : "");
-
-                datiMedico.add(rs.getString(COL_SPECIALIZZAZIONE));
-                datiMedico.add(rs.getString(COL_REPARTO));
-
-                return datiMedico;
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return extractMedicoFromResultSet(rs);
+                }
             }
         } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante il recupero del medico per matricola", e);
         }
         return new ArrayList<>();
     }
-
     @Override
     public ArrayList<ArrayList<String>> getAllMedici() {
         ArrayList<ArrayList<String>> medici = new ArrayList<>();
@@ -96,20 +79,7 @@ public class MedicoPostgresDao implements MedicoDAO {
              ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
-                ArrayList<String> datiMedico = new ArrayList<>();
-                datiMedico.add(rs.getString(COL_NOME));
-                datiMedico.add(rs.getString(COL_COGNOME));
-                datiMedico.add(rs.getString(COL_LOGIN));
-                datiMedico.add(rs.getString(COL_PASSWORD));
-                datiMedico.add(rs.getString(COL_MATRICOLA));
-
-                java.sql.Date dataIscrizione = rs.getDate(COL_ISCRIZIONE_ALBO);
-                datiMedico.add(dataIscrizione != null ? dataIscrizione.toString() : "");
-
-                datiMedico.add(rs.getString(COL_SPECIALIZZAZIONE));
-                datiMedico.add(rs.getString(COL_REPARTO));
-
-                medici.add(datiMedico);
+                medici.add(extractMedicoFromResultSet(rs));
             }
         } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante il recupero di tutti i medici", e);
@@ -154,23 +124,10 @@ public class MedicoPostgresDao implements MedicoDAO {
 
             stmt.setString(1, login);
             stmt.setString(2, password);
-            ResultSet rs = stmt.executeQuery();
-
-            if (rs.next()) {
-                ArrayList<String> datiMedico = new ArrayList<>();
-                datiMedico.add(rs.getString(COL_NOME));
-                datiMedico.add(rs.getString(COL_COGNOME));
-                datiMedico.add(rs.getString(COL_LOGIN));
-                datiMedico.add(rs.getString(COL_PASSWORD));
-                datiMedico.add(rs.getString(COL_MATRICOLA));
-
-                java.sql.Date dataIscrizione = rs.getDate(COL_ISCRIZIONE_ALBO);
-                datiMedico.add(dataIscrizione != null ? dataIscrizione.toString() : "");
-
-                datiMedico.add(rs.getString(COL_SPECIALIZZAZIONE));
-                datiMedico.add(rs.getString(COL_REPARTO));
-
-                return datiMedico;
+            try (ResultSet rs = stmt.executeQuery()) {
+                if (rs.next()) {
+                    return extractMedicoFromResultSet(rs);
+                }
             }
         } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante il recupero del medico per login e password", e);
@@ -184,12 +141,29 @@ public class MedicoPostgresDao implements MedicoDAO {
              PreparedStatement stmt = conn.prepareStatement(CHECK_LOGIN_ESISTENTE_QUERY)) {
 
             stmt.setString(1, login);
-            ResultSet rs = stmt.executeQuery();
-            return rs.next(); // Ritorna true se trova una corrispondenza
+            try (ResultSet rs = stmt.executeQuery()) {
+                return rs.next(); // Ritorna true se trova una corrispondenza
+            }
 
         } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante la verifica del login del medico", e);
         }
         return false;
+    }
+
+    private ArrayList<String> extractMedicoFromResultSet(ResultSet rs) throws SQLException {
+        ArrayList<String> datiMedico = new ArrayList<>();
+        datiMedico.add(rs.getString(COL_NOME));
+        datiMedico.add(rs.getString(COL_COGNOME));
+        datiMedico.add(rs.getString(COL_LOGIN));
+        datiMedico.add(rs.getString(COL_PASSWORD));
+        datiMedico.add(rs.getString(COL_MATRICOLA));
+
+        java.sql.Date dataIscrizione = rs.getDate(COL_ISCRIZIONE_ALBO);
+        datiMedico.add(dataIscrizione != null ? dataIscrizione.toString() : "");
+
+        datiMedico.add(rs.getString(COL_SPECIALIZZAZIONE));
+        datiMedico.add(rs.getString(COL_REPARTO));
+        return datiMedico;
     }
 }

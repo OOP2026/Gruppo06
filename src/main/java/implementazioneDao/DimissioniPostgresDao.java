@@ -20,7 +20,6 @@ public class DimissioniPostgresDao implements DimissioniDAO {
     private static final String GET_ULTIMO_RICOVERO_CHIUSO_QUERY = "SELECT id_ricovero, cf, id_letto, reparto, data_inizio, data_fine, motivazione, prognosi, esito FROM ricovero WHERE cf = ? AND data_fine IS NOT NULL ORDER BY data_fine DESC LIMIT 1";
     private static final String ELIMINA_DIMISSIONE_QUERY = "DELETE FROM ricovero WHERE id_ricovero = ?";
 
-    // Costanti per i nomi delle colonne
     private static final String COL_ID_RICOVERO = "id_ricovero";
     private static final String COL_CF = "cf";
     private static final String COL_ID_LETTO = "id_letto";
@@ -54,17 +53,7 @@ public class DimissioniPostgresDao implements DimissioniDAO {
              ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
-                ArrayList<String> ricovero = new ArrayList<>();
-                ricovero.add(String.valueOf(rs.getInt(COL_ID_RICOVERO)));
-                ricovero.add(rs.getString(COL_CF));
-                ricovero.add(rs.getString(COL_ID_LETTO));
-                ricovero.add(rs.getString(COL_REPARTO));
-                ricovero.add(String.valueOf(rs.getTimestamp(COL_DATA_INIZIO)));
-                ricovero.add(String.valueOf(rs.getTimestamp(COL_DATA_FINE)));
-                ricovero.add(rs.getString(COL_MOTIVAZIONE));
-                ricovero.add(rs.getString(COL_PROGNOSI));
-                ricovero.add(rs.getString(COL_ESITO));
-                dimissioni.add(ricovero);
+                dimissioni.add(extractDimissioneFromResultSet(rs));
             }
         } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante il recupero di tutte le dimissioni", e);
@@ -79,17 +68,7 @@ public class DimissioniPostgresDao implements DimissioniDAO {
             stmt.setString(1, cfPaziente);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
-                ArrayList<String> ricovero = new ArrayList<>();
-                ricovero.add(String.valueOf(rs.getInt(COL_ID_RICOVERO)));
-                ricovero.add(rs.getString(COL_CF));
-                ricovero.add(rs.getString(COL_ID_LETTO));
-                ricovero.add(rs.getString(COL_REPARTO));
-                ricovero.add(String.valueOf(rs.getTimestamp(COL_DATA_INIZIO)));
-                ricovero.add(String.valueOf(rs.getTimestamp(COL_DATA_FINE)));
-                ricovero.add(rs.getString(COL_MOTIVAZIONE));
-                ricovero.add(rs.getString(COL_PROGNOSI));
-                ricovero.add(rs.getString(COL_ESITO));
-                return ricovero;
+                return extractDimissioneFromResultSet(rs);
             }
         } catch (SQLException | NullPointerException e) {
             LOGGER.log(Level.SEVERE, "Errore durante il recupero dell'ultimo ricovero chiuso per il paziente " + cfPaziente, e);
@@ -107,5 +86,19 @@ public class DimissioniPostgresDao implements DimissioniDAO {
             LOGGER.log(Level.SEVERE, "Errore durante l'eliminazione della dimissione", e);
         }
         return false;
+    }
+
+    private ArrayList<String> extractDimissioneFromResultSet(ResultSet rs) throws SQLException {
+        ArrayList<String> ricovero = new ArrayList<>();
+        ricovero.add(String.valueOf(rs.getInt(COL_ID_RICOVERO)));
+        ricovero.add(rs.getString(COL_CF));
+        ricovero.add(rs.getString(COL_ID_LETTO));
+        ricovero.add(rs.getString(COL_REPARTO));
+        ricovero.add(String.valueOf(rs.getTimestamp(COL_DATA_INIZIO)));
+        ricovero.add(String.valueOf(rs.getTimestamp(COL_DATA_FINE)));
+        ricovero.add(rs.getString(COL_MOTIVAZIONE));
+        ricovero.add(rs.getString(COL_PROGNOSI));
+        ricovero.add(rs.getString(COL_ESITO));
+        return ricovero;
     }
 }

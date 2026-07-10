@@ -14,7 +14,6 @@ import java.util.logging.Logger;
 public class PrestazionePostgresDao implements PrestazioneDAO {
 
     private static final Logger LOGGER = Logger.getLogger(PrestazionePostgresDao.class.getName());
-
     private static final String AGGIUNGI_PRESTAZIONE_QUERY = "INSERT INTO prestazione (tipologia_prestazione, esito_prestazione, id_turno, cf_paziente, matricola_medico, id_agenda) VALUES (?, ?, ?, ?, ?, ?)";
     private static final String GET_ALL_PRESTAZIONI_QUERY = "SELECT p.id_prestazione, p.tipologia_prestazione, p.esito_prestazione, t.data_turno AS data_turno, p.cf_paziente, p.matricola_medico, p.referto FROM prestazione p LEFT JOIN turno_lavorativo t ON p.id_turno = t.id_turno ORDER BY p.id_prestazione ASC";
     private static final String GET_PRESTAZIONI_BY_MEDICO_QUERY = "SELECT p.id_prestazione, p.tipologia_prestazione, p.esito_prestazione, t.data_turno AS data_turno, p.cf_paziente, p.matricola_medico, p.referto FROM prestazione p LEFT JOIN turno_lavorativo t ON p.id_turno = t.id_turno WHERE p.matricola_medico = ? ORDER BY p.id_prestazione ASC";

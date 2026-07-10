@@ -14,7 +14,6 @@ import java.util.logging.Logger;
 public class UtentePostgresDao implements UtenteDAO{
 
         private static final Logger LOGGER = Logger.getLogger(UtentePostgresDao.class.getName());
-        
         private static final String CHECK_LOGIN_ESISTENTE_QUERY = "SELECT 1 FROM utente WHERE login = ?";
         private static final String AGGIUNGI_UTENTE_QUERY = "INSERT INTO utente (matricola, login, password, nome, cognome, ruolo) VALUES (?, ?, ?, ?, ?, ?)";
         private static final String GET_UTENTE_BY_LOGIN_AND_PASSWORD_QUERY = "SELECT nome, cognome, ruolo, login, password, matricola FROM utente WHERE login = ? AND password = ?";
@@ -25,8 +24,9 @@ public class UtentePostgresDao implements UtenteDAO{
                  PreparedStatement stmt = conn.prepareStatement(CHECK_LOGIN_ESISTENTE_QUERY)) {
 
                 stmt.setString(1, login);
-                ResultSet rs = stmt.executeQuery();
+            try (ResultSet rs = stmt.executeQuery()) {
                 return rs.next(); // Ritorna true se trova una corrispondenza
+            }
 
             } catch (SQLException | NullPointerException e) {
                 LOGGER.log(Level.SEVERE, "Errore durante la verifica del login", e);
@@ -59,26 +59,25 @@ public class UtentePostgresDao implements UtenteDAO{
 
                 stmt.setString(1, login);
                 stmt.setString(2, password);
-                ResultSet rs = stmt.executeQuery();
-
+            try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    ArrayList<String> datiUtente = new ArrayList<>();
-                    // L'ordine è importante per il Controller: nome, cognome, ruolo, login, password, matricola
-                    String nome = rs.getString("nome");
-                    String cognome = rs.getString("cognome");
-
-                    datiUtente.add(nome);
-                    datiUtente.add(cognome);
-                    datiUtente.add(rs.getString("ruolo"));
-                    datiUtente.add(rs.getString("login"));
-                    datiUtente.add(rs.getString("password"));
-                    datiUtente.add(rs.getString("matricola"));
-                    
-                    return datiUtente;
+                    return extractUtenteFromResultSet(rs);
                 }
+            }
             } catch (SQLException | NullPointerException e) {
                 LOGGER.log(Level.SEVERE, "Errore durante il recupero dell'utente per login e password", e);
             }
             return new ArrayList<>();
         }
+
+    private ArrayList<String> extractUtenteFromResultSet(ResultSet rs) throws SQLException {
+        ArrayList<String> datiUtente = new ArrayList<>();
+        datiUtente.add(rs.getString("nome"));
+        datiUtente.add(rs.getString("cognome"));
+        datiUtente.add(rs.getString("ruolo"));
+        datiUtente.add(rs.getString("login"));
+        datiUtente.add(rs.getString("password"));
+        datiUtente.add(rs.getString("matricola"));
+        return datiUtente;
+    }
 }

@@ -120,7 +120,10 @@ public class Controller {
 
 	private void aggiungiEventoGiornoSeCorrisponde(ArrayList<String> evento, java.time.LocalDate dataTurno, List<ArrayList<String>> eventiDelGiorno) {
 		try {
-			java.sql.Timestamp tsInizio = java.sql.Timestamp.valueOf(evento.get(4));
+			String strInizio = evento.get(4) != null ? evento.get(4).trim() : "";
+			if (strInizio.length() == 16) strInizio += ":00";
+
+			java.sql.Timestamp tsInizio = java.sql.Timestamp.valueOf(strInizio);
 			if (tsInizio.toLocalDateTime().toLocalDate().equals(dataTurno)) {
 				eventiDelGiorno.add(evento);
 			}
@@ -1032,9 +1035,11 @@ public class Controller {
 		panel.add(new JLabel("Nuova " + LABEL_ORA_FINE));
 		panel.add(nuovaFineInput);
 
-		int result = JOptionPane.showConfirmDialog(null, panel, "Modifica Turno", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+		Object[] options = {"Salva Modifiche", "Annulla", "Elimina Turno"};
+		int choice = JOptionPane.showOptionDialog(null, panel, "Modifica Turno",
+				JOptionPane.DEFAULT_OPTION, JOptionPane.PLAIN_MESSAGE, null, options, options[0]);
 
-		if (result == JOptionPane.OK_OPTION) {
+		if (choice == 0) { // Salva Modifiche
 			try {
 				String nuovoInizio = nuovoInizioInput.getText().trim();
 				String nuovaFine = nuovaFineInput.getText().trim();
@@ -1050,6 +1055,21 @@ public class Controller {
 			} catch (Exception ex) {
 				LOGGER.log(java.util.logging.Level.SEVERE, "Errore nel parsing per la modifica del turno", ex);
 				JOptionPane.showMessageDialog(null, "Formato ora non valido. Assicurati di usare HH:MM:SS.", "Errore di Formato", JOptionPane.ERROR_MESSAGE);
+			}
+		} else if (choice == 2) { // Elimina Turno
+			int conferma = JOptionPane.showConfirmDialog(null,
+					"Sei sicuro di voler eliminare questo turno?\nL'azione è irreversibile.",
+					"Conferma Eliminazione Turno",
+					JOptionPane.YES_NO_OPTION,
+					JOptionPane.WARNING_MESSAGE);
+			if (conferma == JOptionPane.YES_OPTION) {
+				boolean successo = eliminaTurno(matricola, data, vecchioInizio);
+				if (successo) {
+					JOptionPane.showMessageDialog(null, "Turno eliminato con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
+					return true;
+				} else {
+					JOptionPane.showMessageDialog(null, "Errore durante l'eliminazione del turno.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+				}
 			}
 		}
 		return false;
@@ -1697,53 +1717,13 @@ public class Controller {
 			}
 		}
 
-		java.awt.event.ActionListener aggiornaTurniEAgenda = e -> {
-			String matSelezionata = (String) matricolaInput.getSelectedItem();
-			turnoInput.removeAllItems();
-			turnoDisplayToIdMap.clear();
-			if (matSelezionata != null && !matSelezionata.isEmpty()) {
-				List<ArrayList<String>> turni = turnoDAO.getTurniByMedico(matSelezionata);
-				if (turni != null && !turni.isEmpty()) {
-					for (ArrayList<String> t : turni) {
-						if (t.size() > 4) { // Assicura che ci siano dati fino all'ora di fine
-							String idTurno = t.get(0);
-							String data = t.get(2);
-							String oraInizio = t.get(3);
-							String oraFine = t.get(4);
-							String displayText = data + " (" + oraInizio + " - " + oraFine + ")";
-							turnoInput.addItem(displayText);
-							turnoDisplayToIdMap.put(displayText, idTurno);
-						}
-					}
-				}
-				if (turnoInput.getItemCount() == 0) {
-					turnoInput.addItem(NESSUN_TURNO_TROVATO);
-				}
+		// Flag vitale per bloccare l'innesco a catena dei Listener di Java Swing ed evitare i crash
+		final boolean[] isUpdating = {false};
 
-				if (!isMedico) { // Amministratore: aggiorna l'agenda in base al medico selezionato
-					idAgendaInput.removeAllItems();
-					if (matSelezionata != null && !matSelezionata.isEmpty()) {
-						List<ArrayList<String>> eventi = agendaDAO.getEventiByMatricola(matSelezionata);
-						if (eventi == null || eventi.isEmpty()) {
-							agendaDAO.creaAgendaPerMedico(matSelezionata);
-							eventi = agendaDAO.getEventiByMatricola(matSelezionata);
-						}
-						if (eventi != null && !eventi.isEmpty() && eventi.get(0).size() > 0) {
-							idAgendaInput.addItem(eventi.get(0).get(0));
-						} else {
-							idAgendaInput.addItem("Errore agenda");
-						}
-					}
-				}
-			}
-		};
+		// 1. Estraiamo la logica di calcolo in modo da poterla chiamare manualmente senza impazzire con i listener Swing
+		Runnable aggiornaOrari = () -> {
+			if (isUpdating[0]) return; // Evita loop ed eccezioni mentre svuotiamo la tendina dei turni
 
-		matricolaInput.addActionListener(aggiornaTurniEAgenda);
-
-		// Questo listener cruciale popola il menu a tendina degli orari disponibili.
-		// Calcola gli slot liberi di 30 minuti all'interno del turno selezionato,
-		// escludendo quelli già occupati da altri eventi in agenda.
-		turnoInput.addActionListener(e -> {
 			String turnoSelezionato = (String) turnoInput.getSelectedItem();
 			String matSelezionata = (String) matricolaInput.getSelectedItem();
 			oraInizioPrestazioneComboBox.removeAllItems();
@@ -1785,13 +1765,26 @@ public class Controller {
 					boolean sovrapposto = false;
 					// Per ogni slot, controlla se si sovrappone con uno degli eventi esistenti.
 					for (ArrayList<String> eventoEsistente : eventiDelGiorno) {
-						java.time.LocalDateTime inizioEsistente = java.sql.Timestamp.valueOf(eventoEsistente.get(4)).toLocalDateTime();
-						java.time.LocalDateTime fineEsistente = java.sql.Timestamp.valueOf(eventoEsistente.get(5)).toLocalDateTime();
+						try {
+							String strInizio = eventoEsistente.get(4) != null ? eventoEsistente.get(4).trim() : "";
+							String strFine = eventoEsistente.get(5) != null ? eventoEsistente.get(5).trim() : "";
+							if (strInizio.length() == 16) strInizio += ":00";
+							if (strFine.length() == 16) strFine += ":00";
 
-						// Logica di sovrapposizione: (StartA < EndB) and (EndA > StartB)
-						if (inizioSlotDateTime.isBefore(fineEsistente) && fineSlotDateTime.isAfter(inizioEsistente)) {
-							sovrapposto = true;
-							break; // Trovata una sovrapposizione, inutile continuare a controllare
+							java.time.LocalDateTime inizioEsistente = java.sql.Timestamp.valueOf(strInizio).toLocalDateTime();
+							java.time.LocalDateTime fineEsistente = java.sql.Timestamp.valueOf(strFine).toLocalDateTime();
+
+							// Logica di sovrapposizione: (StartA < EndB) and (EndA > StartB)
+							if (inizioSlotDateTime.isBefore(fineEsistente) && fineSlotDateTime.isAfter(inizioEsistente)) {
+								sovrapposto = true;
+								break;
+							}
+							if (inizioSlotDateTime.isEqual(inizioEsistente)) {
+								sovrapposto = true;
+								break;
+							}
+						} catch (Exception ex) {
+							// Ignoriamo silenziosamente l'evento malformato per non bloccare l'interfaccia
 						}
 					}
 
@@ -1805,7 +1798,7 @@ public class Controller {
 				if (oraInizioPrestazioneComboBox.getItemCount() > 0) {
 					oraInizioPrestazioneComboBox.setEnabled(true);
 				} else {
-					oraInizioPrestazioneComboBox.addItem(NESSUN_TURNO_TROVATO);
+					oraInizioPrestazioneComboBox.addItem("Nessuno slot libero");
 					oraInizioPrestazioneComboBox.setEnabled(false);
 				}
 
@@ -1813,19 +1806,62 @@ public class Controller {
 				LOGGER.log(java.util.logging.Level.WARNING, "Errore nel calcolo degli slot orari disponibili.", ex);
 				oraInizioPrestazioneComboBox.setEnabled(false);
 			}
-		});
+		};
 
+		Runnable aggiornaTurniEAgenda = () -> {
+			try {
+				isUpdating[0] = true; // Impedisce alla UI di crashare durante la cancellazione degli item
+
+				String matSelezionata = (String) matricolaInput.getSelectedItem();
+				turnoInput.removeAllItems();
+				turnoDisplayToIdMap.clear();
+				if (matSelezionata != null && !matSelezionata.isEmpty()) {
+					List<ArrayList<String>> turni = turnoDAO.getTurniByMedico(matSelezionata);
+					if (turni != null && !turni.isEmpty()) {
+						for (ArrayList<String> t : turni) {
+							if (t.size() > 4) { // Assicura che ci siano dati fino all'ora di fine
+								String idTurno = t.get(0);
+								String data = t.get(2);
+								String oraInizio = t.get(3);
+								String oraFine = t.get(4);
+								String displayText = data + " (" + oraInizio + " - " + oraFine + ")";
+								turnoInput.addItem(displayText);
+								turnoDisplayToIdMap.put(displayText, idTurno);
+							}
+						}
+					}
+					if (turnoInput.getItemCount() == 0) {
+						turnoInput.addItem(NESSUN_TURNO_TROVATO);
+					}
+
+					if (!isMedico) { // Amministratore: aggiorna l'agenda in base al medico selezionato
+						idAgendaInput.removeAllItems();
+						String idAgenda = getIdAgendaPerMatricola(matSelezionata);
+						if (idAgenda != null) {
+							idAgendaInput.addItem(idAgenda);
+						} else {
+							idAgendaInput.addItem("Errore agenda");
+						}
+					}
+				}
+
+				isUpdating[0] = false; // Sblocchiamo prima di calcolare gli orari
+				aggiornaOrari.run();
+			} catch (Exception e) {
+				isUpdating[0] = false;
+				LOGGER.log(java.util.logging.Level.SEVERE, "Errore durante l'aggiornamento dei Turni.", e);
+			}
+		};
+
+		// 2. Inizializziamo i dati base SENZA LISTENER ATTIVI (evita crash di sistema)
 		if (matricolaInput.getItemCount() > 0) {
 			matricolaInput.setSelectedIndex(0);
-			// La chiamata a `setSelectedIndex` scatena il primo listener (aggiornaTurniEAgenda),
-			// che popola la lista dei turni. Tuttavia, questo non scatena automaticamente il listener
-			// su `turnoInput`. Dobbiamo forzarlo manualmente per assicurare che lo spinner dell'orario
-			// venga configurato correttamente all'apertura della finestra, risolvendo il bug.
-			aggiornaTurniEAgenda.actionPerformed(null); // Popola i turni
-			if (turnoInput.getActionListeners().length != 0) {
-				turnoInput.getActionListeners()[0].actionPerformed(null); // Configura lo spinner
-			}
 		}
+		aggiornaTurniEAgenda.run();
+
+		// 3. Solo adesso attacchiamo i listener: reagiranno ESCLUSIVAMENTE alle vere modifiche dell'utente!
+		matricolaInput.addActionListener(e -> aggiornaTurniEAgenda.run());
+		turnoInput.addActionListener(e -> aggiornaOrari.run());
 
 		List<ArrayList<String>> tuttiPazienti = pazienteDAO.getAllPazienti();
 		List<String> pazientiNomi = new ArrayList<>();
@@ -1885,12 +1921,7 @@ public class Controller {
 				String matricolaFinale = (String) matricolaInput.getSelectedItem();
 				String idAgendaFinale;
 				if (isMedico) {
-					List<ArrayList<String>> eventi = agendaDAO.getEventiByMatricola(matricolaFinale);
-					if (eventi == null || eventi.isEmpty()) {
-						agendaDAO.creaAgendaPerMedico(matricolaFinale);
-						eventi = agendaDAO.getEventiByMatricola(matricolaFinale);
-					}
-					idAgendaFinale = (eventi != null && !eventi.isEmpty() && eventi.get(0).size() > 0) ? eventi.get(0).get(0) : null;
+					idAgendaFinale = getIdAgendaPerMatricola(matricolaFinale);
 				} else {
 					idAgendaFinale = (String) idAgendaInput.getSelectedItem();
 				}
@@ -1900,7 +1931,7 @@ public class Controller {
 					return false;
 				}
 				if (idAgendaFinale == null || idAgendaFinale.equals("Nessuna agenda") || idAgendaFinale.equals("Errore caricamento agenda") || idAgendaFinale.equals("Errore agenda") || idAgendaFinale.trim().isEmpty()) {
-					JOptionPane.showMessageDialog(null, "Devi selezionare un'agenda valida.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(null, "Impossibile associare una prestazione senza un'agenda valida per il medico selezionato.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
 					return false;
 				}
 
@@ -2501,7 +2532,7 @@ public class Controller {
 		Runnable ricaricaEventi = () -> {
 			if (utenteLoggato != null) {
 				List<ArrayList<String>> eventi = getEventiPerUtente(utenteLoggato.getMatricola());
-				calendarioFrame.setEventi(eventi);
+				calendarioFrame.setEventi(sdoppiaEventiInSlot(eventi));
 			}
 		};
 	
@@ -2595,11 +2626,26 @@ public class Controller {
 
 		try {
 			int idEvento = Integer.parseInt(evento.get(0));
+			String matricola = evento.get(3);
+			
+			// Recupera l'evento REALE e intero dal DB per annullare l'effetto di sdoppiamento visivo
+			List<ArrayList<String>> eventiReali = getEventiPerUtente(matricola);
+			for (ArrayList<String> evReale : eventiReali) {
+				if (Integer.parseInt(evReale.get(0)) == idEvento) {
+					evento = evReale;
+					break;
+				}
+			}
+
 			String titolo = evento.get(1);
 			String descrizione = evento.get(2);
-			String matricola = evento.get(3);
-			java.sql.Timestamp tsInizio = java.sql.Timestamp.valueOf(evento.get(4));
-			java.sql.Timestamp tsFine = java.sql.Timestamp.valueOf(evento.get(5));
+			String strInizio = evento.get(4) != null ? evento.get(4).trim() : "";
+			String strFine = evento.get(5) != null ? evento.get(5).trim() : "";
+			if (strInizio.length() == 16) strInizio += ":00";
+			if (strFine.length() == 16) strFine += ":00";
+
+			java.sql.Timestamp tsInizio = java.sql.Timestamp.valueOf(strInizio);
+			java.sql.Timestamp tsFine = java.sql.Timestamp.valueOf(strFine);
 
 			LocalDateTime ldtInizio = tsInizio.toLocalDateTime();
 			LocalDateTime ldtFine = tsFine.toLocalDateTime();
@@ -3284,20 +3330,66 @@ public class Controller {
 		return dati;
 	}
 
+	private List<ArrayList<String>> sdoppiaEventiInSlot(List<ArrayList<String>> eventi) {
+		if (eventi == null) return new ArrayList<>();
+		List<ArrayList<String>> eventiSplittati = new ArrayList<>();
+		
+		for (ArrayList<String> ev : eventi) {
+			try {
+				String strInizio = ev.get(4) != null ? ev.get(4).trim() : "";
+				String strFine = ev.get(5) != null ? ev.get(5).trim() : "";
+				if (strInizio.length() == 16) strInizio += ":00";
+				if (strFine.length() == 16) strFine += ":00";
+
+				java.time.LocalDateTime start = java.sql.Timestamp.valueOf(strInizio).toLocalDateTime();
+				java.time.LocalDateTime end = java.sql.Timestamp.valueOf(strFine).toLocalDateTime();
+				
+				java.time.LocalDateTime current = start;
+				while (current.isBefore(end)) {
+					java.time.LocalDateTime next = current.plusMinutes(30);
+					if (next.isAfter(end)) next = end;
+					
+					ArrayList<String> slot = new ArrayList<>(ev);
+					// Forza il titolo e la descrizione per mostrare "OCCUPATO" in OGNI cella
+					slot.set(1, "[OCCUPATO] " + ev.get(1));
+					slot.set(2, "[OCCUPATO] " + (ev.size() > 2 ? ev.get(2) : ""));
+					slot.set(4, java.sql.Timestamp.valueOf(current).toString());
+					slot.set(5, java.sql.Timestamp.valueOf(next).toString());
+					eventiSplittati.add(slot);
+					
+					current = next;
+				}
+			} catch (Exception e) {
+				eventiSplittati.add(ev); // Fallback in caso di date non valide
+			}
+		}
+		return eventiSplittati;
+	}
+
 	private Object[][] formattaDatiAgenda(List<ArrayList<String>> eventi) {
         if (eventi == null) return new Object[0][0];
 		Object[][] dati = new Object[eventi.size()][2];
 		for (int i = 0; i < eventi.size(); i++) {
 			ArrayList<String> ev = eventi.get(i);
-			dati[i][0] = ev.size() > 4 ? ev.get(4) : "N/D"; // data_ora_inizio
+			String inizio = ev.size() > 4 ? ev.get(4) : "N/D";
+			String fine = ev.size() > 5 ? ev.get(5) : "N/D";
 			
-			String descrizione;
-			if (ev.size() > 2) {
-				descrizione = ev.get(2);
-			} else {
-				descrizione = "Evento #" + (ev.isEmpty() ? 0 : ev.get(0));
+			String orario = inizio;
+			if (!inizio.equals("N/D") && !fine.equals("N/D")) {
+				String[] inParts = inizio.split(" ");
+				String[] fiParts = fine.split(" ");
+				if (inParts.length > 1 && fiParts.length > 1 && inParts[0].equals(fiParts[0])) {
+					String oraIn = inParts[1].length() >= 5 ? inParts[1].substring(0, 5) : inParts[1];
+					String oraFi = fiParts[1].length() >= 5 ? fiParts[1].substring(0, 5) : fiParts[1];
+					orario = inParts[0] + " " + oraIn + " - " + oraFi;
+				} else {
+					orario = inizio + " - " + fine;
+				}
 			}
-			dati[i][1] = descrizione;
+
+			dati[i][0] = "<html><font color='red'><b>\u231A " + orario + "</b></font></html>";
+			String descrizione = ev.size() > 2 ? ev.get(2) : "Evento #" + (ev.isEmpty() ? 0 : ev.get(0));
+			dati[i][1] = "<html><font color='red'><b>" + descrizione + "</b></font></html>";
 		}
 		return dati;
 	}
@@ -3503,7 +3595,8 @@ public class Controller {
 
     private void aggiornaAgendaGUI(JFrame frame) {
         if (utenteLoggato == null) return;
-        Object[][] dati = formattaDatiAgenda(agendaDAO.getEventiByMatricola(utenteLoggato.getMatricola()));
+        List<ArrayList<String>> eventi = agendaDAO.getEventiByMatricola(utenteLoggato.getMatricola());
+        Object[][] dati = formattaDatiAgenda(sdoppiaEventiInSlot(eventi));
         if (frame instanceof gui.SchermataAmministratore) ((gui.SchermataAmministratore) frame).aggiornaAgenda(dati);
         if (frame instanceof gui.SchermataMedico) ((gui.SchermataMedico) frame).aggiornaAgenda(dati);
     }

@@ -20,5 +20,18 @@ public class Amministratore extends Utente {
         super(matricola, nome, cognome, login);
     }
 
+    /**
+     * Metodo fittizio per dimostrare l'interazione con la classe Ricovero.
+     * L'amministratore revisiona i dati amministrativi di un ricovero.
+     *
+     * @param ricovero Il ricovero da revisionare.
+     */
+    public void revisionaPraticaRicovero(Ricovero ricovero) {
+        if (ricovero != null) {
+            System.out.println("L'amministratore " + getNome() + " " + getCognome() + 
+                    " sta revisionando la pratica di ricovero del paziente con CF: " + 
+                    (ricovero.getPaziente() != null ? ricovero.getPaziente().getCf() : "Sconosciuto"));
+        }
+    }
 
 }

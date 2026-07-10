@@ -7,12 +7,20 @@ import java.time.LocalDateTime;
  * Contiene informazioni sulle date, la prognosi e il motivo della dimissione.
  */
 public class Ricovero {
+
+    /** La data e l'ora in cui ha avuto inizio il ricovero. */
     private LocalDateTime dataOraInizio;
+    /** La data e l'ora previste per la fine del ricovero. */
     private LocalDateTime dataOraFinePrevista;
+    /** La data e l'ora effettive in cui il ricovero si è concluso. */
     private LocalDateTime dataOraFineEffettiva;
+    /** La motivazione o l'esito della dimissione del paziente. */
     private String motivoDimissione;
+    /** Il numero di giorni di prognosi stimati al momento della dimissione. */
     private int giorniPrognosi;
+    /** Il paziente associato a questo ricovero. */
     private Paziente paziente;
+    /** Il letto attualmente assegnato al paziente per questo ricovero. */
     private Letto lettoAssegnato;
 
     /**
@@ -130,12 +138,18 @@ public class Ricovero {
         this.paziente = paziente;
     }
 
-    /** @return l'oggetto {@link Letto} occupato dal paziente */
+    /**
+     * Restituisce il letto assegnato al paziente durante il ricovero.
+     * @return l'oggetto {@link Letto} occupato dal paziente.
+     */
     public Letto getLettoAssegnato() {
         return lettoAssegnato;
     }
 
-    /** @param lettoAssegnato modifica o azzera il posto letto associato */
+    /**
+     * Imposta o modifica il letto assegnato al paziente.
+     * @param lettoAssegnato il nuovo posto letto da associare al ricovero, oppure null per azzerarlo.
+     */
     public void setLettoAssegnato(Letto lettoAssegnato) {
         this.lettoAssegnato = lettoAssegnato;
     }

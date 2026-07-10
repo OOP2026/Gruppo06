@@ -55,5 +55,18 @@ public class Medico extends Utente {
         this.repartoDiAppartenenza = repartoDiAppartenenza;
     }
 
+    /**
+     * Metodo fittizio per dimostrare l'interazione con la classe Ricovero.
+     * Il medico compila o aggiorna la cartella clinica relativa a un ricovero.
+     *
+     * @param ricovero Il ricovero da esaminare o aggiornare.
+     */
+    public void compilaCartellaClinica(Ricovero ricovero) {
+        if (ricovero != null) {
+            System.out.println("Il Dott. " + getCognome() + " del reparto " + repartoDiAppartenenza + 
+                    " sta valutando il ricovero iniziato il: " + ricovero.getDataOraInizio() + 
+                    " presso il letto: " + (ricovero.getLettoAssegnato() != null ? ricovero.getLettoAssegnato().getReparto() : "Nessuno"));
+        }
+    }
 
 }

@@ -3476,10 +3476,7 @@ public class Controller {
         if (frame instanceof gui.SchermataAmministratore) ((gui.SchermataAmministratore) frame).aggiornaAgenda(dati);
         if (frame instanceof gui.SchermataMedico) ((gui.SchermataMedico) frame).aggiornaAgenda(dati);
     }
-
-	// =========================================================
-	// METODI DI AVVIO PRINCIPALE APP E AUTENTICAZIONE
-	// =========================================================
+	
 
 	public static void main(String[] args) {
 		SwingUtilities.invokeLater(() -> {
@@ -3495,33 +3492,35 @@ public class Controller {
 	private void avviaSchermataLogin() {
 		gui.Login loginView = new gui.Login();
 		JFrame frame = new JFrame("Login - Ospedale San Raffaele");
-		impostaSchermata(frame, loginView.mainPanel, "Login - Ospedale San Raffaele", WindowConstants.EXIT_ON_CLOSE);
+		if (loginView != null && loginView.mainPanel != null) {
+			impostaSchermata(frame, loginView.mainPanel, "Login - Ospedale San Raffaele", WindowConstants.EXIT_ON_CLOSE);
 
-		loginView.addLoginListener(e -> {
-			String username = loginView.getUsername();
-			String password = loginView.getPassword();
-			String pin = loginView.getPin();
+			loginView.addLoginListener(e -> {
+				String username = loginView.getUsername();
+				String password = loginView.getPassword();
+				String pin = loginView.getPin();
 
-			if (username.isEmpty() || password.isEmpty()) {
-				loginView.showMessage("Campi vuoti", "Inserisci Username e Password per accedere.", JOptionPane.WARNING_MESSAGE);
-				return;
-			}
+				if (username.isEmpty() || password.isEmpty()) {
+					loginView.showMessage("Campi vuoti", "Inserisci Username e Password per accedere.", JOptionPane.WARNING_MESSAGE);
+					return;
+				}
 
-			if (whoIsAsking(username, password, pin)) {
-				frame.dispose();
-				indirizzaUtenteLoggato();
-			} else {
-				loginView.showMessage("Errore di accesso", "Credenziali errate. Utente non trovato o password sbagliata.", JOptionPane.ERROR_MESSAGE);
-			}
-		});
+				if (whoIsAsking(username, password, pin)) {
+					frame.dispose();
+					indirizzaUtenteLoggato();
+				} else {
+					loginView.showMessage("Errore di accesso", "Credenziali errate. Utente non trovato o password sbagliata.", JOptionPane.ERROR_MESSAGE);
+				}
+			});
 
-		loginView.addRegisterListener(new java.awt.event.MouseAdapter() {
-			@Override
-			public void mouseClicked(java.awt.event.MouseEvent e) {
-				frame.dispose();
-				avviaSchermataRegistrazione();
-			}
-		});
+			loginView.addRegisterListener(new java.awt.event.MouseAdapter() {
+				@Override
+				public void mouseClicked(java.awt.event.MouseEvent e) {
+					frame.dispose();
+					avviaSchermataRegistrazione();
+				}
+			});
+		}
 
 		frame.setVisible(true);
 	}

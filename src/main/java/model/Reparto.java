@@ -1,5 +1,8 @@
 package model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Rappresenta un reparto ospedaliero.
  * Contiene informazioni sul nome e il numero di medici afferenti.
@@ -7,6 +10,7 @@ package model;
 public class Reparto {
     private String nomeReparto;
     private int numeroAfferenti;
+    private List<Stanza> stanze;
 
     /**
      * Costruisce un nuovo oggetto Reparto.
@@ -16,6 +20,7 @@ public class Reparto {
     public Reparto(String nomeReparto, int numeroAfferenti) {
         this.nomeReparto = nomeReparto;
         this.numeroAfferenti = numeroAfferenti;
+        this.stanze = new ArrayList<>();
     }
 
     /**
@@ -48,6 +53,22 @@ public class Reparto {
      */
     public void setNumeroAfferenti(int numeroAfferenti) {
         this.numeroAfferenti = numeroAfferenti;
+    }
+
+    /**
+     * Restituisce la lista delle stanze del reparto.
+     * @return la lista delle stanze.
+     */
+    public List<Stanza> getStanze() {
+        return stanze;
+    }
+
+    /**
+     * Aggiunge una stanza al reparto.
+     * @param stanza la stanza da aggiungere.
+     */
+    public void addStanza(Stanza stanza) {
+        this.stanze.add(stanza);
     }
 
     @Override

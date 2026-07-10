@@ -1,22 +1,44 @@
 package model;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
- * Rappresenta una stanza di degenza in un ospedale.
+ * Rappresenta una stanza de degenza in un ospedale.
  * Una stanza contiene un certo numero di letti disposti in una griglia.
  */
 public class Stanza {
-    public int numero_stanza;
-    public int numero_letti;
-
+    public int numeroStanza;
+    public int numeroLetti;
+    private List<Letto> quantitaLetti;
     /**
      * Costruisce un nuovo oggetto Stanza.
      *
-     * @param numero_stanza Il numero della stanza.
-     * @param numero_letti  Il numero di letti nella stanza.
+     * @param numeroStanza Il numero della stanza.
+     * @param numeroLetti  Il numero di letti nella stanza.
      */
-    public Stanza(int numero_stanza, int numero_letti){
-        this.numero_stanza = numero_stanza;
-        this.numero_letti =  numero_letti;
+    public Stanza(int numeroStanza, int numeroLetti){
+        this.numeroStanza = numeroStanza;
+        this.numeroLetti =  numeroLetti;
+        this.quantitaLetti = new ArrayList<>();
+    }
+
+    /**
+     * Restituisce la lista dei letti nella stanza.
+     * @return la lista dei letti.
+     */
+    public List<Letto> getQuantitaLetti() {
+        return quantitaLetti;
+    }
+
+    /**
+     * Aggiunge un letto alla stanza.
+     * @param letto il letto da aggiungere.
+     */
+    public void addLetto(Letto letto) {
+        if (this.quantitaLetti.size() < this.numeroLetti) {
+            this.quantitaLetti.add(letto);
+        }
     }
 
 }

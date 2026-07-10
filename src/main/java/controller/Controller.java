@@ -2230,97 +2230,105 @@ public class Controller {
 
 	public void apriSchermataMedici(JFrame frameDaChiudere) {
 		gui.Medici mediciFrame = new gui.Medici();
-		impostaSchermata(mediciFrame, mediciFrame.mainPanel, "Gestione Medici", WindowConstants.DISPOSE_ON_CLOSE);
+		if (mediciFrame != null && mediciFrame.mainPanel != null) {
+			impostaSchermata(mediciFrame, mediciFrame.mainPanel, "Gestione Medici", WindowConstants.DISPOSE_ON_CLOSE);
 
-        mediciFrame.addNuovoMedicoListener(e -> {
-            if (gestisciCreazioneNuovoMedico()) { //
-                mediciFrame.aggiornaTabella(formattaDatiMedici(medicoDAO.getAllMedici()));
-            }
-        });
-
-		mediciFrame.addModificaMedicoListener(e -> {
-			String matricola = mediciFrame.getMatricolaMedicoSelezionato();
-			if (matricola != null) {
-				if (gestisciModificaMedico(matricola)) {
+			mediciFrame.addNuovoMedicoListener(e -> {
+				if (gestisciCreazioneNuovoMedico()) { //
 					mediciFrame.aggiornaTabella(formattaDatiMedici(medicoDAO.getAllMedici()));
 				}
-			} else {
-				JOptionPane.showMessageDialog(mediciFrame, "Per favore, seleziona un medico dalla tabella prima di cliccare su 'Aggiorna Medico'.", "Nessun Medico Selezionato", JOptionPane.WARNING_MESSAGE);
-			}
-		});
+			});
 
-		mediciFrame.addAssenzaListener(e -> {
-			String matricola = mediciFrame.getMatricolaMedicoSelezionato();
-			if (matricola != null) {
-				List<ArrayList<String>> assenzeDb = assenzaDAO.getAssenzeByMedico(matricola); //
-				Assenza assenzaCorrente = null;
-				java.time.LocalDate oggi = java.time.LocalDate.now();
-				if (assenzeDb != null) {
-					for (List<String> a : assenzeDb) {
-						try {
-							java.time.LocalDate dataInizio = java.time.LocalDate.parse(a.get(1));
-							java.time.LocalDate dataFine = java.time.LocalDate.parse(a.get(2));
-							if (!oggi.isBefore(dataInizio) && !oggi.isAfter(dataFine)) {
-								assenzaCorrente = new Assenza(dataInizio, dataFine, a.get(3), true, null, null);
-								break;
+			mediciFrame.addModificaMedicoListener(e -> {
+				String matricola = mediciFrame.getMatricolaMedicoSelezionato();
+				if (matricola != null) {
+					if (gestisciModificaMedico(matricola)) {
+						mediciFrame.aggiornaTabella(formattaDatiMedici(medicoDAO.getAllMedici()));
+					}
+				} else {
+					JOptionPane.showMessageDialog(mediciFrame, "Per favore, seleziona un medico dalla tabella prima di cliccare su 'Aggiorna Medico'.", "Nessun Medico Selezionato", JOptionPane.WARNING_MESSAGE);
+				}
+			});
+
+			mediciFrame.addAssenzaListener(e -> {
+				String matricola = mediciFrame.getMatricolaMedicoSelezionato();
+				if (matricola != null) {
+					List<ArrayList<String>> assenzeDb = assenzaDAO.getAssenzeByMedico(matricola); //
+					Assenza assenzaCorrente = null;
+					java.time.LocalDate oggi = java.time.LocalDate.now();
+					if (assenzeDb != null) {
+						for (List<String> a : assenzeDb) {
+							try {
+								java.time.LocalDate dataInizio = java.time.LocalDate.parse(a.get(1));
+								java.time.LocalDate dataFine = java.time.LocalDate.parse(a.get(2));
+								if (!oggi.isBefore(dataInizio) && !oggi.isAfter(dataFine)) {
+									assenzaCorrente = new Assenza(dataInizio, dataFine, a.get(3), true, null, null);
+									break;
+								}
+							} catch (Exception ex) {
+								LOGGER.warning("Errore nel parsing dei dati di assenza per la matricola " + matricola + ": " + ex.getMessage());
 							}
-						} catch (Exception ex) {
-							LOGGER.warning("Errore nel parsing dei dati di assenza per la matricola " + matricola + ": " + ex.getMessage());
 						}
 					}
-				}
-				
-				if (assenzaCorrente != null) {
-					String messaggio = "Il medico è attualmente assente.\n" +
-									   "Data Inizio: " + assenzaCorrente.getDataInizioAssenza() + "\n" +
-									   "Data Fine: " + assenzaCorrente.getDataFineAssenza() + "\n" +
-									   "Motivazione: " + assenzaCorrente.getMotivoAssenza();
-					Object[] options = {"Chiudi", "Revoca Assenza", "Aggiungi Nuova Assenza"};
-					int choice = JOptionPane.showOptionDialog(mediciFrame, messaggio, "Dettagli Assenza Approvata",
-							JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, options[0]);
-					
-					if (choice == 1) {
-						int conferma = JOptionPane.showConfirmDialog(mediciFrame, "Sei sicuro di voler revocare questa assenza?", "Conferma Revoca", JOptionPane.YES_NO_OPTION);
-						if (conferma == JOptionPane.YES_OPTION) {
-							if (eliminaAssenza(matricola, assenzaCorrente.getDataInizioAssenza().toString())) {
-								JOptionPane.showMessageDialog(mediciFrame, "Assenza revocata con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
+
+					if (assenzaCorrente != null) {
+						String messaggio = "Il medico è attualmente assente.\n" +
+								"Data Inizio: " + assenzaCorrente.getDataInizioAssenza() + "\n" +
+								"Data Fine: " + assenzaCorrente.getDataFineAssenza() + "\n" +
+								"Motivazione: " + assenzaCorrente.getMotivoAssenza();
+						Object[] options = {"Chiudi", "Revoca Assenza", "Aggiungi Nuova Assenza"};
+						int choice = JOptionPane.showOptionDialog(mediciFrame, messaggio, "Dettagli Assenza Approvata",
+								JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, options[0]);
+
+						if (choice == 1) {
+							int conferma = JOptionPane.showConfirmDialog(mediciFrame, "Sei sicuro di voler revocare questa assenza?", "Conferma Revoca", JOptionPane.YES_NO_OPTION);
+							if (conferma == JOptionPane.YES_OPTION) {
+								if (eliminaAssenza(matricola, assenzaCorrente.getDataInizioAssenza().toString())) {
+									JOptionPane.showMessageDialog(mediciFrame, "Assenza revocata con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
+									mediciFrame.aggiornaTabella(formattaDatiMedici(medicoDAO.getAllMedici()));
+								} else {
+									JOptionPane.showMessageDialog(mediciFrame, "Errore durante la revoca dell'assenza.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+								}
+							}
+						} else if (choice == 2) {
+							if (gestisciCreazioneNuovaAssenza(matricola)) {
 								mediciFrame.aggiornaTabella(formattaDatiMedici(medicoDAO.getAllMedici()));
-							} else {
-								JOptionPane.showMessageDialog(mediciFrame, "Errore durante la revoca dell'assenza.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
 							}
 						}
-					} else if (choice == 2) {
+					} else {
 						if (gestisciCreazioneNuovaAssenza(matricola)) {
 							mediciFrame.aggiornaTabella(formattaDatiMedici(medicoDAO.getAllMedici()));
 						}
 					}
 				} else {
-					if (gestisciCreazioneNuovaAssenza(matricola)) {
-						mediciFrame.aggiornaTabella(formattaDatiMedici(medicoDAO.getAllMedici()));
-					}
+					JOptionPane.showMessageDialog(mediciFrame, "Per favore, seleziona un medico dalla tabella prima di gestire un'assenza.", "Nessun Medico Selezionato", JOptionPane.WARNING_MESSAGE);
 				}
-			} else {
-				JOptionPane.showMessageDialog(mediciFrame, "Per favore, seleziona un medico dalla tabella prima di gestire un'assenza.", "Nessun Medico Selezionato", JOptionPane.WARNING_MESSAGE);
-			}
-		});
+			});
 
-		mostraFinestraSecondaria(mediciFrame, frameDaChiudere);
+			mostraFinestraSecondaria(mediciFrame, frameDaChiudere);
 
-		mediciFrame.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
-		SwingWorker<Object[][], Void> worker = new SwingWorker<Object[][], Void>() {
-			@Override
-			protected Object[][] doInBackground() throws Exception {
-				return formattaDatiMedici(getAllMedici()); // Lavoro pensante delegato al thread secondario
-			}
-			@Override
-			protected void done() {
-				try { mediciFrame.aggiornaTabella(get()); }
-				catch (InterruptedException e) { Thread.currentThread().interrupt(); LOGGER.warning("Caricamento medici interrotto"); }
-				catch (Exception e) { LOGGER.warning("Errore caricamento medici"); }
-				mediciFrame.setCursor(java.awt.Cursor.getDefaultCursor());
-			}
-		};
-		worker.execute();
+			mediciFrame.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
+			SwingWorker<Object[][], Void> worker = new SwingWorker<Object[][], Void>() {
+				@Override
+				protected Object[][] doInBackground() throws Exception {
+					return formattaDatiMedici(getAllMedici()); // Lavoro pensante delegato al thread secondario
+				}
+
+				@Override
+				protected void done() {
+					try {
+						mediciFrame.aggiornaTabella(get());
+					} catch (InterruptedException e) {
+						Thread.currentThread().interrupt();
+						LOGGER.warning("Caricamento medici interrotto");
+					} catch (Exception e) {
+						LOGGER.warning("Errore caricamento medici");
+					}
+					mediciFrame.setCursor(java.awt.Cursor.getDefaultCursor());
+				}
+			};
+			worker.execute();
+		}
 	}
 
 	public void apriSchermataDimissioni(JFrame frameDaChiudere) {
@@ -2418,63 +2426,65 @@ public class Controller {
 
 	public void apriSchermataTurni(JFrame frameDaChiudere) {
 		gui.Turni turniFrame = new gui.Turni();
-		impostaSchermata(turniFrame, turniFrame.panelHome, "Gestione Turni Lavorativi", WindowConstants.DISPOSE_ON_CLOSE);
+		if (turniFrame != null && turniFrame.panelHome != null) {
+			impostaSchermata(turniFrame, turniFrame.panelHome, "Gestione Turni Lavorativi", WindowConstants.DISPOSE_ON_CLOSE);
 
-        turniFrame.addNuovoTurnoListener(e -> {
-            if (gestisciCreazioneNuovoTurno()) {
-                caricaDatiTurni(turniFrame);
-            }
-        });
-
-		// Aggiungiamo il listener per la modifica del turno
-		turniFrame.addModificaTurnoListener(e -> {
-			String[] datiSelezionati = turniFrame.getDatiTurnoSelezionato();
-			if (datiSelezionati != null) {
-				String matricolaTurno = datiSelezionati[1]; // datiSelezionati[1] contiene la matricola
-
-				// Controllo per impedire ai medici di modificare i turni dei colleghi
-				if (utenteLoggato instanceof Medico && !utenteLoggato.getMatricola().equals(matricolaTurno)) {
-					JOptionPane.showMessageDialog(turniFrame, "Non sei autorizzato a modificare i turni di altri colleghi.", "Accesso Negato", JOptionPane.ERROR_MESSAGE);
-					return;
+			turniFrame.addNuovoTurnoListener(e -> {
+				if (gestisciCreazioneNuovoTurno()) {
+					caricaDatiTurni(turniFrame);
 				}
+			});
 
-				// datiSelezionati[0] = data, [1] = matricola, [2] = orario
-				if (gestisciModificaTurno(matricolaTurno, datiSelezionati[0], datiSelezionati[2])) {
-					caricaDatiTurni(turniFrame); // Ricarica i dati se la modifica ha successo
+			// Aggiungiamo il listener per la modifica del turno
+			turniFrame.addModificaTurnoListener(e -> {
+				String[] datiSelezionati = turniFrame.getDatiTurnoSelezionato();
+				if (datiSelezionati != null && datiSelezionati.length > 1) {
+					String matricolaTurno = datiSelezionati[1]; // datiSelezionati[1] contiene la matricola
+
+					// Controllo per impedire ai medici di modificare i turni dei colleghi
+					if (utenteLoggato instanceof Medico && !utenteLoggato.getMatricola().equals(matricolaTurno)) {
+						JOptionPane.showMessageDialog(turniFrame, "Non sei autorizzato a modificare i turni di altri colleghi.", "Accesso Negato", JOptionPane.ERROR_MESSAGE);
+						return;
+					}
+
+					// datiSelezionati[0] = data, [1] = matricola, [2] = orario
+					if (gestisciModificaTurno(matricolaTurno, datiSelezionati[0], datiSelezionati[2])) {
+						caricaDatiTurni(turniFrame); // Ricarica i dati se la modifica ha successo
+					}
+				} else {
+					JOptionPane.showMessageDialog(turniFrame, "Per favore, seleziona un turno dalla tabella prima di cliccare Modifica.", "Nessun Turno Selezionato", JOptionPane.WARNING_MESSAGE);
 				}
-			} else {
-				JOptionPane.showMessageDialog(turniFrame, "Per favore, seleziona un turno dalla tabella prima di cliccare Modifica.", "Nessun Turno Selezionato", JOptionPane.WARNING_MESSAGE);
-			}
-		});
+			});
 
-		mostraFinestraSecondaria(turniFrame, frameDaChiudere);
+			mostraFinestraSecondaria(turniFrame, frameDaChiudere);
 
-		// Utilizzo di SwingWorker per caricare i dati in background
-		turniFrame.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
-		SwingWorker<Object[][], Void> worker = new SwingWorker<Object[][], Void>() {
-			@Override
-			protected Object[][] doInBackground() throws Exception {
-				List<ArrayList<String>> turni = new ArrayList<>();
-				List<ArrayList<String>> medici = medicoDAO.getAllMedici();
-				if (medici != null) {
-					for (ArrayList<String> medico : medici) {
-						if (medico.size() > 4) {
-							List<ArrayList<String>> turniMedico = turnoDAO.getTurniByMedico(medico.get(4));
-							if (turniMedico != null) turni.addAll(turniMedico);
+			// Utilizzo di SwingWorker per caricare i dati in background
+			turniFrame.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
+			SwingWorker<Object[][], Void> worker = new SwingWorker<Object[][], Void>() {
+				@Override
+				protected Object[][] doInBackground() throws Exception {
+					List<ArrayList<String>> turni = new ArrayList<>();
+					List<ArrayList<String>> medici = medicoDAO.getAllMedici();
+					if (medici != null) {
+						for (ArrayList<String> medico : medici) {
+							if (medico.size() > 4) {
+								List<ArrayList<String>> turniMedico = turnoDAO.getTurniByMedico(medico.get(4));
+								if (turniMedico != null) turni.addAll(turniMedico);
+							}
 						}
 					}
+					return formattaDatiTurni(turni);
 				}
-				return formattaDatiTurni(turni);
-			}
-			@Override
-			protected void done() {
-				try { turniFrame.aggiornaTabella(get()); }
-				catch (InterruptedException e) { Thread.currentThread().interrupt(); LOGGER.warning("Caricamento turni interrotto"); }
-				catch (Exception e) { LOGGER.warning("Errore caricamento turni"); }
-				turniFrame.setCursor(java.awt.Cursor.getDefaultCursor());
-			}
-		};
-		worker.execute();
+				@Override
+				protected void done() {
+					try { turniFrame.aggiornaTabella(get()); }
+					catch (InterruptedException e) { Thread.currentThread().interrupt(); LOGGER.warning("Caricamento turni interrotto"); }
+					catch (Exception e) { LOGGER.warning("Errore caricamento turni"); }
+					turniFrame.setCursor(java.awt.Cursor.getDefaultCursor());
+				}
+			};
+			worker.execute();
+		}
 	}
 
 	public void apriSchermataCalendario(JFrame frameDaChiudere) {
@@ -2722,9 +2732,7 @@ public class Controller {
 			try {
 				String nuovoNome = nomeInput.getText().trim();
 				String nuovoCognome = cognomeInput.getText().trim();
-
-				boolean successo = true; 
-
+				boolean successo = amministratoreDAO.aggiornaAmministratore(matricola, nuovoNome, nuovoCognome);
 				if (successo) {
 					JOptionPane.showMessageDialog(null, "Profilo aggiornato con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
 					// Aggiorna localmente l'utente loggato per riflettere le modifiche nell'app

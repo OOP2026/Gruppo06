@@ -17,7 +17,8 @@ public class AmministratorePostgresDAO implements AmministratoreDAO {
         private static final String CHECK_LOGIN_ESISTENTE_QUERY = "SELECT 1 FROM amministratore WHERE login = ?";
         private static final String AGGIUNGI_AMMINISTRATORE_QUERY = "INSERT INTO amministratore (matricola, login, password, nome, cognome, pin) VALUES (?, ?, ?, ?, ?, ?)";
         private static final String GET_AMMINISTRATORE_BY_LOGIN_AND_PASSWORD_QUERY = "SELECT nome, cognome, login, password, matricola, pin FROM amministratore WHERE login = ? AND password = ?";
- 
+        private static final String UPDATE_ADMIN_QUERY = "UPDATE amministratore SET nome = ?, cognome = ? WHERE matricola = ?"
+
         @Override
         public boolean checkLoginEsistente(String login) {
         try (Connection conn = ConnessioneDatabase.getInstance();
@@ -80,4 +81,18 @@ public class AmministratorePostgresDAO implements AmministratoreDAO {
         datiAmministratore.add(rs.getString("pin"));
         return datiAmministratore;
     }
+
+    @Override
+    public boolean aggiornaAmministratore(String matricola, String nome, String cognome) {
+            try (Connection conn = ConnessioneDatabase.getInstance();
+                 PreparedStatement stmt = conn.prepareStatement(UPDATE_ADMIN_QUERY)) {
+                stmt.setString(1, nome);
+                stmt.setString(2, cognome);
+                stmt.setString(3, matricola);
+                return stmt.executeUpdate() > 0;
+    } catch (SQLException | NullPointerException e) {
+                LOGGER.log(Level.SEVERE, "Errore durante l'aggiornamento dell'amministratore", e);
+                return false;
+            }
+        }
 }

@@ -35,36 +35,16 @@ public class Medici extends JFrame {
             "Blocco Operatorio", "Terapia Intensiva", "Neuroradiologia",
             "Chirurgia Toracica", "Laboratorio Analisi", "Pronto Soccorso"
     };
-    
-    private Object[][] datiMedici = new Object[0][0];
-    
+
+    // RISOLTO: Aggiunto 'transient' per evitare problemi di serializzazione
+    private transient Object[][] datiMedici = new Object[0][0];
+
     public Medici() {
         initComponents();
         setupStyles();
-		if (specializzazioneList != null) {
-			specializzazioneList.setListData(SPECIALIZZAZIONI_DATA);
-		}
-
-		if (repartoList != null) {
-			repartoList.setListData(REPARTI_DATA);
-		}
-
-		if (tuttiRadioButton != null && attivoRadioButton != null && assenteRadioButton != null && occupatoRadioButton != null) {
-			ButtonGroup statoGroup = new ButtonGroup();
-			statoGroup.add(tuttiRadioButton);
-			statoGroup.add(attivoRadioButton);
-			statoGroup.add(assenteRadioButton);
-			statoGroup.add(occupatoRadioButton);
-			tuttiRadioButton.setSelected(true);
-		}
-
-		if (mediciTable != null) {
-			DefaultTableModel model = new DefaultTableModel(COLONNE, 0) {
-				@Override public boolean isCellEditable(int row, int column) { return false; }
-			};
-			mediciTable.setModel(model);
-		}
+        inizializzaComponentiDati();
         setupListeners();
+
         if (mediciTable != null) {
             loadTableData(null, null, null, null);
         }
@@ -72,99 +52,140 @@ public class Medici extends JFrame {
 
     public void aggiornaTabella(Object[][] dati) {
         this.datiMedici = dati != null ? dati : new Object[0][0];
-        loadTableData(null, null, null, null);
+        if (mediciTable != null) {
+            loadTableData(null, null, null, null);
+        }
     }
 
     public void addNuovoMedicoListener(java.awt.event.ActionListener listener) {
-        newmedicoButton.addActionListener(listener);
+        if (newmedicoButton != null) newmedicoButton.addActionListener(listener);
     }
 
     public void addModificaMedicoListener(java.awt.event.ActionListener listener) {
-        modificamedicoButton.addActionListener(listener);
+        if (modificamedicoButton != null) modificamedicoButton.addActionListener(listener);
     }
 
     public void addAssenzaListener(java.awt.event.ActionListener listener) {
-        assenzaButton.addActionListener(listener);
+        if (assenzaButton != null) assenzaButton.addActionListener(listener);
     }
 
     public String getMatricolaMedicoSelezionato() {
+        if (mediciTable == null) return null;
+
         int selectedRow = mediciTable.getSelectedRow();
-        if (selectedRow == -1) {
-            return null;
-        }
-        return (String) mediciTable.getValueAt(selectedRow, 0);
+        return (selectedRow == -1) ? null : (String) mediciTable.getValueAt(selectedRow, 0);
     }
 
     private void initComponents() {
-        // Questo metodo è mantenuto per compatibilità con il GUI Designer, ma la logica è stata spostata.
+        // Metodo per compatibilità con GUI Designer
     }
-    //Setup degli stili visivi per le componenti GUI
+
     private void setupStyles() {
-        Login.styleList(specializzazioneList);
-        Login.styleList(repartoList);
-        Login.setupTableStyle(mediciTable);
-        Login.applicaStilePulsantiCentrali(cercaButton);
-        Login.applicaStilePulsantiCentrali(resetButton);
-        Login.applicaStilePulsantiCentrali(modificamedicoButton);
-        Login.applicaStilePulsantiCentrali(newmedicoButton);
-        Login.applicaStilePulsantiCentrali(assenzaButton);
+        if (specializzazioneList != null) Login.styleList(specializzazioneList);
+        if (repartoList != null) Login.styleList(repartoList);
+        if (mediciTable != null) Login.setupTableStyle(mediciTable);
+        if (cercaButton != null) Login.applicaStilePulsantiCentrali(cercaButton);
+        if (resetButton != null) Login.applicaStilePulsantiCentrali(resetButton);
+        if (modificamedicoButton != null) Login.applicaStilePulsantiCentrali(modificamedicoButton);
+        if (newmedicoButton != null) Login.applicaStilePulsantiCentrali(newmedicoButton);
+        if (assenzaButton != null) Login.applicaStilePulsantiCentrali(assenzaButton);
     }
+
+
+    private void inizializzaComponentiDati() {
+        if (specializzazioneList != null) specializzazioneList.setListData(SPECIALIZZAZIONI_DATA);
+        if (repartoList != null) repartoList.setListData(REPARTI_DATA);
+        inizializzaRadioButtons();
+        inizializzaTabella();
+    }
+
+    private void inizializzaRadioButtons() {
+        if (tuttiRadioButton == null || attivoRadioButton == null || assenteRadioButton == null || occupatoRadioButton == null) return;
+
+        ButtonGroup statoGroup = new ButtonGroup();
+        statoGroup.add(tuttiRadioButton);
+        statoGroup.add(attivoRadioButton);
+        statoGroup.add(assenteRadioButton);
+        statoGroup.add(occupatoRadioButton);
+        tuttiRadioButton.setSelected(true);
+    }
+
+    private void inizializzaTabella() {
+        if (mediciTable == null) return;
+
+        DefaultTableModel model = new DefaultTableModel(COLONNE, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+        mediciTable.setModel(model);
+    }
+
+    // --- REFACTORING: Metodi estratti per abbattere la complessità di setupListeners ---
 
     private void setupListeners() {
-        cercaButton.addActionListener(e -> {
-            String nome = nomeField.getText().toLowerCase().trim();
-            String matricola = codiceField.getText().toLowerCase().trim();//codiceField viene usato per il filtraggio
-            String specializzazione = specializzazioneList.getSelectedValue();
-            String reparto = repartoList.getSelectedValue();
-
-            loadTableData(nome, matricola, specializzazione, reparto);
-        });
-
-        resetButton.addActionListener(e -> {
-            nomeField.setText("");
-            codiceField.setText("");
-            specializzazioneList.clearSelection();
-            repartoList.clearSelection();
-            tuttiRadioButton.setSelected(true);
-
-            loadTableData(null, null, null, null);
-        });
+        if (cercaButton != null) cercaButton.addActionListener(e -> eseguiRicerca());
+        if (resetButton != null) resetButton.addActionListener(e -> eseguiReset());
     }
 
-    private void loadTableData(String filtroNome, String filtroMatricola, String filtroSpec, String filtroReparto) {
+    private void eseguiRicerca() {
+        String nome = (nomeField != null) ? nomeField.getText().toLowerCase().trim() : "";
+        String matricola = (codiceField != null) ? codiceField.getText().toLowerCase().trim() : "";
+        String specializzazione = (specializzazioneList != null) ? specializzazioneList.getSelectedValue() : null;
+        String reparto = (repartoList != null) ? repartoList.getSelectedValue() : null;
+
+        loadTableData(nome, matricola, specializzazione, reparto);
+    }
+
+    private void eseguiReset() {
+        if (nomeField != null) nomeField.setText("");
+        if (codiceField != null) codiceField.setText("");
+        if (specializzazioneList != null) specializzazioneList.clearSelection();
+        if (repartoList != null) repartoList.clearSelection();
+        if (tuttiRadioButton != null) tuttiRadioButton.setSelected(true);
+
+        loadTableData(null, null, null, null);
+    }
+
+
+    private void loadTableData(String fNome, String fMatricola, String fSpec, String fReparto) {
+        if (mediciTable == null || mediciTable.getModel() == null) return;
+
         DefaultTableModel m = (DefaultTableModel) mediciTable.getModel();
         m.setRowCount(0);
 
-        String filtroStato = null;
-        if (tuttiRadioButton.isSelected()) {
-            filtroStato = null; // Nessun filtro
-        } else if (attivoRadioButton.isSelected()) {
-            filtroStato = "attivo";
-        } else if (assenteRadioButton.isSelected()) {
-            filtroStato = "assente";
-        } else if (occupatoRadioButton.isSelected()) {
-            filtroStato = "occupato";
-        }
+        String filtroStato = determinaFiltroStatoSelezionato();
 
         for (Object[] row : datiMedici) {
-            String rMatricola = ((String) row[0]).toLowerCase();
-            String rNome = ((String) row[1]).toLowerCase();
-            String rSpec = (String) row[2];
-            String rReparto = (String) row[3];
-            String rStato = ((String) row[4]).toLowerCase();
-
-            boolean matchNome = (filtroNome == null || filtroNome.isEmpty() || rNome.contains(filtroNome));
-            boolean matchMatricola = (filtroMatricola == null || filtroMatricola.isEmpty() || rMatricola.contains(filtroMatricola));
-
-            boolean matchSpec = (filtroSpec == null || rSpec.equals(filtroSpec));
-            boolean matchReparto = (filtroReparto == null || rReparto.equals(filtroReparto));
-            
-            boolean matchStato = (filtroStato == null || rStato.equals(filtroStato));
-
-            if (matchNome && matchMatricola && matchSpec && matchReparto && matchStato) {
+            if (rigaCorrispondeAiFiltri(row, fNome, fMatricola, fSpec, fReparto, filtroStato)) {
                 m.addRow(row);
             }
         }
     }
 
+    private String determinaFiltroStatoSelezionato() {
+        if (attivoRadioButton != null && attivoRadioButton.isSelected()) return "attivo";
+        if (assenteRadioButton != null && assenteRadioButton.isSelected()) return "assente";
+        if (occupatoRadioButton != null && occupatoRadioButton.isSelected()) return "occupato";
+        return null;
+    }
+
+    private boolean rigaCorrispondeAiFiltri(Object[] row, String fNome, String fMatricola, String fSpec, String fReparto, String fStato) {
+        if (row == null || row.length < 5) return false;
+
+        String rMatricola = row[0] != null ? ((String) row[0]).toLowerCase() : "";
+        String rNome = row[1] != null ? ((String) row[1]).toLowerCase() : "";
+        String rSpec = (String) row[2];
+        String rReparto = (String) row[3];
+        String rStato = row[4] != null ? ((String) row[4]).toLowerCase() : "";
+
+        if (fNome != null && !fNome.isEmpty() && !rNome.contains(fNome)) return false;
+        if (fMatricola != null && !fMatricola.isEmpty() && !rMatricola.contains(fMatricola)) return false;
+        if (fSpec != null && !fSpec.equals(rSpec)) return false;
+        if (fReparto != null && !fReparto.equals(rReparto)) return false;
+        if (fStato != null && !fStato.equals(rStato)) return false;
+
+        return true;
+    }
 }

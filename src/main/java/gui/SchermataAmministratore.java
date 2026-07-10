@@ -21,9 +21,8 @@ public class SchermataAmministratore extends JFrame {
     private JButton esciButton;
 
     // Attributi per l'Agenda
-    private JTextField dataField;
+    private JTextField ricercaField;
     private JButton ricercaButton;
-    private JPanel agendaPanel;
     private JTable agendaTable;
     private JButton settimanaleButton;
     private JButton newEventButton;
@@ -135,7 +134,7 @@ public class SchermataAmministratore extends JFrame {
      * Restituisce il testo inserito nel campo di ricerca per passarlo al Controller
      */
     public String getTestoRicercaAgenda() {
-        return (dataField != null) ? dataField.getText().trim() : "";
+        return (ricercaField != null) ? ricercaField.getText().trim() : "";
     }
 
 }

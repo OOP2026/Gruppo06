@@ -2,8 +2,7 @@ package gui;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
-import java.util.Calendar;
-import java.util.Date;
+import java.time.Instant;
 
 public class Turni extends JFrame {
 
@@ -40,7 +39,7 @@ public class Turni extends JFrame {
         setupStyles();
 
         if (dataSpinner != null) {
-            SpinnerDateModel dateModel = new SpinnerDateModel(new Date(), null, null, Calendar.DAY_OF_MONTH);
+            SpinnerDateModel dateModel = new SpinnerDateModel(java.util.Date.from(Instant.now()), null, null, java.util.Calendar.DAY_OF_MONTH);
             dataSpinner.setModel(dateModel);
             dataSpinner.setEditor(new JSpinner.DateEditor(dataSpinner, "yyyy-MM-dd"));
         }
@@ -130,7 +129,7 @@ public class Turni extends JFrame {
                 nomeField.setText("");
                 tipologiaList.clearSelection();
                 repartoList.clearSelection();
-                dataSpinner.setValue(new Date());
+                dataSpinner.setValue(java.util.Date.from(Instant.now()));
 
                 loadTableData(null, null, null, null, null, null);
             });

@@ -129,4 +129,11 @@ public class SchermataMedico extends JFrame {
         }
     }
 
+    /**
+     * Restituisce il testo inserito nel campo di ricerca per passarlo al Controller
+     */
+    public String getTestoRicercaAgenda() {
+        return (ricercaField != null) ? ricercaField.getText().trim() : "";
+    }
+
 }

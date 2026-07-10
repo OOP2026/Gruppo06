@@ -36,7 +36,6 @@ public class Controller {
 
 	private Utente utenteLoggato;
 	private JFrame finestraAttiva = null;
-	private JFrame homeFrame = null;
 
 	private static final String ERRORE_TITLE = "Errore";
 	private static final String SUCCESSO_TITLE = "Successo";
@@ -187,17 +186,17 @@ public class Controller {
 
 		if (isAdmin) {
 			if (amministratoreDAO.checkLoginEsistente(login)) {
-				LOGGER.warning("Tentativo di registrazione con login già esistente: " + login);
+				LOGGER.log(java.util.logging.Level.WARNING, "Tentativo di registrazione con login già esistente: {0}", login);
 				return false;
 			}
-			LOGGER.info("Tentativo di registrazione nuovo amministratore con matricola: " + matricola);
+			LOGGER.log(java.util.logging.Level.INFO, "Tentativo di registrazione nuovo amministratore con matricola: {0}", matricola);
 			return amministratoreDAO.aggiungiAmministratore(matricola, login, password, nome, cognome, pin);
 		} else {
 			if (medicoDAO.checkLoginEsistente(login)) {
-				LOGGER.warning("Tentativo di registrazione con login già esistente: " + login);
+				LOGGER.log(java.util.logging.Level.WARNING, "Tentativo di registrazione con login già esistente: {0}", login);
 				return false;
 			}
-			LOGGER.info("Tentativo di registrazione nuovo medico con matricola: " + matricola);
+			LOGGER.log(java.util.logging.Level.INFO, "Tentativo di registrazione nuovo medico con matricola: {0}", matricola);
 			return medicoDAO.aggiungiMedico(nome, cognome, matricola, login, password, null, null, null);
 		}
 	}
@@ -219,7 +218,7 @@ public class Controller {
 			String cognome = datiAmministratore.get(1);
 			String matricola = datiAmministratore.get(4);
 			this.utenteLoggato = new Amministratore(matricola, nome, cognome, login);
-			LOGGER.info("Accesso Amministratore confermato per " + login);
+			LOGGER.log(java.util.logging.Level.INFO, "Accesso Amministratore confermato per {0}", login);
 			return true;
 		}
 
@@ -229,7 +228,7 @@ public class Controller {
 			String cognome = datiMedico.get(1);
 			String matricola = datiMedico.get(4);
 			this.utenteLoggato = new Medico(matricola, nome, cognome, login);
-			LOGGER.info("Accesso Medico confermato per " + login);
+			LOGGER.log(java.util.logging.Level.INFO, "Accesso Medico confermato per {0}", login);
 			return true;
 		}
 
@@ -267,7 +266,7 @@ public class Controller {
 		// Business Logic: controlliamo se esiste già un medico con questa matricola
 		List<String> medicoEsistente = getMedicoByMatricola(matricola);
 		if (medicoEsistente != null && !medicoEsistente.isEmpty()) {
-			LOGGER.warning(() -> "Errore: Impossibile aggiungere. Esiste già un medico con matricola " + matricola);
+			LOGGER.log(java.util.logging.Level.WARNING, "Errore: Impossibile aggiungere. Esiste già un medico con matricola {0}", matricola);
 			return false;
 		}
 		boolean successo = medicoDAO.aggiungiMedico(nome, cognome, matricola, login, password, iscrizioneAlbo, specializzazione, reparto);
@@ -1299,7 +1298,7 @@ public class Controller {
 			}
 		});
 
-		if (repartiComboBox.getItemCount() > 0) {
+		if (repartiComboBox.getItemCount() != 0) {
 			repartiComboBox.setSelectedIndex(0);
 		}
 
@@ -1383,8 +1382,6 @@ public class Controller {
 	public void avviaSchermataAmministratore(String nomeUtente) {
 		gui.SchermataAmministratore adminFrame = new gui.SchermataAmministratore(nomeUtente);
 		impostaSchermata(adminFrame, adminFrame.mainPanel, "Ospedale - Home Amministratore", WindowConstants.DISPOSE_ON_CLOSE);
-
-		homeFrame = adminFrame; // Imposta come schermata principale
 
 		// Il Controller si iscrive agli eventi della GUI "stupida"
 		adminFrame.addPazientiListener(e -> apriSchermataPazienti(adminFrame));
@@ -1753,7 +1750,9 @@ public class Controller {
 							if (tsInizio.toLocalDateTime().toLocalDate().equals(dataTurno)) {
 								eventiDelGiorno.add(evento);
 							}
-						} catch (Exception ignored) {}
+						} catch (Exception ex) {
+							LOGGER.log(java.util.logging.Level.WARNING, "Errore di inserimento, riprovare.", ex);
+						}
 					}
 				}
 
@@ -2188,8 +2187,6 @@ public class Controller {
 		gui.SchermataMedico medicoHome = new gui.SchermataMedico(nomeUtente);
 		impostaSchermata(medicoHome, medicoHome.mainPanel, "Ospedale - Home Medico", WindowConstants.DISPOSE_ON_CLOSE);
 
-		homeFrame = medicoHome;
-
 		medicoHome.addPazientiListener(e -> apriSchermataPazienti(medicoHome));
 		medicoHome.addLettiListener(e -> apriSchermataLetti(medicoHome));
 		medicoHome.addPrestazioniListener(e -> apriSchermataPrestazioni(medicoHome));
@@ -2230,105 +2227,103 @@ public class Controller {
 
 	public void apriSchermataMedici(JFrame frameDaChiudere) {
 		gui.Medici mediciFrame = new gui.Medici();
-		if (mediciFrame != null && mediciFrame.mainPanel != null) {
-			impostaSchermata(mediciFrame, mediciFrame.mainPanel, "Gestione Medici", WindowConstants.DISPOSE_ON_CLOSE);
+		impostaSchermata(mediciFrame, mediciFrame.mainPanel, "Gestione Medici", WindowConstants.DISPOSE_ON_CLOSE);
 
-			mediciFrame.addNuovoMedicoListener(e -> {
-				if (gestisciCreazioneNuovoMedico()) { //
+		mediciFrame.addNuovoMedicoListener(e -> {
+			if (gestisciCreazioneNuovoMedico()) { //
+				mediciFrame.aggiornaTabella(formattaDatiMedici(medicoDAO.getAllMedici()));
+			}
+		});
+
+		mediciFrame.addModificaMedicoListener(e -> {
+			String matricola = mediciFrame.getMatricolaMedicoSelezionato();
+			if (matricola != null) {
+				if (gestisciModificaMedico(matricola)) {
 					mediciFrame.aggiornaTabella(formattaDatiMedici(medicoDAO.getAllMedici()));
 				}
-			});
+			} else {
+				JOptionPane.showMessageDialog(mediciFrame, "Per favore, seleziona un medico dalla tabella prima di cliccare su 'Aggiorna Medico'.", "Nessun Medico Selezionato", JOptionPane.WARNING_MESSAGE);
+			}
+		});
 
-			mediciFrame.addModificaMedicoListener(e -> {
-				String matricola = mediciFrame.getMatricolaMedicoSelezionato();
-				if (matricola != null) {
-					if (gestisciModificaMedico(matricola)) {
-						mediciFrame.aggiornaTabella(formattaDatiMedici(medicoDAO.getAllMedici()));
+		mediciFrame.addAssenzaListener(e -> {
+			String matricola = mediciFrame.getMatricolaMedicoSelezionato();
+			if (matricola != null) {
+				List<ArrayList<String>> assenzeDb = assenzaDAO.getAssenzeByMedico(matricola); //
+				Assenza assenzaCorrente = null;
+				java.time.LocalDate oggi = java.time.LocalDate.now();
+				if (assenzeDb != null) {
+					for (List<String> a : assenzeDb) {
+						try {
+							java.time.LocalDate dataInizio = java.time.LocalDate.parse(a.get(1));
+							java.time.LocalDate dataFine = java.time.LocalDate.parse(a.get(2));
+							if (!oggi.isBefore(dataInizio) && !oggi.isAfter(dataFine)) {
+								assenzaCorrente = new Assenza(dataInizio, dataFine, a.get(3), true, null, null);
+								break;
+							}
+						} catch (Exception ex) {
+							LOGGER.warning("Errore nel parsing dei dati di assenza per la matricola " + matricola + ": " + ex.getMessage());
+						}
 					}
-				} else {
-					JOptionPane.showMessageDialog(mediciFrame, "Per favore, seleziona un medico dalla tabella prima di cliccare su 'Aggiorna Medico'.", "Nessun Medico Selezionato", JOptionPane.WARNING_MESSAGE);
 				}
-			});
 
-			mediciFrame.addAssenzaListener(e -> {
-				String matricola = mediciFrame.getMatricolaMedicoSelezionato();
-				if (matricola != null) {
-					List<ArrayList<String>> assenzeDb = assenzaDAO.getAssenzeByMedico(matricola); //
-					Assenza assenzaCorrente = null;
-					java.time.LocalDate oggi = java.time.LocalDate.now();
-					if (assenzeDb != null) {
-						for (List<String> a : assenzeDb) {
-							try {
-								java.time.LocalDate dataInizio = java.time.LocalDate.parse(a.get(1));
-								java.time.LocalDate dataFine = java.time.LocalDate.parse(a.get(2));
-								if (!oggi.isBefore(dataInizio) && !oggi.isAfter(dataFine)) {
-									assenzaCorrente = new Assenza(dataInizio, dataFine, a.get(3), true, null, null);
-									break;
-								}
-							} catch (Exception ex) {
-								LOGGER.warning("Errore nel parsing dei dati di assenza per la matricola " + matricola + ": " + ex.getMessage());
-							}
-						}
-					}
+				if (assenzaCorrente != null) {
+					String messaggio = "Il medico è attualmente assente.\n" +
+							"Data Inizio: " + assenzaCorrente.getDataInizioAssenza() + "\n" +
+							"Data Fine: " + assenzaCorrente.getDataFineAssenza() + "\n" +
+							"Motivazione: " + assenzaCorrente.getMotivoAssenza();
+					Object[] options = {"Chiudi", "Revoca Assenza", "Aggiungi Nuova Assenza"};
+					int choice = JOptionPane.showOptionDialog(mediciFrame, messaggio, "Dettagli Assenza Approvata",
+							JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, options[0]);
 
-					if (assenzaCorrente != null) {
-						String messaggio = "Il medico è attualmente assente.\n" +
-								"Data Inizio: " + assenzaCorrente.getDataInizioAssenza() + "\n" +
-								"Data Fine: " + assenzaCorrente.getDataFineAssenza() + "\n" +
-								"Motivazione: " + assenzaCorrente.getMotivoAssenza();
-						Object[] options = {"Chiudi", "Revoca Assenza", "Aggiungi Nuova Assenza"};
-						int choice = JOptionPane.showOptionDialog(mediciFrame, messaggio, "Dettagli Assenza Approvata",
-								JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, options[0]);
-
-						if (choice == 1) {
-							int conferma = JOptionPane.showConfirmDialog(mediciFrame, "Sei sicuro di voler revocare questa assenza?", "Conferma Revoca", JOptionPane.YES_NO_OPTION);
-							if (conferma == JOptionPane.YES_OPTION) {
-								if (eliminaAssenza(matricola, assenzaCorrente.getDataInizioAssenza().toString())) {
-									JOptionPane.showMessageDialog(mediciFrame, "Assenza revocata con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
-									mediciFrame.aggiornaTabella(formattaDatiMedici(medicoDAO.getAllMedici()));
-								} else {
-									JOptionPane.showMessageDialog(mediciFrame, "Errore durante la revoca dell'assenza.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
-								}
-							}
-						} else if (choice == 2) {
-							if (gestisciCreazioneNuovaAssenza(matricola)) {
+					if (choice == 1) {
+						int conferma = JOptionPane.showConfirmDialog(mediciFrame, "Sei sicuro di voler revocare questa assenza?", "Conferma Revoca", JOptionPane.YES_NO_OPTION);
+						if (conferma == JOptionPane.YES_OPTION) {
+							if (eliminaAssenza(matricola, assenzaCorrente.getDataInizioAssenza().toString())) {
+								JOptionPane.showMessageDialog(mediciFrame, "Assenza revocata con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
 								mediciFrame.aggiornaTabella(formattaDatiMedici(medicoDAO.getAllMedici()));
+							} else {
+								JOptionPane.showMessageDialog(mediciFrame, "Errore durante la revoca dell'assenza.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
 							}
 						}
-					} else {
+					} else if (choice == 2) {
 						if (gestisciCreazioneNuovaAssenza(matricola)) {
 							mediciFrame.aggiornaTabella(formattaDatiMedici(medicoDAO.getAllMedici()));
 						}
 					}
 				} else {
-					JOptionPane.showMessageDialog(mediciFrame, "Per favore, seleziona un medico dalla tabella prima di gestire un'assenza.", "Nessun Medico Selezionato", JOptionPane.WARNING_MESSAGE);
-				}
-			});
-
-			mostraFinestraSecondaria(mediciFrame, frameDaChiudere);
-
-			mediciFrame.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
-			SwingWorker<Object[][], Void> worker = new SwingWorker<Object[][], Void>() {
-				@Override
-				protected Object[][] doInBackground() throws Exception {
-					return formattaDatiMedici(getAllMedici()); // Lavoro pensante delegato al thread secondario
-				}
-
-				@Override
-				protected void done() {
-					try {
-						mediciFrame.aggiornaTabella(get());
-					} catch (InterruptedException e) {
-						Thread.currentThread().interrupt();
-						LOGGER.warning("Caricamento medici interrotto");
-					} catch (Exception e) {
-						LOGGER.warning("Errore caricamento medici");
+					if (gestisciCreazioneNuovaAssenza(matricola)) {
+						mediciFrame.aggiornaTabella(formattaDatiMedici(medicoDAO.getAllMedici()));
 					}
-					mediciFrame.setCursor(java.awt.Cursor.getDefaultCursor());
 				}
-			};
-			worker.execute();
-		}
+			} else {
+				JOptionPane.showMessageDialog(mediciFrame, "Per favore, seleziona un medico dalla tabella prima di gestire un'assenza.", "Nessun Medico Selezionato", JOptionPane.WARNING_MESSAGE);
+			}
+		});
+
+		mostraFinestraSecondaria(mediciFrame, frameDaChiudere);
+
+		mediciFrame.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
+		SwingWorker<Object[][], Void> worker = new SwingWorker<Object[][], Void>() {
+			@Override
+			protected Object[][] doInBackground() throws Exception {
+				return formattaDatiMedici(getAllMedici()); // Lavoro pensante delegato al thread secondario
+			}
+
+			@Override
+			protected void done() {
+				try {
+					mediciFrame.aggiornaTabella(get());
+				} catch (InterruptedException e) {
+					Thread.currentThread().interrupt();
+					LOGGER.warning("Caricamento medici interrotto");
+				} catch (Exception e) {
+					LOGGER.warning("Errore caricamento medici");
+				}
+				mediciFrame.setCursor(java.awt.Cursor.getDefaultCursor());
+			}
+		};
+		worker.execute();
 	}
 
 	public void apriSchermataDimissioni(JFrame frameDaChiudere) {
@@ -2426,65 +2421,63 @@ public class Controller {
 
 	public void apriSchermataTurni(JFrame frameDaChiudere) {
 		gui.Turni turniFrame = new gui.Turni();
-		if (turniFrame != null && turniFrame.panelHome != null) {
-			impostaSchermata(turniFrame, turniFrame.panelHome, "Gestione Turni Lavorativi", WindowConstants.DISPOSE_ON_CLOSE);
+		impostaSchermata(turniFrame, turniFrame.panelHome, "Gestione Turni Lavorativi", WindowConstants.DISPOSE_ON_CLOSE);
 
-			turniFrame.addNuovoTurnoListener(e -> {
-				if (gestisciCreazioneNuovoTurno()) {
-					caricaDatiTurni(turniFrame);
+		turniFrame.addNuovoTurnoListener(e -> {
+			if (gestisciCreazioneNuovoTurno()) {
+				caricaDatiTurni(turniFrame);
+			}
+		});
+
+		// Aggiungiamo il listener per la modifica del turno
+		turniFrame.addModificaTurnoListener(e -> {
+			String[] datiSelezionati = turniFrame.getDatiTurnoSelezionato();
+			if (datiSelezionati != null && datiSelezionati.length > 1) {
+				String matricolaTurno = datiSelezionati[1]; // datiSelezionati[1] contiene la matricola
+
+				// Controllo per impedire ai medici di modificare i turni dei colleghi
+				if (utenteLoggato instanceof Medico && !utenteLoggato.getMatricola().equals(matricolaTurno)) {
+					JOptionPane.showMessageDialog(turniFrame, "Non sei autorizzato a modificare i turni di altri colleghi.", "Accesso Negato", JOptionPane.ERROR_MESSAGE);
+					return;
 				}
-			});
 
-			// Aggiungiamo il listener per la modifica del turno
-			turniFrame.addModificaTurnoListener(e -> {
-				String[] datiSelezionati = turniFrame.getDatiTurnoSelezionato();
-				if (datiSelezionati != null && datiSelezionati.length > 1) {
-					String matricolaTurno = datiSelezionati[1]; // datiSelezionati[1] contiene la matricola
-
-					// Controllo per impedire ai medici di modificare i turni dei colleghi
-					if (utenteLoggato instanceof Medico && !utenteLoggato.getMatricola().equals(matricolaTurno)) {
-						JOptionPane.showMessageDialog(turniFrame, "Non sei autorizzato a modificare i turni di altri colleghi.", "Accesso Negato", JOptionPane.ERROR_MESSAGE);
-						return;
-					}
-
-					// datiSelezionati[0] = data, [1] = matricola, [2] = orario
-					if (gestisciModificaTurno(matricolaTurno, datiSelezionati[0], datiSelezionati[2])) {
-						caricaDatiTurni(turniFrame); // Ricarica i dati se la modifica ha successo
-					}
-				} else {
-					JOptionPane.showMessageDialog(turniFrame, "Per favore, seleziona un turno dalla tabella prima di cliccare Modifica.", "Nessun Turno Selezionato", JOptionPane.WARNING_MESSAGE);
+				// datiSelezionati[0] = data, [1] = matricola, [2] = orario
+				if (gestisciModificaTurno(matricolaTurno, datiSelezionati[0], datiSelezionati[2])) {
+					caricaDatiTurni(turniFrame); // Ricarica i dati se la modifica ha successo
 				}
-			});
+			} else {
+				JOptionPane.showMessageDialog(turniFrame, "Per favore, seleziona un turno dalla tabella prima di cliccare Modifica.", "Nessun Turno Selezionato", JOptionPane.WARNING_MESSAGE);
+			}
+		});
 
-			mostraFinestraSecondaria(turniFrame, frameDaChiudere);
+		mostraFinestraSecondaria(turniFrame, frameDaChiudere);
 
-			// Utilizzo di SwingWorker per caricare i dati in background
-			turniFrame.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
-			SwingWorker<Object[][], Void> worker = new SwingWorker<Object[][], Void>() {
-				@Override
-				protected Object[][] doInBackground() throws Exception {
-					List<ArrayList<String>> turni = new ArrayList<>();
-					List<ArrayList<String>> medici = medicoDAO.getAllMedici();
-					if (medici != null) {
-						for (ArrayList<String> medico : medici) {
-							if (medico.size() > 4) {
-								List<ArrayList<String>> turniMedico = turnoDAO.getTurniByMedico(medico.get(4));
-								if (turniMedico != null) turni.addAll(turniMedico);
-							}
+		// Utilizzo di SwingWorker per caricare i dati in background
+		turniFrame.setCursor(java.awt.Cursor.getPredefinedCursor(java.awt.Cursor.WAIT_CURSOR));
+		SwingWorker<Object[][], Void> worker = new SwingWorker<Object[][], Void>() {
+			@Override
+			protected Object[][] doInBackground() throws Exception {
+				List<ArrayList<String>> turni = new ArrayList<>();
+				List<ArrayList<String>> medici = medicoDAO.getAllMedici();
+				if (medici != null) {
+					for (ArrayList<String> medico : medici) {
+						if (medico.size() > 4) {
+							List<ArrayList<String>> turniMedico = turnoDAO.getTurniByMedico(medico.get(4));
+							if (turniMedico != null) turni.addAll(turniMedico);
 						}
 					}
-					return formattaDatiTurni(turni);
 				}
-				@Override
-				protected void done() {
-					try { turniFrame.aggiornaTabella(get()); }
-					catch (InterruptedException e) { Thread.currentThread().interrupt(); LOGGER.warning("Caricamento turni interrotto"); }
-					catch (Exception e) { LOGGER.warning("Errore caricamento turni"); }
-					turniFrame.setCursor(java.awt.Cursor.getDefaultCursor());
-				}
-			};
-			worker.execute();
-		}
+				return formattaDatiTurni(turni);
+			}
+			@Override
+			protected void done() {
+				try { turniFrame.aggiornaTabella(get()); }
+				catch (InterruptedException e) { Thread.currentThread().interrupt(); LOGGER.warning("Caricamento turni interrotto"); }
+				catch (Exception e) { LOGGER.warning("Errore caricamento turni"); }
+				turniFrame.setCursor(java.awt.Cursor.getDefaultCursor());
+			}
+		};
+		worker.execute();
 	}
 
 	public void apriSchermataCalendario(JFrame frameDaChiudere) {
@@ -2825,6 +2818,7 @@ public class Controller {
 
 				if (successo) {
 					JOptionPane.showMessageDialog(null, "Assenza aggiunta con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
+					suggerisciSostitutiPerAssenza(matricola, dataInizio, dataFine);
 					return true;
 				} else {
 					JOptionPane.showMessageDialog(null, ERRORE_AGGIUNTA_DATI, ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
@@ -2834,6 +2828,105 @@ public class Controller {
 			}
 		}
 		return false;
+	}
+
+	private void suggerisciSostitutiPerAssenza(String matricolaMedicoAssente, String dataInizioStr, String dataFineStr) {
+		List<String> datiMedicoAssente = medicoDAO.getMedicoByMatricola(matricolaMedicoAssente);
+		if (datiMedicoAssente == null || datiMedicoAssente.isEmpty()) return;
+
+		String reparto = datiMedicoAssente.get(7);
+		if (reparto == null || reparto.trim().isEmpty() || reparto.equals("Nessuno")) {
+			// Se il medico non ha un reparto, non possiamo trovare colleghi.
+			return;
+		}
+
+		java.time.LocalDate dataInizioAssenza = java.time.LocalDate.parse(dataInizioStr);
+		java.time.LocalDate dataFineAssenza = java.time.LocalDate.parse(dataFineStr);
+
+		List<ArrayList<String>> tuttiTurni = turnoDAO.getTurniByMedico(matricolaMedicoAssente);
+		if (tuttiTurni == null) return;
+
+		for (ArrayList<String> turno : tuttiTurni) {
+			java.time.LocalDate dataTurno = java.time.LocalDate.parse(turno.get(2));
+
+			// Controlla se il turno ricade nel periodo di assenza
+			if (!dataTurno.isBefore(dataInizioAssenza) && !dataTurno.isAfter(dataFineAssenza)) {
+				List<String> sostitutiDisponibili = suggerisciSostitutiPerTurno(reparto, matricolaMedicoAssente, turno);
+
+				String infoTurno = "Turno del " + dataTurno + " dalle " + turno.get(3) + " alle " + turno.get(4);
+				JList<String> listaSostituti = new JList<>(sostitutiDisponibili.toArray(new String[0]));
+				JScrollPane scrollPane = new JScrollPane(listaSostituti);
+				scrollPane.setPreferredSize(new Dimension(350, 150));
+
+				JPanel panel = new JPanel(new BorderLayout(10, 10));
+				panel.add(new JLabel("<html>Il medico <b>" + datiMedicoAssente.get(0) + " " + datiMedicoAssente.get(1) + "</b> è assente.<br>Selezionare un sostituto per il seguente turno:</html>"), BorderLayout.NORTH);
+				panel.add(new JLabel(infoTurno), BorderLayout.CENTER);
+
+				if (sostitutiDisponibili.isEmpty()) {
+					panel.add(new JLabel("Nessun sostituto disponibile trovato per questo turno."), BorderLayout.SOUTH);
+				} else {
+					panel.add(scrollPane, BorderLayout.SOUTH);
+				}
+
+				JOptionPane.showMessageDialog(
+						null,
+						panel,
+						"Suggerimento Sostituto",
+						JOptionPane.INFORMATION_MESSAGE
+				);
+			}
+		}
+	}
+
+	private List<String> suggerisciSostitutiPerTurno(String reparto, String matricolaMedicoAssente, ArrayList<String> turnoDaCoprire) {
+		List<String> sostitutiDisponibili = new ArrayList<>();
+		List<ArrayList<String>> tuttiMedici = medicoDAO.getAllMedici();
+		if (tuttiMedici == null) return sostitutiDisponibili;
+
+		java.time.LocalDateTime inizioTurnoDaCoprire = LocalDateTime.parse(turnoDaCoprire.get(2) + "T" + turnoDaCoprire.get(3));
+		java.time.LocalDateTime fineTurnoDaCoprire = LocalDateTime.parse(turnoDaCoprire.get(2) + "T" + turnoDaCoprire.get(4));
+
+		for (ArrayList<String> medico : tuttiMedici) {
+			String matricolaCandidato = medico.get(4);
+			String repartoCandidato = medico.get(7);
+
+			// Filtra per: stesso reparto, non è il medico assente
+			if (reparto.equals(repartoCandidato) && !matricolaCandidato.equals(matricolaMedicoAssente)) {
+				boolean isDisponibile = true;
+
+				// 1. Controlla se il candidato è assente
+				List<ArrayList<String>> assenzeCandidato = assenzaDAO.getAssenzeByMedico(matricolaCandidato);
+				if (assenzeCandidato != null) {
+					for (List<String> assenza : assenzeCandidato) {
+						java.time.LocalDate inizioAssenza = java.time.LocalDate.parse(assenza.get(1));
+						java.time.LocalDate fineAssenza = java.time.LocalDate.parse(assenza.get(2));
+						if (!inizioTurnoDaCoprire.toLocalDate().isBefore(inizioAssenza) && !inizioTurnoDaCoprire.toLocalDate().isAfter(fineAssenza)) {
+							isDisponibile = false;
+							break;
+						}
+					}
+				}
+				if (!isDisponibile) continue;
+
+				// 2. Controlla se il candidato ha eventi/turni in sovrapposizione
+				List<ArrayList<String>> eventiCandidato = agendaDAO.getEventiByMatricola(matricolaCandidato);
+				if (eventiCandidato != null) {
+					for (ArrayList<String> evento : eventiCandidato) {
+						java.time.LocalDateTime inizioEvento = java.sql.Timestamp.valueOf(evento.get(4)).toLocalDateTime();
+						java.time.LocalDateTime fineEvento = java.sql.Timestamp.valueOf(evento.get(5)).toLocalDateTime();
+						if (inizioTurnoDaCoprire.isBefore(fineEvento) && fineTurnoDaCoprire.isAfter(inizioEvento)) {
+							isDisponibile = false;
+							break;
+						}
+					}
+				}
+
+				if (isDisponibile) {
+					sostitutiDisponibili.add(medico.get(0) + " " + medico.get(1) + " (Mat: " + matricolaCandidato + ")");
+				}
+			}
+		}
+		return sostitutiDisponibili;
 	}
 
 	private List<ArrayList<String>> formattaDatiPazienti(List<ArrayList<String>> pazientiDb) {
@@ -3404,35 +3497,33 @@ public class Controller {
 	private void avviaSchermataLogin() {
 		gui.Login loginView = new gui.Login();
 		JFrame frame = new JFrame("Login - Ospedale San Raffaele");
-		if (loginView != null && loginView.mainPanel != null) {
-			impostaSchermata(frame, loginView.mainPanel, "Login - Ospedale San Raffaele", WindowConstants.EXIT_ON_CLOSE);
+		impostaSchermata(frame, loginView.mainPanel, "Login - Ospedale San Raffaele", WindowConstants.EXIT_ON_CLOSE);
 
-			loginView.addLoginListener(e -> {
-				String username = loginView.getUsername();
-				String password = loginView.getPassword();
-				String pin = loginView.getPin();
+		loginView.addLoginListener(e -> {
+			String username = loginView.getUsername();
+			String password = loginView.getPassword();
+			String pin = loginView.getPin();
 
-				if (username.isEmpty() || password.isEmpty()) {
-					loginView.showMessage("Campi vuoti", "Inserisci Username e Password per accedere.", JOptionPane.WARNING_MESSAGE);
-					return;
-				}
+			if (username.isEmpty() || password.isEmpty()) {
+				loginView.showMessage("Campi vuoti", "Inserisci Username e Password per accedere.", JOptionPane.WARNING_MESSAGE);
+				return;
+			}
 
-				if (whoIsAsking(username, password, pin)) {
-					frame.dispose();
-					indirizzaUtenteLoggato();
-				} else {
-					loginView.showMessage("Errore di accesso", "Credenziali errate. Utente non trovato o password sbagliata.", JOptionPane.ERROR_MESSAGE);
-				}
-			});
+			if (whoIsAsking(username, password, pin)) {
+				frame.dispose();
+				indirizzaUtenteLoggato();
+			} else {
+				loginView.showMessage("Errore di accesso", "Credenziali errate. Utente non trovato o password sbagliata.", JOptionPane.ERROR_MESSAGE);
+			}
+		});
 
-			loginView.addRegisterListener(new java.awt.event.MouseAdapter() {
-				@Override
-				public void mouseClicked(java.awt.event.MouseEvent e) {
-					frame.dispose();
-					avviaSchermataRegistrazione();
-				}
-			});
-		}
+		loginView.addRegisterListener(new java.awt.event.MouseAdapter() {
+			@Override
+			public void mouseClicked(java.awt.event.MouseEvent e) {
+				frame.dispose();
+				avviaSchermataRegistrazione();
+			}
+		});
 
 		frame.setVisible(true);
 	}
@@ -3451,46 +3542,44 @@ public class Controller {
 	private void avviaSchermataRegistrazione() {
 		gui.Registrazione regView = new gui.Registrazione();
 		JFrame frame = new JFrame("Registrazione - Ospedale San Raffaele");
-		if (regView != null && regView.mainPanel != null) {
-			impostaSchermata(frame, regView.mainPanel, "Registrazione - Ospedale San Raffaele", WindowConstants.EXIT_ON_CLOSE);
+		impostaSchermata(frame, regView.mainPanel, "Registrazione - Ospedale San Raffaele", WindowConstants.EXIT_ON_CLOSE);
 
-			regView.addRegisterListener(e -> {
-				String nome = regView.getNome();
-				String cognome = regView.getCognome();
-				String username = regView.getUsername();
-				String password = regView.getPassword();
-				boolean isAdmin = regView.isAdmin();
-				String pin = regView.getPin();
+		regView.addRegisterListener(e -> {
+			String nome = regView.getNome();
+			String cognome = regView.getCognome();
+			String username = regView.getUsername();
+			String password = regView.getPassword();
+			boolean isAdmin = regView.isAdmin();
+			String pin = regView.getPin();
 
-				if (nome.isEmpty() || cognome.isEmpty() || username.isEmpty() || password.isEmpty()) {
-					regView.showMessage(ERRORE_TITLE, "Compila tutti i campi obbligatori (Nome, Cognome, Username, Password).", JOptionPane.ERROR_MESSAGE);
-					return;
-				}
+			if (nome.isEmpty() || cognome.isEmpty() || username.isEmpty() || password.isEmpty()) {
+				regView.showMessage(ERRORE_TITLE, "Compila tutti i campi obbligatori (Nome, Cognome, Username, Password).", JOptionPane.ERROR_MESSAGE);
+				return;
+			}
 
-				if (isAdmin && pin.isEmpty()) {
-					regView.showMessage("Errore PIN", "Scegli un PIN personale per registrarti come Amministratore.", JOptionPane.WARNING_MESSAGE);
-					return;
-				}
+			if (isAdmin && pin.isEmpty()) {
+				regView.showMessage("Errore PIN", "Scegli un PIN personale per registrarti come Amministratore.", JOptionPane.WARNING_MESSAGE);
+				return;
+			}
 
-				boolean successo = registrazione(username, password, nome, cognome, pin, isAdmin);
+			boolean successo = registrazione(username, password, nome, cognome, pin, isAdmin);
 
-				if (successo) {
-					regView.showMessage(SUCCESSO_TITLE, "Registrazione completata con successo!\nBenvenuto " + nome + " " + cognome, JOptionPane.INFORMATION_MESSAGE);
-					frame.dispose();
-					avviaSchermataLogin(); // Torna al login
-				} else {
-					regView.showMessage("Errore Registrazione", "Registrazione fallita!\nVerifica che l'username non sia già in uso e, se hai selezionato 'Amministratore', che il PIN di sicurezza sia corretto.", JOptionPane.ERROR_MESSAGE);
-				}
-			});
+			if (successo) {
+				regView.showMessage(SUCCESSO_TITLE, "Registrazione completata con successo!\nBenvenuto " + nome + " " + cognome, JOptionPane.INFORMATION_MESSAGE);
+				frame.dispose();
+				avviaSchermataLogin(); // Torna al login
+			} else {
+				regView.showMessage("Errore Registrazione", "Registrazione fallita!\nVerifica che l'username non sia già in uso e, se hai selezionato 'Amministratore', che il PIN di sicurezza sia corretto.", JOptionPane.ERROR_MESSAGE);
+			}
+		});
 
-			regView.addLoginListener(new java.awt.event.MouseAdapter() {
-				@Override
-				public void mouseClicked(java.awt.event.MouseEvent e) {
-					frame.dispose();
-					avviaSchermataLogin();
-				}
-			});
-		}
+		regView.addLoginListener(new java.awt.event.MouseAdapter() {
+			@Override
+			public void mouseClicked(java.awt.event.MouseEvent e) {
+				frame.dispose();
+				avviaSchermataLogin();
+			}
+		});
 
 		frame.setVisible(true);
 	}

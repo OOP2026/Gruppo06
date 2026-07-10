@@ -3414,8 +3414,8 @@ public class Controller {
 				String dataFiltroDb = "";
 				if (dataFiltroStr != null && !dataFiltroStr.isEmpty()) {
 					try {
-						java.util.Date d = new java.text.SimpleDateFormat("yyyy-MM-dd").parse(dataFiltroStr);
-						dataFiltroDb = new java.text.SimpleDateFormat("yyyy-MM-dd").format(d);
+						java.time.LocalDate d = java.time.LocalDate.parse(dataFiltroStr, java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+						dataFiltroDb = d.format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd"));
 					} catch (Exception e) {
 						LOGGER.warning("Formato data ricerca non valido: " + dataFiltroStr);
 					}
@@ -3497,14 +3497,6 @@ public class Controller {
         if (frame instanceof gui.SchermataAmministratore) ((gui.SchermataAmministratore) frame).aggiornaAgenda(dati);
         if (frame instanceof gui.SchermataMedico) ((gui.SchermataMedico) frame).aggiornaAgenda(dati);
     }
-	
-
-	public static void main(String[] args) {
-		SwingUtilities.invokeLater(() -> {
-			Controller app = new Controller();
-			app.avvia(); // Questo farà partire la tua schermata di Login!
-		});
-	}
 
 	public void avvia() {
 		avviaSchermataLogin();

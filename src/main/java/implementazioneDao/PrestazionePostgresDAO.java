@@ -21,6 +21,15 @@ public class PrestazionePostgresDAO implements PrestazioneDAO {
     private static final String UPDATE_PRESTAZIONE_QUERY = "UPDATE prestazione SET tipologia_prestazione = ?, esito_prestazione = ?, referto = ? WHERE id_prestazione = ?";
     private static final String DELETE_PRESTAZIONE_QUERY = "DELETE FROM prestazione WHERE id_prestazione = ?";
 
+    // Costanti per i nomi delle colonne per evitare duplicazioni e code smells
+    private static final String COL_ID_PRESTAZIONE = "id_prestazione";
+    private static final String COL_TIPOLOGIA_PRESTAZIONE = "tipologia_prestazione";
+    private static final String COL_ESITO_PRESTAZIONE = "esito_prestazione";
+    private static final String COL_DATA_TURNO = "data_turno";
+    private static final String COL_CF_PAZIENTE = "cf_paziente";
+    private static final String COL_MATRICOLA_MEDICO = "matricola_medico";
+    private static final String COL_REFERTO = "referto";
+
     @Override
     public boolean aggiungiPrestazione(String tipologiaPrestazione, String esitoPrestazione, String idTurno, String cfPaziente, String matricolaMedico, String idAgenda) {
         try (Connection conn = ConnessioneDatabase.getInstance();
@@ -46,13 +55,13 @@ public class PrestazionePostgresDAO implements PrestazioneDAO {
              ResultSet rs = stmt.executeQuery()) {
             while (rs.next()) {
                 ArrayList<String> p = new ArrayList<>();
-                p.add(String.valueOf(rs.getInt("id_prestazione")));
-                p.add(rs.getString("tipologia_prestazione"));
-                p.add(rs.getString("esito_prestazione"));
-                p.add(rs.getString("data_turno"));
-                p.add(rs.getString("cf_paziente"));
-                p.add(rs.getString("matricola_medico"));
-                p.add(rs.getString("referto"));
+                p.add(String.valueOf(rs.getInt(COL_ID_PRESTAZIONE)));
+                p.add(rs.getString(COL_TIPOLOGIA_PRESTAZIONE));
+                p.add(rs.getString(COL_ESITO_PRESTAZIONE));
+                p.add(rs.getString(COL_DATA_TURNO));
+                p.add(rs.getString(COL_CF_PAZIENTE));
+                p.add(rs.getString(COL_MATRICOLA_MEDICO));
+                p.add(rs.getString(COL_REFERTO));
                 prestazioni.add(p);
             }
         } catch (SQLException | NullPointerException e) {
@@ -70,18 +79,18 @@ public class PrestazionePostgresDAO implements PrestazioneDAO {
             try (ResultSet rs = stmt.executeQuery()) {
                 while (rs.next()) {
                     ArrayList<String> p = new ArrayList<>();
-                    p.add(String.valueOf(rs.getInt("id_prestazione")));
-                    p.add(rs.getString("tipologia_prestazione"));
-                    p.add(rs.getString("esito_prestazione"));
-                    p.add(rs.getString("data_turno"));
-                    p.add(rs.getString("cf_paziente"));
-                    p.add(rs.getString("matricola_medico"));
-                    p.add(rs.getString("referto"));
+                    p.add(String.valueOf(rs.getInt(COL_ID_PRESTAZIONE)));
+                    p.add(rs.getString(COL_TIPOLOGIA_PRESTAZIONE));
+                    p.add(rs.getString(COL_ESITO_PRESTAZIONE));
+                    p.add(rs.getString(COL_DATA_TURNO));
+                    p.add(rs.getString(COL_CF_PAZIENTE));
+                    p.add(rs.getString(COL_MATRICOLA_MEDICO));
+                    p.add(rs.getString(COL_REFERTO));
                     prestazioni.add(p);
                 }
             }
         } catch (SQLException | NullPointerException e) {
-            LOGGER.log(Level.SEVERE, "Errore durante il recupero delle prestazioni per il medico " + matricola, e);
+            LOGGER.log(Level.SEVERE, e, () -> "Errore durante il recupero delle prestazioni per il medico " + matricola);
         }
         return prestazioni;
     }
@@ -95,17 +104,17 @@ public class PrestazionePostgresDAO implements PrestazioneDAO {
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
                     prestazione = new ArrayList<>();
-                    prestazione.add(String.valueOf(rs.getInt("id_prestazione")));
-                    prestazione.add(rs.getString("tipologia_prestazione"));
-                    prestazione.add(rs.getString("esito_prestazione"));
-                    prestazione.add(rs.getString("data_turno"));
-                    prestazione.add(rs.getString("cf_paziente"));
-                    prestazione.add(rs.getString("matricola_medico"));
-                    prestazione.add(rs.getString("referto"));
+                    prestazione.add(String.valueOf(rs.getInt(COL_ID_PRESTAZIONE)));
+                    prestazione.add(rs.getString(COL_TIPOLOGIA_PRESTAZIONE));
+                    prestazione.add(rs.getString(COL_ESITO_PRESTAZIONE));
+                    prestazione.add(rs.getString(COL_DATA_TURNO));
+                    prestazione.add(rs.getString(COL_CF_PAZIENTE));
+                    prestazione.add(rs.getString(COL_MATRICOLA_MEDICO));
+                    prestazione.add(rs.getString(COL_REFERTO));
                 }
             }
         } catch (SQLException | NumberFormatException | NullPointerException e) {
-            LOGGER.log(Level.SEVERE, "Errore durante il recupero della prestazione con ID " + idPrestazione, e);
+            LOGGER.log(Level.SEVERE, e, () -> "Errore durante il recupero della prestazione con ID " + idPrestazione);
         }
         return prestazione;
     }
@@ -120,7 +129,7 @@ public class PrestazionePostgresDAO implements PrestazioneDAO {
             stmt.setInt(4, idPrestazione);
             return stmt.executeUpdate() > 0;
         } catch (SQLException | NullPointerException e) {
-            LOGGER.log(Level.SEVERE, "Errore durante l'aggiornamento della prestazione con ID " + idPrestazione, e);
+            LOGGER.log(Level.SEVERE, e, () -> "Errore durante l'aggiornamento della prestazione con ID " + idPrestazione);
             return false;
         }
     }
@@ -132,7 +141,7 @@ public class PrestazionePostgresDAO implements PrestazioneDAO {
             stmt.setInt(1, idPrestazione);
             return stmt.executeUpdate() > 0;
         } catch (SQLException | NullPointerException e) {
-            LOGGER.log(Level.SEVERE, "Errore durante l'eliminazione della prestazione con ID " + idPrestazione, e);
+            LOGGER.log(Level.SEVERE, e, () -> "Errore durante l'eliminazione della prestazione con ID " + idPrestazione);
             return false;
         }
     }

@@ -58,7 +58,7 @@ public class AgendaPostgresDAO implements AgendaDAO {
                 }
             }
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Errore nel recuperare gli eventi per la matricola: " + matricola, e);
+            LOGGER.log(Level.SEVERE, e, () -> "Errore nel recuperare gli eventi per la matricola: " + matricola);
         }
         return eventi;
     }
@@ -84,7 +84,7 @@ public class AgendaPostgresDAO implements AgendaDAO {
 
             return stmt.executeUpdate() > 0;
         } catch (SQLException | NullPointerException e) {
-            LOGGER.log(Level.SEVERE, "Errore durante l'inserimento dell'evento nel database per la matricola: " + matricola, e);
+            LOGGER.log(Level.SEVERE, e, () ->"Errore durante l'inserimento dell'evento nel database per la matricola: " + matricola);
             return false;
         }
     }

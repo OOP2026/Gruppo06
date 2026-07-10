@@ -15,10 +15,10 @@ public class Utente {
     /**
      * Costruisce un nuovo oggetto Utente.
      *
-     * @param matricola the matricola
-     * @param nome      the nome
-     * @param cognome   the cognome
-     * @param login     the login
+     * @param matricola la matricola
+     * @param nome      il nome
+     * @param cognome   il cognome
+     * @param login     la login
      */
     public Utente(String matricola, String nome, String cognome, String login) {
         this.matricola = matricola;

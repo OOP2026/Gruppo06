@@ -91,6 +91,13 @@ public class Dimissioni extends JFrame {
     }
 
     public Date getDataSelezionata() {
+        if (dataDimissioneSpinner != null && dataDimissioneSpinner.getEditor() instanceof JSpinner.DateEditor) {
+            JSpinner.DateEditor editor = (JSpinner.DateEditor) dataDimissioneSpinner.getEditor();
+            // Se il campo di testo è vuoto, restituisce null per ignorare il filtro della data
+            if (editor.getTextField().getText().trim().isEmpty()) {
+                return null;
+            }
+        }
         return (Date) dataDimissioneSpinner.getValue();
     }
 
@@ -109,11 +116,25 @@ public class Dimissioni extends JFrame {
         return null;
     }
 
+    /**
+     *
+     * @param cercaListener
+     */
     public void resetCampiRicerca(ActionListener cercaListener) {
-        codiceFiscaleField.setText("");
-        nomeCognomeField.setText("");
-        repartoList.clearSelection();
-        tipoDimissioneList.clearSelection();
+        if (codiceFiscaleField != null) codiceFiscaleField.setText("");
+        if (nomeCognomeField != null) nomeCognomeField.setText("");
+        if (repartoList != null) repartoList.clearSelection();
+        if (tipoDimissioneList != null) tipoDimissioneList.clearSelection();
+
+        // Svuota fisicamente la data dallo Spinner
+        if (dataDimissioneSpinner != null) {
+            dataDimissioneSpinner.setValue(new Date());
+            if (dataDimissioneSpinner.getEditor() instanceof JSpinner.DateEditor) {
+                JSpinner.DateEditor editor = (JSpinner.DateEditor) dataDimissioneSpinner.getEditor();
+                editor.getTextField().setValue(null);
+                editor.getTextField().setText(""); // Forza la pulizia testuale assoluta
+            }
+        }
 
         // Esegue la ricerca con i campi resettati per mostrare tutti i risultati
         if (cercaListener != null) {
@@ -140,7 +161,12 @@ public class Dimissioni extends JFrame {
 
         SpinnerDateModel dateModel = new SpinnerDateModel(new Date(), null, null, Calendar.DAY_OF_MONTH);
         dataDimissioneSpinner.setModel(dateModel);
-        dataDimissioneSpinner.setEditor(new JSpinner.DateEditor(dataDimissioneSpinner, "yyyy-MM-dd"));
+        
+        JSpinner.DateEditor editor = new JSpinner.DateEditor(dataDimissioneSpinner, "yyyy-MM-dd");
+        dataDimissioneSpinner.setEditor(editor);
+        // All'avvio della schermata, imposta il campo della data come vuoto
+        editor.getTextField().setValue(null);
+        editor.getTextField().setText(""); // Forza la pulizia testuale assoluta
     }
     private void setupStyles() {
         Login.setupTableStyle(pazientiTable);

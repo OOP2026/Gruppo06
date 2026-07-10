@@ -25,8 +25,6 @@ public class Ricovero extends JFrame {
     private JButton gestisciRicoveroButton;
     private JButton gestisciDimissioneButton;
 
-    private boolean dataModificata = false;
-
     private List<String> idRicoveriNascosti = new ArrayList<>();
 
     private static final String[] COLONNE = {
@@ -40,13 +38,10 @@ public class Ricovero extends JFrame {
 		if (dataSpinner != null) {
 			SpinnerDateModel dateModel = new SpinnerDateModel(new Date(), null, null, Calendar.DAY_OF_MONTH);
 			dataSpinner.setModel(dateModel);
-			dataSpinner.setEditor(new JSpinner.DateEditor(dataSpinner, "yyyy-MM-dd"));
-			dataSpinner.addChangeListener(e -> dataModificata = true);
-			((JSpinner.DateEditor) dataSpinner.getEditor()).getTextField().getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
-				public void insertUpdate(javax.swing.event.DocumentEvent e) { dataModificata = true; }
-				public void removeUpdate(javax.swing.event.DocumentEvent e) { dataModificata = true; }
-				public void changedUpdate(javax.swing.event.DocumentEvent e) { dataModificata = true; }
-			});
+			JSpinner.DateEditor editor = new JSpinner.DateEditor(dataSpinner, "yyyy-MM-dd");
+			dataSpinner.setEditor(editor);
+			editor.getTextField().setValue(null);
+			editor.getTextField().setText(""); // Forza la pulizia visiva e logica all'avvio
 		}
 
 		if (repartoList != null) {
@@ -105,15 +100,15 @@ public class Ricovero extends JFrame {
     }
 
     public String getNome() {
-        return nomeField.getText();
+        return nomeField != null ? nomeField.getText().trim() : "";
     }
 
     public String getCodiceFiscale() {
-        return codiceField.getText();
+        return codiceField != null ? codiceField.getText().trim() : "";
     }
 
     public String getStanza() {
-        return stanzaField.getText();
+        return stanzaField != null ? stanzaField.getText().trim() : "";
     }
 
     public String getRepartoSelezionato() {
@@ -121,24 +116,31 @@ public class Ricovero extends JFrame {
     }
 
     public String getDataStr() {
-        try {
-            dataSpinner.commitEdit();
-        } catch (java.text.ParseException e) {
+        if (dataSpinner != null && dataSpinner.getEditor() instanceof JSpinner.DateEditor) {
+            JSpinner.DateEditor editor = (JSpinner.DateEditor) dataSpinner.getEditor();
+            if (editor.getTextField().getText().trim().isEmpty()) {
+                return "";
+            }
         }
-
-        JSpinner.DateEditor editor = (JSpinner.DateEditor) dataSpinner.getEditor();
-        String text = editor.getTextField().getText().trim();
-        if (text.isEmpty() || !dataModificata) return "";
-        return text;
+        Date selectedDate = (Date) dataSpinner.getValue();
+        if (selectedDate == null) return "";
+        java.text.SimpleDateFormat dateFormat = new java.text.SimpleDateFormat("yyyy-MM-dd");
+        return dateFormat.format(selectedDate);
     }
 
     public void resetCampiRicerca() {
-        nomeField.setText("");
-        codiceField.setText("");
-        stanzaField.setText("");
-        repartoList.clearSelection();
-        dataSpinner.setValue(new Date());
-        dataModificata = false;
+        if (nomeField != null) nomeField.setText("");
+        if (codiceField != null) codiceField.setText("");
+        if (stanzaField != null) stanzaField.setText("");
+        if (repartoList != null) repartoList.clearSelection();
+        if (dataSpinner != null) {
+            dataSpinner.setValue(new Date());
+            if (dataSpinner.getEditor() instanceof JSpinner.DateEditor) {
+                JSpinner.DateEditor editor = (JSpinner.DateEditor) dataSpinner.getEditor();
+                editor.getTextField().setValue(null);
+                editor.getTextField().setText(""); // Forza la pulizia durante il reset
+            }
+        }
     }
 
     public String[] getRicoveroSelezionato() {

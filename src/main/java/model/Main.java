@@ -4,14 +4,14 @@ import controller.Controller;
 import javax.swing.SwingUtilities;
 
 /**
- * The type Main.
+ * Classe principale dell'applicazione.
  */
 public class Main {
 
     /**
-     * The entry point of application.
+     * Punto di ingresso dell'applicazione.
      *
-     * @param args the input arguments
+     * @param args gli argomenti passati da riga di comando
      */
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {

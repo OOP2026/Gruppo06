@@ -40,6 +40,9 @@ public class Prestazioni {
             dataSpinner.setModel(new SpinnerDateModel(new Date(), null, null, java.util.Calendar.DAY_OF_MONTH));
             JSpinner.DateEditor dateEditor = new JSpinner.DateEditor(dataSpinner, "yyyy-MM-dd");
             dataSpinner.setEditor(dateEditor);
+            
+            // Svuotiamo il campo testuale per non forzare la ricerca alla data odierna di default
+            dateEditor.getTextField().setValue(null);
         }
 
         if (prestazioniTable != null) {
@@ -145,6 +148,13 @@ public class Prestazioni {
     }
 
     public String getData() {
+        if (dataSpinner != null && dataSpinner.getEditor() instanceof JSpinner.DateEditor) {
+            JSpinner.DateEditor editor = (JSpinner.DateEditor) dataSpinner.getEditor();
+            // Se l'utente ha lasciato o svuotato il campo, non applichiamo il filtro data
+            if (editor.getTextField().getText().trim().isEmpty()) {
+                return "";
+            }
+        }
         Date selectedDate = (Date) dataSpinner.getValue();
         if (selectedDate == null) return "";
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
@@ -154,8 +164,13 @@ public class Prestazioni {
     public void resetCampiRicerca() {
         if (codiceField != null) codiceField.setText("");
         if (nomeField != null) nomeField.setText("");
-        dataSpinner.setValue(new Date());
-        repartoList.clearSelection();
-        tipologiaList.clearSelection();
+        if (dataSpinner != null) {
+            dataSpinner.setValue(new Date());
+            if (dataSpinner.getEditor() instanceof JSpinner.DateEditor) {
+                ((JSpinner.DateEditor) dataSpinner.getEditor()).getTextField().setValue(null);
+            }
+        }
+        if (repartoList != null) repartoList.clearSelection();
+        if (tipologiaList != null) tipologiaList.clearSelection();
     }
 }

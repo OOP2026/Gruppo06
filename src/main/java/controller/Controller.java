@@ -140,19 +140,21 @@ public class Controller {
 
 	private void autoInserisciPrestazioneInAgenda(String turnoSelezionato, String oraInizioSelezionataStr, String matricolaFinale, String tipologiaPrestazione, String cfPaziente) {
 		try {
-			String dataTurno = turnoSelezionato.split(" ")[0];
-			String oraInizioPrestazione = oraInizioSelezionataStr + ":00"; // Aggiunge i secondi
-			String inizioTimestampStr = dataTurno + " " + oraInizioPrestazione;
-			java.sql.Timestamp tsInizio = java.sql.Timestamp.valueOf(inizioTimestampStr);
+			String dataTurnoStr = turnoSelezionato.split(" ")[0].trim();
+			String oraPulita = oraInizioSelezionataStr.trim();
 
-			java.util.Calendar cal = java.util.Calendar.getInstance();
-			cal.setTime(tsInizio);
-			cal.add(java.util.Calendar.MINUTE, 30);
-			java.sql.Timestamp tsFine = new java.sql.Timestamp(cal.getTimeInMillis());
+			java.time.LocalDate data = java.time.LocalDate.parse(dataTurnoStr);
+			java.time.LocalTime ora = java.time.LocalTime.parse(oraPulita);
+
+			java.time.LocalDateTime ldtInizio = java.time.LocalDateTime.of(data, ora);
+			java.sql.Timestamp tsInizio = java.sql.Timestamp.valueOf(ldtInizio);
+
+			java.time.LocalDateTime ldtFine = ldtInizio.plusMinutes(30);
+			java.sql.Timestamp tsFine = java.sql.Timestamp.valueOf(ldtFine);
 
 			addEvento(matricolaFinale, "Prestazione: " + tipologiaPrestazione, "Paziente: " + cfPaziente, tsInizio, tsFine);
 		} catch (Exception ex) {
-			LOGGER.log(java.util.logging.Level.WARNING, "Impossibile auto-inserire la prestazione in agenda.", ex);
+			LOGGER.log(java.util.logging.Level.WARNING, "Impossibile auto-inserire la prestazione in agenda. Turno='" + turnoSelezionato + "', Ora='" + oraInizioSelezionataStr + "'", ex);
 		}
 	}
 

@@ -3404,36 +3404,35 @@ public class Controller {
 	private void avviaSchermataLogin() {
 		gui.Login loginView = new gui.Login();
 		JFrame frame = new JFrame("Login - Ospedale San Raffaele");
-		impostaSchermata(frame, loginView.mainPanel, "Login - Ospedale San Raffaele", WindowConstants.EXIT_ON_CLOSE);
+		if (loginView != null && loginView.mainPanel != null) {
+			impostaSchermata(frame, loginView.mainPanel, "Login - Ospedale San Raffaele", WindowConstants.EXIT_ON_CLOSE);
 
-		// Listener delegato dal bottone Accedi nella GUI
-		loginView.addLoginListener(e -> {
-			String username = loginView.getUsername();
-			String password = loginView.getPassword();
-			// Legge il PIN dalla GUI. Se la GUI Login non lo ha, aggiungi il campo e il metodo getPin()!
-			String pin = loginView.getPin(); 
+			loginView.addLoginListener(e -> {
+				String username = loginView.getUsername();
+				String password = loginView.getPassword();
+				String pin = loginView.getPin();
 
-			if (username.isEmpty() || password.isEmpty()) {
-				loginView.showMessage("Campi vuoti", "Inserisci Username e Password per accedere.", JOptionPane.WARNING_MESSAGE);
-				return;
-			}
+				if (username.isEmpty() || password.isEmpty()) {
+					loginView.showMessage("Campi vuoti", "Inserisci Username e Password per accedere.", JOptionPane.WARNING_MESSAGE);
+					return;
+				}
 
-			if (whoIsAsking(username, password, pin)) {
-				frame.dispose(); // Chiude la schermata di login
-				indirizzaUtenteLoggato();
-			} else {
-				loginView.showMessage("Errore di accesso", "Credenziali errate. Utente non trovato o password sbagliata.", JOptionPane.ERROR_MESSAGE);
-			}
-		});
+				if (whoIsAsking(username, password, pin)) {
+					frame.dispose();
+					indirizzaUtenteLoggato();
+				} else {
+					loginView.showMessage("Errore di accesso", "Credenziali errate. Utente non trovato o password sbagliata.", JOptionPane.ERROR_MESSAGE);
+				}
+			});
 
-		// Listener delegato dal bottone (testo) "Registrati" nella GUI
-		loginView.addRegisterListener(new java.awt.event.MouseAdapter() {
-			@Override
-			public void mouseClicked(java.awt.event.MouseEvent e) {
-				frame.dispose();
-				avviaSchermataRegistrazione();
-			}
-		});
+			loginView.addRegisterListener(new java.awt.event.MouseAdapter() {
+				@Override
+				public void mouseClicked(java.awt.event.MouseEvent e) {
+					frame.dispose();
+					avviaSchermataRegistrazione();
+				}
+			});
+		}
 
 		frame.setVisible(true);
 	}

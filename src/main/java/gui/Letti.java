@@ -6,6 +6,11 @@ import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.event.ActionListener;
 
 
+/**
+ * La classe Letti gestisce l'interfaccia grafica per la visualizzazione,
+ * la ricerca e l'assegnazione dei letti all'interno della struttura ospedaliera.
+ * Estende JFrame e fornisce i metodi necessari per interagire con il controller.
+ */
 public class Letti extends JFrame {
     public JPanel mainPanel;
     private JRadioButton tuttiRadioButton;
@@ -14,7 +19,7 @@ public class Letti extends JFrame {
     private JList<String> repartoList;
     private JButton cercaButton;
     private JButton resetButton;
-    private JTable lettiTable; // Questa è la tabella che mostra i letti
+    private JTable lettiTable;
     private JButton assegnaPazienteButton;
     private JButton storicoLettiButton;
     private JTextField stanzaField;
@@ -24,39 +29,48 @@ public class Letti extends JFrame {
             "Numero Letto", "Stanza", "Nome Paziente", "Codice Fiscale", "Reparto", "Stato"
     };
 
+    /**
+     * Costruisce una nuova istanza della schermata Letti,
+     * inizializzando i componenti grafici e applicando gli stili visivi.
+     */
     public Letti() {
         initComponents();
         setupStyles();
     }
 
+    /**
+     * Inizializza i componenti principali dell'interfaccia, configurando in particolare
+     * il modello della tabella dei letti e raggruppando i filtri di selezione dello stato.
+     */
     private void initComponents() {
-        // Inizializza subito il modello della tabella con le colonne per mostrare le intestazioni
         DefaultTableModel model = new DefaultTableModel(new Object[0][0], COLONNE) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false; // Rende la tabella non modificabile
+                return false;
             }
         };
 
         lettiTable.setModel(model);
 
-        // Raggruppa i radio button per permettere una sola selezione
         ButtonGroup statoLettoGroup = new ButtonGroup();
         statoLettoGroup.add(tuttiRadioButton);
         statoLettoGroup.add(disponibileRadioButton);
         statoLettoGroup.add(occupatoRadioButton);
-        tuttiRadioButton.setSelected(true); // Imposta "Tutti" come predefinito
+        tuttiRadioButton.setSelected(true);
     }
 
+    /**
+     * Applica gli stili personalizzati ai componenti dell'interfaccia utente,
+     * inclusi i colori dei pulsanti, delle liste e l'allineamento del testo in tabella.
+     */
     private void setupStyles() {
-        Login.styleList(repartoList); // Mantenuto per repartoList
+        Login.styleList(repartoList);
         Login.setupTableStyle(lettiTable);
         Login.applicaStilePulsantiCentrali(cercaButton);
         Login.applicaStilePulsantiCentrali(resetButton);
         Login.applicaStilePulsantiCentrali(assegnaPazienteButton);
         Login.applicaStilePulsantiCentrali(storicoLettiButton);
         
-        // Centra il testo nelle colonne della tabella per far risaltare meglio le emoji
         DefaultTableCellRenderer centerRenderer = new DefaultTableCellRenderer();
         centerRenderer.setHorizontalAlignment(SwingConstants.CENTER);
         for (int i = 0; i < lettiTable.getColumnCount(); i++) {
@@ -65,44 +79,82 @@ public class Letti extends JFrame {
     }
 
     /**
-     * Rende il pulsante "Assegna Paziente" accessibile a un controller esterno.
-     * @param listener L'ActionListener che verrà eseguito al click del pulsante.
+     * Registra un listener per il pulsante di assegnazione di un paziente a un letto.
+     *
+     * @param listener il comportamento da eseguire al click
      */
     public void addAssegnaPazienteListener(ActionListener listener) {
         assegnaPazienteButton.addActionListener(listener);
     }
 
+    /**
+     * Registra un listener per il pulsante di ricerca dei letti.
+     *
+     * @param listener il comportamento da eseguire al click
+     */
     public void addCercaListener(ActionListener listener) {
         cercaButton.addActionListener(listener);
     }
 
+    /**
+     * Registra un listener per il pulsante di reset dei filtri.
+     *
+     * @param listener il comportamento da eseguire al click
+     */
     public void addResetListener(ActionListener listener) {
         resetButton.addActionListener(listener);
     }
 
+    /**
+     * Registra un listener per il pulsante di visualizzazione dello storico.
+     *
+     * @param listener il comportamento da eseguire al click
+     */
     public void addStoricoLettiListener(ActionListener listener) {
         storicoLettiButton.addActionListener(listener);
     }
 
+    /**
+     * Restituisce lo stato del letto correntemente selezionato tramite radio button.
+     *
+     * @return una stringa rappresentante lo stato ("Libero", "Occupato" o "Tutti")
+     */
     public String getSelectedStato() {
         if (disponibileRadioButton.isSelected()) return "Libero";
         if (occupatoRadioButton.isSelected()) return "Occupato";
         return "Tutti";
     }
 
+    /**
+     * Restituisce il reparto correntemente selezionato dalla lista di filtraggio.
+     *
+     * @return il nome del reparto selezionato, oppure null se non è stata effettuata alcuna selezione
+     */
     public String getSelectedReparto() {
-        // Se nessun reparto è selezionato, restituisce null o una stringa vuota per indicare "tutti i reparti"
         return repartoList.getSelectedValue();
     }
 
+    /**
+     * Restituisce la stanza inserita nel campo di ricerca.
+     *
+     * @return la stringa inserita nel campo di testo dedicato alla stanza
+     */
     public String getStanza() {
         return stanzaField.getText();
     }
 
+    /**
+     * Restituisce il nome del paziente inserito nel campo di ricerca.
+     *
+     * @return la stringa inserita nel campo di testo dedicato al paziente
+     */
     public String getPaziente() {
         return pazienteField.getText();
     }
 
+    /**
+     * Resetta tutti i campi di ricerca e i filtri ai loro valori di default.
+     */
     public void resetCampiRicerca() {
         tuttiRadioButton.setSelected(true);
         repartoList.clearSelection();
@@ -111,21 +163,22 @@ public class Letti extends JFrame {
     }
 
     /**
-     * Recupera l'ID del letto attualmente selezionato nella tabella.
-     * @return L'ID del letto come String, o null se non c'è nessuna selezione.
+     * Identifica e restituisce l'ID del letto selezionato nella tabella.
+     *
+     * @return l'ID del letto come stringa, oppure null se non è stata selezionata alcuna riga
      */
     public String getIdLettoSelezionato() {
         int rigaSelezionata = lettiTable.getSelectedRow();
         if (rigaSelezionata == -1) {
             return null;
         }
-        // Si assume che l'ID del letto sia nella prima colonna (indice 0)
         return (String) lettiTable.getValueAt(rigaSelezionata, 0);
     }
 
     /**
-     * Recupera il Reparto del letto attualmente selezionato nella tabella.
-     * @return Il Reparto del letto come String, o null se non c'è nessuna selezione.
+     * Identifica e restituisce il reparto associato al letto selezionato nella tabella.
+     *
+     * @return il nome del reparto come stringa, oppure null se non è stata selezionata alcuna riga
      */
     public String getRepartoLettoSelezionato() {
         int rigaSelezionata = lettiTable.getSelectedRow();
@@ -136,12 +189,13 @@ public class Letti extends JFrame {
     }
 
     /**
-     * Popola la tabella dei letti con i dati forniti dal controller.
-     * @param dati Una matrice di oggetti da visualizzare nella tabella.
+     * Aggiorna il contenuto della tabella dei letti con i nuovi dati forniti.
+     *
+     * @param dati matrice di oggetti contenente i record dei letti prelevati dal database
      */
     public void aggiornaTabella(Object[][] dati) {
         DefaultTableModel model = (DefaultTableModel) lettiTable.getModel();
-        model.setRowCount(0); // Pulisce la tabella
+        model.setRowCount(0);
         if (dati != null) {
             for (Object[] riga : dati) {
                 model.addRow(riga);

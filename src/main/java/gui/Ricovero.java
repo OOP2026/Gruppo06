@@ -8,6 +8,11 @@ import java.util.Date;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * La classe Ricovero gestisce l'interfaccia grafica per la visualizzazione,
+ * la ricerca e la gestione dei ricoveri ospedalieri.
+ * Estende JFrame e fornisce i metodi necessari per interagire con il controller.
+ */
 public class Ricovero extends JFrame {
 
     public JPanel mainPanel;
@@ -32,6 +37,10 @@ public class Ricovero extends JFrame {
             "Motivazione Ricovero", "Reparto di Ricovero", "Data e Ora Ingresso"
     };
 
+    /**
+     * Costruisce una nuova istanza della schermata Ricovero, inizializzando
+     * i componenti grafici, i modelli di dati e applicando gli stili visivi.
+     */
     public Ricovero() {
         initComponents();
         setupStyles();
@@ -41,7 +50,7 @@ public class Ricovero extends JFrame {
 			JSpinner.DateEditor editor = new JSpinner.DateEditor(dataSpinner, "yyyy-MM-dd");
 			dataSpinner.setEditor(editor);
 			editor.getTextField().setValue(null);
-			editor.getTextField().setText(""); // Forza la pulizia visiva e logica all'avvio
+			editor.getTextField().setText("");
 		}
 
 		if (repartoList != null) {
@@ -56,22 +65,28 @@ public class Ricovero extends JFrame {
 		}
     }
 
+    /**
+     * Aggiorna il contenuto della tabella dei ricoveri con i nuovi dati forniti.
+     * Nasconde l'ID reale del ricovero salvandolo in una lista interna per mantenere l'interfaccia pulita.
+     *
+     * @param dati matrice di oggetti contenente i record dei ricoveri prelevati dal database
+     */
     public void aggiornaTabella(Object[][] dati) {
         idRicoveriNascosti.clear();
         DefaultTableModel model = (DefaultTableModel) ricoveriTable.getModel();
-        model.setRowCount(0); // Pulisce la tabella
+        model.setRowCount(0);
         if (dati != null) {
             for (Object[] riga : dati) {
                 if (riga != null && riga.length >= 7) {
-                    idRicoveriNascosti.add((String) riga[0]); // Salva l'ID in memoria
+                    idRicoveriNascosti.add((String) riga[0]);
                     
                     Object[] rigaVisibile = new Object[6];
-                    rigaVisibile[0] = riga[3]; // Codice Fiscale
-                    rigaVisibile[1] = riga[1]; // Paziente
-                    rigaVisibile[2] = riga[2]; // Stanza
-                    rigaVisibile[3] = riga[4]; // Motivazione Ricovero
-                    rigaVisibile[4] = riga[5]; // Reparto di Ricovero
-                    rigaVisibile[5] = riga[6]; // Data e Ora Ingresso
+                    rigaVisibile[0] = riga[3];
+                    rigaVisibile[1] = riga[1];
+                    rigaVisibile[2] = riga[2];
+                    rigaVisibile[3] = riga[4];
+                    rigaVisibile[4] = riga[5];
+                    rigaVisibile[5] = riga[6];
                     
                     model.addRow(rigaVisibile);
                 }
@@ -79,42 +94,92 @@ public class Ricovero extends JFrame {
         }
     }
 
+    /**
+     * Registra un listener per il pulsante di inserimento di un nuovo ricovero.
+     *
+     * @param listener il comportamento da eseguire al click
+     */
     public void addNuovoRicoveroListener(ActionListener listener) {
         nuovoRicoveroButton.addActionListener(listener);
     }
 
+    /**
+     * Registra un listener per il pulsante di gestione delle dimissioni di un paziente ricoverato.
+     *
+     * @param listener il comportamento da eseguire al click
+     */
     public void addGestisciDimissioneListener(ActionListener listener) {
         gestisciDimissioneButton.addActionListener(listener);
     }
 
+    /**
+     * Registra un listener per il pulsante di modifica o gestione di un ricovero esistente.
+     *
+     * @param listener il comportamento da eseguire al click
+     */
     public void addGestisciRicoveroListener(ActionListener listener) {
         gestisciRicoveroButton.addActionListener(listener);
     }
 
+    /**
+     * Registra un listener per il pulsante di ricerca dei ricoveri.
+     *
+     * @param listener il comportamento da eseguire al click
+     */
     public void addCercaListener(ActionListener listener) {
         cercaButton.addActionListener(listener);
     }
 
+    /**
+     * Registra un listener per il pulsante di reset dei campi di ricerca.
+     *
+     * @param listener il comportamento da eseguire al click
+     */
     public void addResetListener(ActionListener listener) {
         resetButton.addActionListener(listener);
     }
 
+    /**
+     * Restituisce il nome e cognome inseriti nel campo di ricerca.
+     *
+     * @return la stringa inserita nel campo del nome
+     */
     public String getNome() {
         return nomeField != null ? nomeField.getText().trim() : "";
     }
 
+    /**
+     * Restituisce il codice fiscale inserito nel campo di ricerca.
+     *
+     * @return la stringa inserita nel campo del codice fiscale
+     */
     public String getCodiceFiscale() {
         return codiceField != null ? codiceField.getText().trim() : "";
     }
 
+    /**
+     * Restituisce il numero della stanza inserito nel campo di ricerca.
+     *
+     * @return la stringa inserita nel campo della stanza
+     */
     public String getStanza() {
         return stanzaField != null ? stanzaField.getText().trim() : "";
     }
 
+    /**
+     * Restituisce il reparto correntemente selezionato dalla lista di filtraggio.
+     *
+     * @return il nome del reparto selezionato, oppure null se non c'è selezione
+     */
     public String getRepartoSelezionato() {
         return repartoList.getSelectedValue();
     }
 
+    /**
+     * Estrae e restituisce la data formattata selezionata nello spinner.
+     *
+     * @return la data in formato "yyyy-MM-dd", oppure una stringa vuota se non avvalorata
+     */
     public String getDataStr() {
         if (dataSpinner != null && dataSpinner.getEditor() instanceof JSpinner.DateEditor) {
             JSpinner.DateEditor editor = (JSpinner.DateEditor) dataSpinner.getEditor();
@@ -128,6 +193,9 @@ public class Ricovero extends JFrame {
         return dateFormat.format(selectedDate);
     }
 
+    /**
+     * Resetta tutti i campi di ricerca e svuota le selezioni applicate.
+     */
     public void resetCampiRicerca() {
         if (nomeField != null) nomeField.setText("");
         if (codiceField != null) codiceField.setText("");
@@ -138,11 +206,17 @@ public class Ricovero extends JFrame {
             if (dataSpinner.getEditor() instanceof JSpinner.DateEditor) {
                 JSpinner.DateEditor editor = (JSpinner.DateEditor) dataSpinner.getEditor();
                 editor.getTextField().setValue(null);
-                editor.getTextField().setText(""); // Forza la pulizia durante il reset
+                editor.getTextField().setText("");
             }
         }
     }
 
+    /**
+     * Recupera le informazioni identificative del ricovero attualmente selezionato nella tabella.
+     *
+     * @return un array di stringhe contenente l'ID reale del ricovero (indice 0)
+     *         e il codice fiscale del paziente (indice 1), oppure un array vuoto se nessuna riga è selezionata
+     */
     public String[] getRicoveroSelezionato() {
         int rigaSelezionata = ricoveriTable.getSelectedRow();
         if (rigaSelezionata == -1) {
@@ -157,10 +231,15 @@ public class Ricovero extends JFrame {
         return new String[]{idRicovero, cf};
     }
 
+    /**
+     * Inizializza i componenti grafici generati dal GUI Designer.
+     */
     private void initComponents() {
-        // Questo metodo è mantenuto per compatibilità con il GUI Designer, ma la logica è stata spostata.
     }
 
+    /**
+     * Applica gli stili visivi personalizzati a tabelle, liste e pulsanti dell'interfaccia.
+     */
     private void setupStyles() {
         Login.styleList(repartoList);
         Login.setupTableStyle(ricoveriTable);

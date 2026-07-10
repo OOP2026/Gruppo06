@@ -6,6 +6,11 @@ import java.util.Calendar;
 import java.awt.event.ActionListener;
 import java.util.Date;
 
+/**
+ * La classe Dimissioni gestisce l'interfaccia grafica per la ricerca, visualizzazione
+ * e archiviazione delle dimissioni dei pazienti all'interno della struttura ospedaliera.
+ * Estende JFrame e definisce i metodi per interagire con il controller.
+ */
 public class Dimissioni extends JFrame {
 
     public JPanel mainPanel;
@@ -33,17 +38,26 @@ public class Dimissioni extends JFrame {
             "Ordinaria", "Trasferimento", "Volontaria", "Decesso"
     };
 
+    /**
+     * Costruisce una nuova istanza della schermata Dimissioni,
+     * inizializzando i componenti grafici e applicando gli stili visivi.
+     */
     public Dimissioni() {
         initComponents();
         setupStyles();
     }
 
+    /**
+     * Aggiorna il contenuto della tabella delle dimissioni con i nuovi dati forniti.
+     * La colonna relativa all'ID Ricovero viene nascosta all'utente per una visualizzazione più pulita.
+     *
+     * @param dati matrice di oggetti contenente i record delle dimissioni prelevati dal database
+     */
     public void aggiornaTabella(Object[][] dati) {
         if (pazientiTable != null) {
             DefaultTableModel model = (DefaultTableModel) pazientiTable.getModel();
             model.setRowCount(0);
 
-            // Nascondiamo la colonna dell'ID Ricovero
             pazientiTable.getColumnModel().getColumn(0).setMinWidth(0);
             pazientiTable.getColumnModel().getColumn(0).setMaxWidth(0);
             pazientiTable.getColumnModel().getColumn(0).setWidth(0);
@@ -56,44 +70,87 @@ public class Dimissioni extends JFrame {
         }
     }
 
-    // Metodi per aggiungere i listener ai pulsanti
+    /**
+     * Registra un listener per il pulsante di archiviazione di una dimissione.
+     *
+     * @param listener il comportamento da eseguire al click
+     */
     public void addArchiviaDimissioneListener(ActionListener listener) {
         archiviaDimissioneButton.addActionListener(listener);
     }
 
+    /**
+     * Registra un listener per il pulsante di ricerca delle dimissioni.
+     *
+     * @param listener il comportamento da eseguire al click
+     */
     public void addCercaListener(ActionListener listener) {
         cercaButton.addActionListener(listener);
     }
 
+    /**
+     * Registra un listener per il pulsante di reset dei campi di ricerca.
+     *
+     * @param listener il comportamento da eseguire al click
+     */
     public void addResetListener(ActionListener listener) {
         resetButton.addActionListener(listener);
     }
 
+    /**
+     * Registra un listener per il pulsante di visualizzazione dei dettagli di una dimissione.
+     *
+     * @param listener il comportamento da eseguire al click
+     */
     public void addLetturaDimissioneListener(ActionListener listener) {
         letturaDimissioneButton.addActionListener(listener);
     }
 
-    // Metodi per ottenere i valori dai campi di input
+    /**
+     * Restituisce il codice fiscale inserito nel relativo campo di testo.
+     *
+     * @return la stringa contenente il codice fiscale
+     */
     public String getCodiceFiscale() {
         return codiceFiscaleField.getText();
     }
 
+    /**
+     * Restituisce il nome e cognome inseriti nel relativo campo di testo.
+     *
+     * @return la stringa contenente il nome e cognome del paziente
+     */
     public String getNomeCognome() {
         return nomeCognomeField.getText();
     }
 
+    /**
+     * Restituisce il reparto correntemente selezionato dalla lista di ricerca.
+     *
+     * @return il nome del reparto selezionato, oppure null se non è stata effettuata alcuna selezione
+     */
     public String getRepartoSelezionato() {
         return repartoList.getSelectedValue();
     }
 
+    /**
+     * Restituisce il tipo di dimissione correntemente selezionato dalla lista di ricerca.
+     *
+     * @return il tipo di dimissione selezionato, oppure null se non è stata effettuata alcuna selezione
+     */
     public String getTipoDimissioneSelezionato() {
         return tipoDimissioneList.getSelectedValue();
     }
 
+    /**
+     * Estrae e restituisce la data di dimissione selezionata dal selettore.
+     * Se il campo di testo associato è vuoto, la data viene ignorata.
+     *
+     * @return la data selezionata, oppure null se il campo è vuoto o non valido
+     */
     public Date getDataSelezionata() {
         if (dataDimissioneSpinner != null && dataDimissioneSpinner.getEditor() instanceof JSpinner.DateEditor) {
             JSpinner.DateEditor editor = (JSpinner.DateEditor) dataDimissioneSpinner.getEditor();
-            // Se il campo di testo è vuoto, restituisce null per ignorare il filtro della data
             if (editor.getTextField().getText().trim().isEmpty()) {
                 return null;
             }
@@ -101,15 +158,24 @@ public class Dimissioni extends JFrame {
         return (Date) dataDimissioneSpinner.getValue();
     }
 
+    /**
+     * Identifica e restituisce il codice fiscale del paziente selezionato nella tabella.
+     *
+     * @return il codice fiscale del paziente, oppure null se non è stata selezionata alcuna riga
+     */
     public String getCFPazienteSelezionato() {
         int selectedRow = pazientiTable.getSelectedRow();
         if (selectedRow != -1) {
-            // La colonna 2 contiene il Codice Fiscale
             return (String) pazientiTable.getValueAt(selectedRow, 2);
         }
         return null;
     }
 
+    /**
+     * Identifica e restituisce l'ID del ricovero associato alla dimissione selezionata nella tabella.
+     *
+     * @return l'ID del ricovero come stringa, oppure null se non è stata selezionata alcuna riga
+     */
     public String getIdRicoveroSelezionato() {
         int selectedRow = pazientiTable.getSelectedRow();
         if (selectedRow != -1) return (String) pazientiTable.getValueAt(selectedRow, 0);
@@ -117,8 +183,10 @@ public class Dimissioni extends JFrame {
     }
 
     /**
+     * Resetta tutti i campi di ricerca della schermata ai loro valori predefiniti
+     * e avvia automaticamente un aggiornamento per mostrare la totalità dei risultati.
      *
-     * @param cercaListener
+     * @param cercaListener il listener di ricerca da invocare dopo la pulizia dei campi
      */
     public void resetCampiRicerca(ActionListener cercaListener) {
         if (codiceFiscaleField != null) codiceFiscaleField.setText("");
@@ -126,22 +194,24 @@ public class Dimissioni extends JFrame {
         if (repartoList != null) repartoList.clearSelection();
         if (tipoDimissioneList != null) tipoDimissioneList.clearSelection();
 
-        // Svuota fisicamente la data dallo Spinner
         if (dataDimissioneSpinner != null) {
             dataDimissioneSpinner.setValue(new Date());
             if (dataDimissioneSpinner.getEditor() instanceof JSpinner.DateEditor) {
                 JSpinner.DateEditor editor = (JSpinner.DateEditor) dataDimissioneSpinner.getEditor();
                 editor.getTextField().setValue(null);
-                editor.getTextField().setText(""); // Forza la pulizia testuale assoluta
+                editor.getTextField().setText("");
             }
         }
 
-        // Esegue la ricerca con i campi resettati per mostrare tutti i risultati
         if (cercaListener != null) {
             cercaListener.actionPerformed(null);
         }
     }
 
+    /**
+     * Inizializza i componenti chiave dell'interfaccia, in particolare il modello
+     * della tabella per l'elenco delle dimissioni e i modelli per le liste di ricerca.
+     */
     private void initComponents() {
         DefaultTableModel model = new DefaultTableModel(new Object[0][0], COLONNE) {
             @Override
@@ -153,10 +223,8 @@ public class Dimissioni extends JFrame {
 
         pazientiTable.setAutoCreateRowSorter(true);
 
-        //Reparti
         repartoList.setListData(REPARTI_LIST_DATA);
 
-        //Dimissione
         tipoDimissioneList.setListData(TIPO_DIMISSIONE_LIST_DATA);
 
         SpinnerDateModel dateModel = new SpinnerDateModel(new Date(), null, null, Calendar.DAY_OF_MONTH);
@@ -164,10 +232,12 @@ public class Dimissioni extends JFrame {
         
         JSpinner.DateEditor editor = new JSpinner.DateEditor(dataDimissioneSpinner, "yyyy-MM-dd");
         dataDimissioneSpinner.setEditor(editor);
-        // All'avvio della schermata, imposta il campo della data come vuoto
         editor.getTextField().setValue(null);
-        editor.getTextField().setText(""); // Forza la pulizia testuale assoluta
+        editor.getTextField().setText("");
     }
+    /**
+     * Applica gli stili visivi personalizzati a tabelle, liste e bottoni dell'interfaccia.
+     */
     private void setupStyles() {
         Login.setupTableStyle(pazientiTable);
         Login.styleList(repartoList);

@@ -13,6 +13,10 @@ import java.time.format.TextStyle;
 import java.util.*;
 import java.time.temporal.TemporalAdjusters;
 
+/**
+ * La classe Calendario gestisce l'interfaccia grafica per la visualizzazione settimanale
+ * degli eventi e dei turni. Estende JFrame e implementa una griglia interattiva.
+ */
 public class Calendario extends JFrame {
 
     public JPanel mainPanel;
@@ -29,44 +33,50 @@ public class Calendario extends JFrame {
     private transient java.util.List<ArrayList<String>> tuttiGliEventi;
     private transient Map<Point, ArrayList<String>> eventiMappa;
 
+    /**
+     * Costruisce una nuova istanza del Calendario, inizializzando la data di partenza,
+     * le strutture dati, i componenti grafici e applicando i listener.
+     */
     public Calendario() {
-        // 1. GESTIONE DELLE DATE
         this.lunediCorrente = LocalDate.now().with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
         this.eventiMappa = new HashMap<>();
         this.tuttiGliEventi = new ArrayList<>();
 
-        // 2. INIZIALIZZAZIONE COMPONENTI E STILI
         initComponents();
         setupStyles();
         setupListeners();
 
-        // 3. AGGIORNAMENTO INIZIALE VISTA
         aggiornaVistaCalendario();
     }
     
+    /**
+     * Inizializza i componenti principali dell'interfaccia, in particolare il modello
+     * della tabella che forma la griglia degli orari e dei giorni della settimana.
+     */
     private void initComponents() {
         String[] colonne = {"Orario", "Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"};
         tableModel = new DefaultTableModel(colonne, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false; // Rende la tabella non modificabile
+                return false;
             }
         };
         settimanaTable.setModel(tableModel);
 
-        // Popola le righe delle ore
         for (int i = 0; i < 24; i++) {
             tableModel.addRow(new Object[]{String.format("%02d:00", i)});
         }
     }
 
+    /**
+     * Configura l'aspetto visivo dei vari elementi dell'interfaccia utente,
+     * applicando colori, font, dimensioni e logiche di selezione alla griglia.
+     */
     private void setupStyles() {
-        // Stile generale
         mainPanel.setBackground(Color.WHITE);
         meseLabel.setFont(new Font("SansSerif", Font.BOLD, 18));
         meseLabel.setForeground(Login.AZZURRO_HOME);
 
-        // Stile pulsanti
         Login.applicaStilePulsantiCentrali(avantiButton);
         Login.applicaStilePulsantiCentrali(dietroButton);
         Login.applicaStilePulsantiCentrali(aggiungiEventoButton);
@@ -74,57 +84,77 @@ public class Calendario extends JFrame {
         avantiButton.setText("Settimana Successiva >>");
         dietroButton.setText("<< Settimana Precedente");
 
-        // Stile tabella
         Login.setupTableStyle(settimanaTable);
         settimanaTable.setRowHeight(40);
 
-        // --- IMPOSTAZIONI PER GRIGLIA E SELEZIONE ---
-        settimanaTable.setCellSelectionEnabled(true); // Permette di selezionare una singola cella
+        settimanaTable.setCellSelectionEnabled(true);
         settimanaTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        // Imposta un colore di sfondo per la cella selezionata per renderla più visibile
         settimanaTable.setSelectionBackground(new Color(173, 216, 230));
         settimanaTable.setSelectionForeground(Color.BLACK);
-        settimanaTable.setShowGrid(true); // Mostra le linee della griglia
-        settimanaTable.setGridColor(Color.LIGHT_GRAY); // Imposta il colore della griglia
+        settimanaTable.setShowGrid(true);
+        settimanaTable.setGridColor(Color.LIGHT_GRAY);
 
-        // Aggiunge una spaziatura tra le celle per rendere la griglia più evidente e continua
         settimanaTable.setIntercellSpacing(new Dimension(1, 1));
 
-        // Stile specifico per la colonna degli orari
         settimanaTable.getColumnModel().getColumn(0).setCellRenderer(new OrarioCellRenderer());
         settimanaTable.getColumnModel().getColumn(0).setPreferredWidth(70);
         settimanaTable.getColumnModel().getColumn(0).setMaxWidth(70);
     }
 
+    /**
+     * Associa i listener per i pulsanti di navigazione tra le settimane.
+     */
     private void setupListeners() {
         dietroButton.addActionListener(e -> cambiaSettimana(-7));
         avantiButton.addActionListener(e -> cambiaSettimana(7));
     }
 
+    /**
+     * Registra un listener per il pulsante di aggiunta di un nuovo evento.
+     *
+     * @param listener il comportamento da eseguire al click
+     */
     public void addAggiungiEventoListener(java.awt.event.ActionListener listener) {
         aggiungiEventoButton.addActionListener(listener);
     }
 
+    /**
+     * Registra un listener per il pulsante di modifica di un evento esistente.
+     *
+     * @param listener il comportamento da eseguire al click
+     */
     public void addModificaEventoListener(java.awt.event.ActionListener listener) {
         modificaEventoButton.addActionListener(listener);
     }
 
+    /**
+     * Modifica la data di riferimento della vista corrente spostandola avanti o indietro.
+     *
+     * @param giorniDaAggiungere il numero di giorni da sommare o sottrarre
+     */
     private void cambiaSettimana(int giorniDaAggiungere) {
         lunediCorrente = lunediCorrente.plusDays(giorniDaAggiungere);
         aggiornaVistaCalendario();
     }
 
+    /**
+     * Coordina l'aggiornamento visivo dell'intero calendario rigenerando intestazioni,
+     * pulendo la griglia e riposizionando gli eventi estratti.
+     */
     private void aggiornaVistaCalendario() {
         aggiornaIntestazioni();
         svuotaCelleImpegni();
         disponiEventiNellaGriglia();
     }
 
+    /**
+     * Calcola e aggiorna le etichette delle colonne inserendo i nomi dei giorni e 
+     * le rispettive date per la settimana in fase di visualizzazione.
+     */
     private void aggiornaIntestazioni() {
         DateTimeFormatter formatterGiorno = DateTimeFormatter.ofPattern("dd/MM");
         DateTimeFormatter formatterMese = DateTimeFormatter.ofPattern("MMMM yyyy");
 
-        // Controllo per evitare NullPointerException in fase di design
         if (lunediCorrente == null) {
             lunediCorrente = LocalDate.now();
         }
@@ -145,6 +175,9 @@ public class Calendario extends JFrame {
         settimanaTable.getTableHeader().repaint();
     }
 
+    /**
+     * Cancella il contenuto di tutte le celle della griglia rimuovendo gli eventi renderizzati.
+     */
     private void svuotaCelleImpegni() {
         if (tableModel == null) return;
         eventiMappa.clear();
@@ -155,11 +188,20 @@ public class Calendario extends JFrame {
         }
     }
 
+    /**
+     * Imposta il dataset contenente tutti gli eventi da mostrare e aggiorna la vista.
+     *
+     * @param eventi lista contenente i dati grezzi degli eventi prelevati dal database
+     */
     public void setEventi(java.util.List<ArrayList<String>> eventi) {
         this.tuttiGliEventi = eventi;
         aggiornaVistaCalendario();
     }
 
+    /**
+     * Estrae le date e gli orari dalla lista degli eventi e inserisce i titoli
+     * nelle celle corrispondenti all'interno della griglia della settimana corrente.
+     */
     private void disponiEventiNellaGriglia() {
         if (tuttiGliEventi == null) return;
 
@@ -167,15 +209,13 @@ public class Calendario extends JFrame {
 
         for (ArrayList<String> evento : tuttiGliEventi) {
             try {
-                // DAO: 0:id, 1:titolo, 2:desc, 3:matricola, 4:inizio, 5:fine
                 Timestamp tsInizio = Timestamp.valueOf(evento.get(4));
                 LocalDateTime ldtInizio = tsInizio.toLocalDateTime();
                 LocalDate dataEvento = ldtInizio.toLocalDate();
 
-                // Controlla se l'evento appartiene alla settimana visualizzata
                 if (!dataEvento.isBefore(lunediCorrente) && dataEvento.isBefore(fineSettimana)) {
                     int riga = ldtInizio.getHour();
-                    int colonna = ldtInizio.getDayOfWeek().getValue(); // Lun=1, ..., Dom=7
+                    int colonna = ldtInizio.getDayOfWeek().getValue();
 
                     if (riga < tableModel.getRowCount() && colonna > 0 && colonna <= 7) {
                         String titolo = evento.get(1);
@@ -184,11 +224,15 @@ public class Calendario extends JFrame {
                     }
                 }
             } catch (Exception e) {
-                // Ignora eventi con formato data non valido
             }
         }
     }
 
+    /**
+     * Recupera le informazioni dell'evento cliccato all'interno della griglia.
+     *
+     * @return i dettagli dell'evento selezionato, oppure null se la cella è vuota o non valida
+     */
     public ArrayList<String> getEventoSelezionato() {
         int riga = settimanaTable.getSelectedRow();
         int colonna = settimanaTable.getSelectedColumn();
@@ -214,6 +258,10 @@ public class Calendario extends JFrame {
         return LocalDateTime.of(dataSelezionata, java.time.LocalTime.of(riga, 0));
     }
 
+    /**
+     * Classe interna dedicata alla formattazione estetica della colonna degli orari,
+     * differenziandola dalle celle standard assegnate agli eventi.
+     */
     private static class OrarioCellRenderer extends DefaultTableCellRenderer {
         private final Color nonSelectedBackground = new Color(240, 240, 240);
 

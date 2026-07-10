@@ -21,7 +21,7 @@ public class SchermataAmministratore extends JFrame {
     private JButton esciButton;
 
     // Attributi per l'Agenda
-    private JTextField ricercaField;
+    private JTextField dataField;
     private JButton ricercaButton;
     private JTable agendaTable;
     private JButton settimanaleButton;
@@ -46,19 +46,7 @@ public class SchermataAmministratore extends JFrame {
             });
         }
 
-        Login.applicaStileMenuLaterale(prestazioniButton);
-        Login.applicaStileMenuLaterale(mediciButton);
-        Login.applicaStileMenuLaterale(turniButton);
-        Login.applicaStileMenuLaterale(esciButton);
-
-        Login.applicaStilePulsantiCentrali(ricercaButton);
-        Login.applicaStilePulsantiCentrali(newEventButton);
-        Login.applicaStilePulsantiCentrali(settimanaleButton);
-
-        Login.applicaStilePulsantiCentrali(pazientiButton);
-        Login.applicaStilePulsantiCentrali(lettiButton);
-        Login.applicaStilePulsantiCentrali(dimissioniButton);
-        Login.applicaStilePulsantiCentrali(ricoveroButton);
+        applicaStiliAiPulsanti();
 
         Login.setupAgendaTableStyle(agendaTable);
     }
@@ -134,7 +122,18 @@ public class SchermataAmministratore extends JFrame {
      * Restituisce il testo inserito nel campo di ricerca per passarlo al Controller
      */
     public String getTestoRicercaAgenda() {
-        return (ricercaField != null) ? ricercaField.getText().trim() : "";
+        return (dataField != null) ? dataField.getText().trim() : "";
     }
 
+    private void applicaStiliAiPulsanti() {
+        JButton[] menuLateraleButtons = {prestazioniButton, mediciButton, turniButton, esciButton};
+        for (JButton button : menuLateraleButtons) {
+            Login.applicaStileMenuLaterale(button);
+        }
+
+        JButton[] pulsantiCentraliButtons = {ricercaButton, newEventButton, settimanaleButton, pazientiButton, lettiButton, dimissioniButton, ricoveroButton};
+        for (JButton button : pulsantiCentraliButtons) {
+            Login.applicaStilePulsantiCentrali(button);
+        }
+    }
 }

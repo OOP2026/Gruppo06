@@ -49,22 +49,7 @@ public class SchermataMedico extends JFrame {
             ((javax.swing.border.TitledBorder) agendaPanel.getBorder()).setTitleColor(Color.WHITE);
         }
 
-
-        Login.applicaStileMenuLaterale(prestazioniButton);
-        Login.applicaStileMenuLaterale(turniButton);
-        Login.applicaStileMenuLaterale(esciButton);
-
-
-        Login.applicaStilePulsantiCentrali(ricercaButton);
-        Login.applicaStilePulsantiCentrali(newEventButton);
-        Login.applicaStilePulsantiCentrali(settimanaleButton);
-
-
-        Login.applicaStilePulsantiCentrali(pazientiButton);
-        Login.applicaStilePulsantiCentrali(lettiButton);
-        Login.applicaStilePulsantiCentrali(dimissioniButton);
-        Login.applicaStilePulsantiCentrali(ricoveroButton);
-
+        applicaStiliAiPulsanti();
 
         Login.setupAgendaTableStyle(agendaTable);
     }
@@ -136,4 +121,21 @@ public class SchermataMedico extends JFrame {
         return (ricercaField != null) ? ricercaField.getText().trim() : "";
     }
 
+    private void applicaStiliAiPulsanti() {
+        JButton[] menuLateraleButtons = {prestazioniButton, turniButton, esciButton};
+        for (JButton button : menuLateraleButtons) {
+            Login.applicaStileMenuLaterale(button);
+        }
+
+        JButton[] pulsantiCentraliButtons = {ricercaButton, newEventButton, settimanaleButton, pazientiButton, lettiButton, dimissioniButton, ricoveroButton};
+        for (JButton button : pulsantiCentraliButtons) {
+            Login.applicaStilePulsantiCentrali(button);
+        }
+    }
+
+    private void aggiungiListener(JButton button, ActionListener listener) {
+        if (button != null) {
+            button.addActionListener(listener);
+        }
+    }
 }

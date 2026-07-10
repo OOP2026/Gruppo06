@@ -2153,11 +2153,9 @@ public class Controller {
 					if (repartoRicerca != null && !repartoRicerca.trim().isEmpty()) {
 						String matricola = p.size() > 5 && p.get(5) != null ? p.get(5) : "";
 						String repartoErogante = "-";
-						if (!matricola.trim().isEmpty()) {
-							List<String> medico = mediciMap.get(matricola);
-							if (medico != null && medico.size() > 7 && medico.get(7) != null && !medico.get(7).trim().isEmpty()) {
-								repartoErogante = medico.get(7);
-							}
+						List<String> medico = mediciMap.get(matricola);
+						if (!matricola.trim().isEmpty() && medico != null && medico.size() > 7 && medico.get(7) != null && !medico.get(7).trim().isEmpty()) {
+							repartoErogante = medico.get(7);
 						}
 						matchReparto = repartoErogante.equalsIgnoreCase(repartoRicerca);
 					}
@@ -3031,11 +3029,9 @@ public class Controller {
 							if (!dateConPrestazioni.isEmpty()) {
 								java.time.LocalTime oraCorrente = java.time.LocalTime.now(java.time.ZoneId.of("Europe/Rome"));
 								for (ArrayList<String> turno : turniMedico) {
-									if (turno.size() > 4 && dateConPrestazioni.contains(turno.get(2))) {
-										if (isTurnoOccupato(turno, oggi, oraCorrente)) {
-											stato = "Occupato";
-											break;
-										}
+									if (turno.size() > 4 && dateConPrestazioni.contains(turno.get(2)) && isTurnoOccupato(turno, oggi, oraCorrente)) {
+										stato = "Occupato";
+										break;
 									}
 								}
 							}
@@ -3178,15 +3174,9 @@ public class Controller {
 				dati[i][4] = dataOraPrestazione; // Data e Ora Prestazione
 
 				String repartoErogante = "-";
-				if (!matricola.trim().isEmpty()) {
-					List<String> medico = mediciMap.get(matricola);
-					if (medico != null && medico.size() > 7 && medico.get(7) != null && !medico.get(7).trim().isEmpty()) {
-						String repartoPotenziale = medico.get(7);
-						// Mostra il reparto solo se è uno di quelli validi presenti nel DB
-						if (repartiValidi.contains(repartoPotenziale)) {
-							repartoErogante = repartoPotenziale;
-						}
-					}
+				List<String> medico = mediciMap.get(matricola);
+				if (!matricola.trim().isEmpty() && medico != null && medico.size() > 7 && medico.get(7) != null && !medico.get(7).trim().isEmpty() && repartiValidi.contains(medico.get(7))) {
+					repartoErogante = medico.get(7);
 				}
 				dati[i][5] = repartoErogante; // Reparto Erogante
 				dati[i][6] = idPrestazione;   // ID Prestazione (per operazioni, non mostrato)
@@ -3290,7 +3280,13 @@ public class Controller {
 		for (int i = 0; i < eventi.size(); i++) {
 			ArrayList<String> ev = eventi.get(i);
 			dati[i][0] = ev.size() > 4 ? ev.get(4) : "N/D"; // data_ora_inizio
-			String descrizione = ev.size() > 2 ? ev.get(2) : "Evento #" + (ev.size() > 0 ? ev.get(0) : ""); // titolo o ID
+			
+			String descrizione;
+			if (ev.size() > 2) {
+				descrizione = ev.get(2);
+			} else {
+				descrizione = "Evento #" + (ev.size() > 0 ? ev.get(0) : "");
+			}
 			dati[i][1] = descrizione;
 		}
 		return dati;
@@ -3517,7 +3513,7 @@ public class Controller {
 	private void avviaSchermataLogin() {
 		gui.Login loginView = new gui.Login();
 		JFrame frame = new JFrame("Login - Ospedale San Raffaele");
-		if (loginView != null && loginView.mainPanel != null) {
+		if (loginView.mainPanel != null) {
 			impostaSchermata(frame, loginView.mainPanel, "Login - Ospedale San Raffaele", WindowConstants.EXIT_ON_CLOSE);
 
 			loginView.addLoginListener(e -> {
@@ -3564,7 +3560,7 @@ public class Controller {
 	private void avviaSchermataRegistrazione() {
 		gui.Registrazione regView = new gui.Registrazione();
 		JFrame frame = new JFrame("Registrazione - Ospedale San Raffaele");
-		if (regView != null && regView.mainPanel != null) {
+		if (regView.mainPanel != null) {
 			impostaSchermata(frame, regView.mainPanel, "Registrazione - Ospedale San Raffaele", WindowConstants.EXIT_ON_CLOSE);
 
 			regView.addRegisterListener(e -> {

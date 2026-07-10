@@ -21,6 +21,7 @@ public class SchermataAmministratore extends JFrame {
     private JButton esciButton;
 
     // Attributi per l'Agenda
+    private JPanel agendaPanel;
     private JTextField dataField;
     private JButton ricercaButton;
     private JTable agendaTable;

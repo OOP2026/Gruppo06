@@ -11,9 +11,9 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
  
-public class AmministratorePostgresDao implements AmministratoreDAO {
+public class AmministratorePostgresDAO implements AmministratoreDAO {
  
-        private static final Logger LOGGER = Logger.getLogger(AmministratorePostgresDao.class.getName());
+        private static final Logger LOGGER = Logger.getLogger(AmministratorePostgresDAO.class.getName());
         private static final String CHECK_LOGIN_ESISTENTE_QUERY = "SELECT 1 FROM amministratore WHERE login = ?";
         private static final String AGGIUNGI_AMMINISTRATORE_QUERY = "INSERT INTO amministratore (matricola, login, password, nome, cognome, pin) VALUES (?, ?, ?, ?, ?, ?)";
         private static final String GET_AMMINISTRATORE_BY_LOGIN_AND_PASSWORD_QUERY = "SELECT nome, cognome, login, password, matricola, pin FROM amministratore WHERE login = ? AND password = ?";

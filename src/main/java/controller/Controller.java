@@ -24,7 +24,7 @@ import java.sql.SQLException;
  */
 public class Controller {
 	private MedicoDAO medicoDAO;
-	private Turno_LavoroDAO turnoDAO;
+	private TurnoLavoroDAO turnoDAO;
 	private AssenzaDAO assenzaDAO;
 	private PazienteDAO pazienteDAO;
 	private LettoDAO lettoDAO;
@@ -63,16 +63,16 @@ public class Controller {
 	public Controller() { //Blocco Costruttore
 
 		//inizializzazione DAO per Postgre
-		medicoDAO = new MedicoPostgresDao();
-		turnoDAO = new TurnoLavoroPostgresDao();
-		assenzaDAO = new AssenzaPostgresDao();
-		pazienteDAO = new PazientePostgresDao();
-		lettoDAO = new LettoPostgresDao();
-		ricoveroDAO = new RicoveroPostgresDao();
+		medicoDAO = new MedicoPostgresDAO();
+		turnoDAO = new TurnoLavoroPostgresDAO();
+		assenzaDAO = new AssenzaPostgresDAO();
+		pazienteDAO = new PazientePostgresDAO();
+		lettoDAO = new LettoPostgresDAO();
+		ricoveroDAO = new RicoveroPostgresDAO();
 		agendaDAO = new AgendaPostgresDAO();
-		dimissioniDAO = new DimissioniPostgresDao();
-		amministratoreDAO = new AmministratorePostgresDao();
-		prestazioneDAO = new PrestazionePostgresDao();
+		dimissioniDAO = new DimissioniPostgresDAO();
+		amministratoreDAO = new AmministratorePostgresDAO();
+		prestazioneDAO = new PrestazionePostgresDAO();
 
 		// Test di connessione al database all'avvio
 		Connection conn = ConnessioneDatabase.getInstance();

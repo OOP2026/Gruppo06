@@ -11,9 +11,9 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class MedicoPostgresDao implements MedicoDAO {
+public class MedicoPostgresDAO implements MedicoDAO {
 
-    private static final Logger LOGGER = Logger.getLogger(MedicoPostgresDao.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(MedicoPostgresDAO.class.getName());
     
     private static final String AGGIUNGI_MEDICO_QUERY = "INSERT INTO medico (nome, cognome, matricola, login, password, iscrizione_albo, specializzazione, reparto) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
     private static final String GET_MEDICO_BY_MATRICOLA_QUERY = "SELECT nome, cognome, login, password, matricola, iscrizione_albo, specializzazione, reparto FROM medico WHERE matricola = ?";

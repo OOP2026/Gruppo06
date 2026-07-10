@@ -11,9 +11,9 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class UtentePostgresDao implements UtenteDAO{
+public class UtentePostgresDAO implements UtenteDAO{
 
-        private static final Logger LOGGER = Logger.getLogger(UtentePostgresDao.class.getName());
+        private static final Logger LOGGER = Logger.getLogger(UtentePostgresDAO.class.getName());
         private static final String CHECK_LOGIN_ESISTENTE_QUERY = "SELECT 1 FROM utente WHERE login = ?";
         private static final String AGGIUNGI_UTENTE_QUERY = "INSERT INTO utente (matricola, login, password, nome, cognome, ruolo) VALUES (?, ?, ?, ?, ?, ?)";
         private static final String GET_UTENTE_BY_LOGIN_AND_PASSWORD_QUERY = "SELECT nome, cognome, ruolo, login, password, matricola FROM utente WHERE login = ? AND password = ?";

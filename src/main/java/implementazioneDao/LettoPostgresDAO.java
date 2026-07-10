@@ -12,9 +12,9 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class LettoPostgresDao implements LettoDAO {
+public class LettoPostgresDAO implements LettoDAO {
 
-    private static final Logger LOGGER = Logger.getLogger(LettoPostgresDao.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(LettoPostgresDAO.class.getName());
     
     private static final String AGGIUNGI_LETTO_QUERY = "INSERT INTO letto (numero_letto, reparto_di_appartenenza, is_libero, num_stanza) VALUES (?, ?, true, 'NON SPECIFICATA')";
     private static final String GET_LETTO_BY_ID_QUERY = "SELECT numero_letto, reparto_di_appartenenza, is_libero, num_stanza FROM letto WHERE numero_letto = ? AND reparto_di_appartenenza = ?";

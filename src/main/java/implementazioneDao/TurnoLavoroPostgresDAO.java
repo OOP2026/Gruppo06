@@ -1,6 +1,6 @@
 package implementazioneDao;
 
-import dao.Turno_LavoroDAO;
+import dao.TurnoLavoroDAO;
 import database_connection.ConnessioneDatabase;
 
 import java.sql.Connection;
@@ -13,9 +13,9 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class TurnoLavoroPostgresDao implements Turno_LavoroDAO {
+public class TurnoLavoroPostgresDAO implements TurnoLavoroDAO {
 
-    private static final Logger LOGGER = Logger.getLogger(TurnoLavoroPostgresDao.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(TurnoLavoroPostgresDAO.class.getName());
     private static final String AGGIUNGI_TURNO_QUERY = "INSERT INTO turno_lavorativo (data_turno, ora_inizio, ora_fine, matricola_medico, id_agenda) VALUES (?, ?, ?, ?, ?)";
     private static final String GET_TURNO_QUERY = "SELECT * FROM turno_lavorativo WHERE matricola_medico = ? AND data_turno = ? AND ora_inizio = ?";
     private static final String GET_TURNI_BY_MEDICO_QUERY = "SELECT * FROM  turno_lavorativo WHERE matricola_medico = ? ORDER BY data_turno ASC, ora_inizio ASC";

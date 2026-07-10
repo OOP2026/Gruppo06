@@ -11,9 +11,9 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class AssenzaPostgresDao implements AssenzaDAO {
+public class AssenzaPostgresDAO implements AssenzaDAO {
 
-    private static final Logger LOGGER = Logger.getLogger(AssenzaPostgresDao.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(AssenzaPostgresDAO.class.getName());
     
     private static final String AGGIUNGI_ASSENZA_QUERY = "INSERT INTO assenza (matricola, data_inizio, data_fine, motivazione) VALUES (?, ?, ?, ?)";
     private static final String GET_ASSENZA_QUERY = "SELECT matricola, data_inizio, data_fine, motivazione FROM assenza WHERE matricola = ? AND data_inizio = ?";

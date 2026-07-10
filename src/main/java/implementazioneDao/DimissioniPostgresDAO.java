@@ -11,9 +11,9 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class DimissioniPostgresDao implements DimissioniDAO {
+public class DimissioniPostgresDAO implements DimissioniDAO {
 
-    private static final Logger LOGGER = Logger.getLogger(DimissioniPostgresDao.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(DimissioniPostgresDAO.class.getName());
 
     private static final String CREA_DIMISSIONE_QUERY = "UPDATE ricovero SET data_fine = ?, prognosi = ?, esito = ? WHERE id_ricovero = ?";
     private static final String GET_ALL_DIMISSIONI_QUERY = "SELECT id_ricovero, cf, id_letto, reparto, data_inizio, data_fine, motivazione, prognosi, esito FROM ricovero WHERE data_fine IS NOT NULL ORDER BY data_fine DESC";

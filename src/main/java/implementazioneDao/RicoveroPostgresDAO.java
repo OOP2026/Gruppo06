@@ -12,9 +12,9 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class RicoveroPostgresDao implements RicoveroDAO {
+public class RicoveroPostgresDAO implements RicoveroDAO {
 
-    private static final Logger LOGGER = Logger.getLogger(RicoveroPostgresDao.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(RicoveroPostgresDAO.class.getName());
     private static final String AGGIUNGI_RICOVERO_QUERY = "INSERT INTO ricovero (cf, id_letto, reparto, data_inizio, motivazione) VALUES (?, ?, ?, ?, ?)";
     private static final String GET_RICOVERO_ATTIVO_QUERY = "SELECT id_ricovero, cf, id_letto, reparto, data_inizio, motivazione FROM ricovero WHERE cf = ? AND data_fine IS NULL ORDER BY data_inizio DESC LIMIT 1";
     private static final String GET_ALL_RICOVERI_ATTIVI_QUERY = "SELECT id_ricovero, cf, id_letto, reparto, data_inizio, motivazione FROM ricovero WHERE data_fine IS NULL";

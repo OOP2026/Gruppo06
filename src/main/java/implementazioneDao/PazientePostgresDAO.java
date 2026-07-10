@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class PazientePostgresDao implements PazienteDAO {
+public class PazientePostgresDAO implements PazienteDAO {
 
     // Centralizzazione delle query SQL come costanti
     private static final String COLUMNS = "cf, nome, cognome, data_nascita, sesso, residenza, diagnosi";
@@ -20,7 +20,7 @@ public class PazientePostgresDao implements PazienteDAO {
     private static final String GET_ALL_PAZIENTI_QUERY = "SELECT " + COLUMNS + " FROM paziente ORDER BY cognome, nome";
     private static final String AGGIORNA_PAZIENTE_QUERY = "UPDATE paziente SET nome = ?, cognome = ?, data_nascita = ?, sesso = ?, residenza = ?, diagnosi = ? WHERE cf = ?";
     private static final String ELIMINA_PAZIENTE_QUERY = "DELETE FROM paziente WHERE cf = ?";
-    private static final Logger LOGGER = Logger.getLogger(PazientePostgresDao.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(PazientePostgresDAO.class.getName());
 
     @Override
     public boolean aggiungiPaziente(String cf, String nome, String cognome, String dataNascita, String sesso, String residenza, String diagnosi) {

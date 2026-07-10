@@ -4,8 +4,13 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.time.Instant;
 
+/**
+ * Classe che rappresenta l'interfaccia grafica per la gestione dei turni di lavoro.
+ * Permette di visualizzare, filtrare, creare e modificare i turni.
+ */
 public class Turni extends JFrame {
 
+    /** Il pannello principale della finestra. */
     public JPanel panelHome;
     private JTextField nomeField;
     private JSpinner dataSpinner;
@@ -34,6 +39,10 @@ public class Turni extends JFrame {
 
     private transient Object[][] datiTurni = new Object[0][0];
 
+    /**
+     * Costruisce una nuova finestra per la gestione dei turni.
+     * Inizializza i componenti, imposta gli stili e i listener.
+     */
     public Turni() {
         initComponents();
         setupStyles();
@@ -61,19 +70,40 @@ public class Turni extends JFrame {
         }
     }
 
+    /**
+     * Aggiorna i dati dei turni visualizzati nella tabella.
+     *
+     * @param dati una matrice di oggetti contenente i nuovi dati dei turni.
+     */
     public void aggiornaTabella(Object[][] dati) {
         this.datiTurni = dati != null ? dati : new Object[0][0];
         loadTableData(null, null, null, null, null, null);
     }
 
+    /**
+     * Aggiunge un listener al pulsante "Nuovo Turno".
+     *
+     * @param listener l'ActionListener da aggiungere.
+     */
     public void addNuovoTurnoListener(java.awt.event.ActionListener listener) {
         nuovoTurnoButton1.addActionListener(listener);
     }
 
+    /**
+     * Aggiunge un listener al pulsante "Modifica Turno".
+     *
+     * @param listener l'ActionListener da aggiungere.
+     */
     public void addModificaTurnoListener(java.awt.event.ActionListener listener) {
         modificaTurno.addActionListener(listener);
     }
 
+    /**
+     * Restituisce i dati chiave del turno attualmente selezionato nella tabella.
+     *
+     * @return un array di stringhe contenente [data, matricola, orarioEffettivo] del turno selezionato,
+     *         o un array vuoto se nessuna riga è selezionata.
+     */
     public String[] getDatiTurnoSelezionato() {
         int selectedRow = turniTable.getSelectedRow();
         if (selectedRow >= 0) {
@@ -86,10 +116,17 @@ public class Turni extends JFrame {
         return new String[0];
     }
 
+    /**
+     * Inizializza i componenti della GUI.
+     * Questo metodo è mantenuto per compatibilità con il GUI Designer.
+     */
     private void initComponents() {
         // Questo metodo è mantenuto per compatibilità con il GUI Designer, ma la logica è stata spostata.
     }
 
+    /**
+     * Applica gli stili personalizzati ai componenti della GUI.
+     */
     private void setupStyles() {
         Login.styleList(tipologiaList);
         Login.styleList(repartoList);
@@ -100,6 +137,9 @@ public class Turni extends JFrame {
         Login.applicaStilePulsantiCentrali(modificaTurno);
     }
 
+    /**
+     * Imposta i listener per i pulsanti di ricerca e reset.
+     */
     private void setupListeners() {
         if (cercaButton != null) {
             cercaButton.addActionListener(e -> {
@@ -136,6 +176,18 @@ public class Turni extends JFrame {
         }
     }
 
+    /**
+     * Verifica se una riga di dati di un turno corrisponde ai filtri di ricerca specificati.
+     *
+     * @param row             l'array di oggetti che rappresenta la riga del turno.
+     * @param filtroIdTurno   il filtro per l'ID del turno.
+     * @param filtroNome      il filtro per il nome del dipendente.
+     * @param filtroMatricola il filtro per la matricola.
+     * @param filtroRuolo     il filtro per il ruolo.
+     * @param filtroReparto   il filtro per il reparto.
+     * @param filtroData      il filtro per la data.
+     * @return {@code true} se il turno corrisponde ai filtri, altrimenti {@code false}.
+     */
     private boolean isTurnoCorrispondente(Object[] row, String filtroIdTurno, String filtroNome, String filtroMatricola, String filtroRuolo, String filtroReparto, String filtroData) {
         String rIdTurno = row[0] != null ? ((String) row[0]).toLowerCase() : "";
         String rData = row[1] != null ? ((String) row[1]).toLowerCase() : "";
@@ -154,6 +206,16 @@ public class Turni extends JFrame {
         return matchIdTurno && matchData && matchNome && matchMatricola && matchRuolo && matchReparto;
     }
 
+    /**
+     * Carica e filtra i dati nella tabella dei turni in base ai filtri forniti.
+     *
+     * @param filtroIdTurno   il filtro per l'ID del turno.
+     * @param filtroNome      il filtro per il nome del dipendente.
+     * @param filtroMatricola il filtro per la matricola.
+     * @param filtroRuolo     il filtro per il ruolo.
+     * @param filtroReparto   il filtro per il reparto.
+     * @param filtroData      il filtro per la data.
+     */
     private void loadTableData(String filtroIdTurno, String filtroNome, String filtroMatricola, String filtroRuolo, String filtroReparto, String filtroData) {
         DefaultTableModel m = (DefaultTableModel) turniTable.getModel();
         m.setRowCount(0);

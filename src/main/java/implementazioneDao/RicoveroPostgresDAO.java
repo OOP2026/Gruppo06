@@ -117,7 +117,7 @@ public class RicoveroPostgresDAO implements RicoveroDAO {
                 return rs.next();
             }
         } catch (SQLException | NullPointerException e) {
-            LOGGER.log(Level.SEVERE, "Errore durante la verifica dello stato di occupazione del letto " + idLetto, e);
+            LOGGER.log(Level.SEVERE, e, () -> "Errore durante la verifica dello stato di occupazione del letto " + idLetto);
             return true;
         }
     }
@@ -135,7 +135,7 @@ public class RicoveroPostgresDAO implements RicoveroDAO {
                 }
             }
         } catch (SQLException | NullPointerException e) {
-            LOGGER.log(Level.SEVERE, "Errore durante il recupero dello storico ricoveri per il letto " + idLetto + " nel reparto " + reparto, e);
+            LOGGER.log(Level.SEVERE, e, () -> "Errore durante il recupero dello storico ricoveri per il letto " + idLetto + " nel reparto " + reparto);
         }
         return storico;
     }

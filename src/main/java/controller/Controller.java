@@ -118,6 +118,26 @@ public class Controller {
 		return timestampStr;
 	}
 
+	private void aggiungiEventoGiornoSeCorrisponde(ArrayList<String> evento, java.time.LocalDate dataTurno, List<ArrayList<String>> eventiDelGiorno) {
+		try {
+			java.sql.Timestamp tsInizio = java.sql.Timestamp.valueOf(evento.get(4));
+			if (tsInizio.toLocalDateTime().toLocalDate().equals(dataTurno)) {
+				eventiDelGiorno.add(evento);
+			}
+		} catch (Exception ex) {
+			LOGGER.log(java.util.logging.Level.WARNING, "Errore di inserimento, riprovare.", ex);
+		}
+	}
+
+	private String formattaDataInizioRicovero(String dataInizio) {
+		try {
+			java.sql.Timestamp ts = java.sql.Timestamp.valueOf(dataInizio);
+			return new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm").format(ts);
+		} catch (Exception ex) {
+			return formattaTimestampString(dataInizio);
+		}
+	}
+
 	private void autoInserisciPrestazioneInAgenda(String turnoSelezionato, String oraInizioSelezionataStr, String matricolaFinale, String tipologiaPrestazione, String cfPaziente) {
 		try {
 			String dataTurno = turnoSelezionato.split(" ")[0];
@@ -812,7 +832,7 @@ public class Controller {
 		// 1. Verifichiamo che il letto esista fisicamente nel DB.
 		List<String> letto = lettoDAO.getLettoById(idLetto, reparto);
 		if (letto == null || letto.isEmpty()) {
-			LOGGER.warning("Tentativo di verificare disponibilità per un letto inesistente: ID " + idLetto);
+			LOGGER.warning(() -> "Tentativo di verificare disponibilità per un letto inesistente: ID " + idLetto);
 			return false;
 		}
 
@@ -1745,14 +1765,7 @@ public class Controller {
 				List<ArrayList<String>> eventiEsistenti = agendaDAO.getEventiByMatricola(matSelezionata);
 				if (eventiEsistenti != null) {
 					for (ArrayList<String> evento : eventiEsistenti) {
-						try {
-							java.sql.Timestamp tsInizio = java.sql.Timestamp.valueOf(evento.get(4));
-							if (tsInizio.toLocalDateTime().toLocalDate().equals(dataTurno)) {
-								eventiDelGiorno.add(evento);
-							}
-						} catch (Exception ex) {
-							LOGGER.log(java.util.logging.Level.WARNING, "Errore di inserimento, riprovare.", ex);
-						}
+						aggiungiEventoGiornoSeCorrisponde(evento, dataTurno, eventiDelGiorno);
 					}
 				}
 
@@ -3241,12 +3254,7 @@ public class Controller {
 				
 				// Formattazione esatta della data e ora (yyyy-MM-dd HH:mm) per la tabella Ricovero
 				if (dataInizio != null && !dataInizio.isEmpty()) {
-					try {
-						java.sql.Timestamp ts = java.sql.Timestamp.valueOf(dataInizio);
-						dataInizio = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm").format(ts);
-					} catch (Exception ex) {
-						dataInizio = formattaTimestampString(dataInizio);
-					}
+					dataInizio = formattaDataInizioRicovero(dataInizio);
 				}
 				
 				List<String> paziente = pazienteDAO.getPazienteByCf(cf);

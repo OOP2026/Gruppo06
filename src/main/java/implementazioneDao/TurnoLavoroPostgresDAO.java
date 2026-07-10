@@ -16,16 +16,17 @@ import java.util.logging.Logger;
 public class TurnoLavoroPostgresDAO implements TurnoLavoroDAO {
 
     private static final Logger LOGGER = Logger.getLogger(TurnoLavoroPostgresDAO.class.getName());
-    private static final String AGGIUNGI_TURNO_QUERY = "INSERT INTO turno_lavorativo (data_turno, ora_inizio, ora_fine, matricola_medico, id_agenda) VALUES (?, ?, ?, ?, ?)";
-    private static final String GET_TURNO_QUERY = "SELECT * FROM turno_lavorativo WHERE matricola_medico = ? AND data_turno = ? AND ora_inizio = ?";
-    private static final String GET_TURNI_BY_MEDICO_QUERY = "SELECT * FROM  turno_lavorativo WHERE matricola_medico = ? ORDER BY data_turno ASC, ora_inizio ASC";
-    private static final String AGGIORNA_TURNO_QUERY = "UPDATE  turno_lavorativo SET ora_inizio = ?, ora_fine = ? WHERE matricola_medico = ? AND data_turno = ? AND ora_inizio = ?";
-    private static final String ELIMINA_TURNO_QUERY = "DELETE FROM  turno_lavorativo WHERE matricola_medico = ? AND data_turno = ? AND ora_inizio = ?";
     private static final String COL_ID_TURNO = "id_turno";
     private static final String COL_MATRICOLA_MEDICO = "matricola_medico";
     private static final String COL_DATA_TURNO = "data_turno";
     private static final String COL_ORA_INIZIO = "ora_inizio";
     private static final String COL_ORA_FINE = "ora_fine";
+    private static final String COLUMNS_TO_SELECT = COL_ID_TURNO + ", " + COL_MATRICOLA_MEDICO + ", " + COL_DATA_TURNO + ", " + COL_ORA_INIZIO + ", " + COL_ORA_FINE;
+    private static final String AGGIUNGI_TURNO_QUERY = "INSERT INTO turno_lavorativo (data_turno, ora_inizio, ora_fine, matricola_medico, id_agenda) VALUES (?, ?, ?, ?, ?)";
+    private static final String GET_TURNO_QUERY = "SELECT " + COLUMNS_TO_SELECT + " FROM turno_lavorativo WHERE matricola_medico = ? AND data_turno = ? AND ora_inizio = ?";
+    private static final String GET_TURNI_BY_MEDICO_QUERY = "SELECT " + COLUMNS_TO_SELECT + " FROM  turno_lavorativo WHERE matricola_medico = ? ORDER BY data_turno ASC, ora_inizio ASC";
+    private static final String AGGIORNA_TURNO_QUERY = "UPDATE  turno_lavorativo SET ora_inizio = ?, ora_fine = ? WHERE matricola_medico = ? AND data_turno = ? AND ora_inizio = ?";
+    private static final String ELIMINA_TURNO_QUERY = "DELETE FROM  turno_lavorativo WHERE matricola_medico = ? AND data_turno = ? AND ora_inizio = ?";
 
     @Override
     public boolean aggiungiTurno(String matricola, String data, String inizioTurno, String fineTurno, String idAgenda) {
@@ -134,5 +135,19 @@ public class TurnoLavoroPostgresDAO implements TurnoLavoroDAO {
             LOGGER.log(Level.SEVERE, "Errore durante l'eliminazione del turno", e);
         }
         return false; 
+    }
+
+    @Override
+    public boolean aggiornaMedicoTurno(int idTurno, String nuovaMatricola) {
+        final String UPDATE_QUERY = "UPDATE turno_lavorativo SET matricola_medico = ? WHERE id_turno = ?";
+        try (Connection conn = ConnessioneDatabase.getInstance();
+             PreparedStatement stmt = conn.prepareStatement(UPDATE_QUERY)) {
+            stmt.setString(1, nuovaMatricola);
+            stmt.setInt(2, idTurno);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, e, () -> "Errore durante l'aggiornamento del medico per il turno ID: " + idTurno);
+        }
+        return false;
     }
 }

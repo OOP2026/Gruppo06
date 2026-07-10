@@ -10,4 +10,6 @@ public interface TurnoLavoroDAO {
     
     boolean aggiornaTurno(String matricola, String data, String vecchioInizio, String nuovoInizio, String nuovaFine);
     boolean eliminaTurno(String matricola, String data, String inizioTurno);
+
+    boolean aggiornaMedicoTurno(int idTurno, String nuovaMatricola);
 }

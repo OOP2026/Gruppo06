@@ -2852,6 +2852,7 @@ public class Controller {
 			// Controlla se il turno ricade nel periodo di assenza
 			if (!dataTurno.isBefore(dataInizioAssenza) && !dataTurno.isAfter(dataFineAssenza)) {
 				List<String> sostitutiDisponibili = suggerisciSostitutiPerTurno(reparto, matricolaMedicoAssente, turno);
+				int idTurnoDaSostituire = Integer.parseInt(turno.get(0));
 
 				String infoTurno = "Turno del " + dataTurno + " dalle " + turno.get(3) + " alle " + turno.get(4);
 				JList<String> listaSostituti = new JList<>(sostitutiDisponibili.toArray(new String[0]));
@@ -2864,16 +2865,32 @@ public class Controller {
 
 				if (sostitutiDisponibili.isEmpty()) {
 					panel.add(new JLabel("Nessun sostituto disponibile trovato per questo turno."), BorderLayout.SOUTH);
+					JOptionPane.showMessageDialog(null, panel, "Suggerimento Sostituto", JOptionPane.INFORMATION_MESSAGE);
 				} else {
 					panel.add(scrollPane, BorderLayout.SOUTH);
-				}
+					listaSostituti.setSelectedIndex(0);
 
-				JOptionPane.showMessageDialog(
-						null,
-						panel,
-						"Suggerimento Sostituto",
-						JOptionPane.INFORMATION_MESSAGE
-				);
+					Object[] options = {"Assegna Sostituto", "Chiudi"};
+					int choice = JOptionPane.showOptionDialog(null, panel, "Suggerimento Sostituto", JOptionPane.OK_CANCEL_OPTION, JOptionPane.INFORMATION_MESSAGE, null, options, options[0]);
+
+					if (choice == 0) { // "Assegna Sostituto"
+						String sostitutoSelezionato = listaSostituti.getSelectedValue();
+						if (sostitutoSelezionato != null) {
+							// Estrai la matricola dalla stringa es. "Nome Cognome (Mat: M123456)"
+							String matricolaSostituto = sostitutoSelezionato.substring(sostitutoSelezionato.indexOf("Mat: ") + 5, sostitutoSelezionato.length() - 1);
+
+							int conferma = JOptionPane.showConfirmDialog(null, "Sei sicuro di voler assegnare il turno a " + sostitutoSelezionato + "?", "Conferma Sostituzione", JOptionPane.YES_NO_OPTION);
+							if (conferma == JOptionPane.YES_OPTION) {
+								boolean successo = turnoDAO.aggiornaMedicoTurno(idTurnoDaSostituire, matricolaSostituto);
+								if (successo) {
+									JOptionPane.showMessageDialog(null, "Sostituzione effettuata con successo!", SUCCESSO_TITLE, JOptionPane.INFORMATION_MESSAGE);
+								} else {
+									JOptionPane.showMessageDialog(null, "Errore durante l'aggiornamento del turno.", ERRORE_TITLE, JOptionPane.ERROR_MESSAGE);
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 	}

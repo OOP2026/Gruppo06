@@ -45,7 +45,9 @@ public class Registrazione {
     }
 
     public void addRegisterListener(java.awt.event.ActionListener listener) {
-        registratiButton.addActionListener(listener);
+        if (registratiButton != null) {
+            registratiButton.addActionListener(listener);
+        }
     }
 
     public void addLoginListener(java.awt.event.MouseListener listener) {

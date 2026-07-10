@@ -3452,44 +3452,46 @@ public class Controller {
 	private void avviaSchermataRegistrazione() {
 		gui.Registrazione regView = new gui.Registrazione();
 		JFrame frame = new JFrame("Registrazione - Ospedale San Raffaele");
-		impostaSchermata(frame, regView.mainPanel, "Registrazione - Ospedale San Raffaele", WindowConstants.EXIT_ON_CLOSE);
+		if (regView != null && regView.mainPanel != null) {
+			impostaSchermata(frame, regView.mainPanel, "Registrazione - Ospedale San Raffaele", WindowConstants.EXIT_ON_CLOSE);
 
-		regView.addRegisterListener(e -> {
-			String nome = regView.getNome();
-			String cognome = regView.getCognome();
-			String username = regView.getUsername();
-			String password = regView.getPassword();
-			boolean isAdmin = regView.isAdmin();
-			String pin = regView.getPin();
+			regView.addRegisterListener(e -> {
+				String nome = regView.getNome();
+				String cognome = regView.getCognome();
+				String username = regView.getUsername();
+				String password = regView.getPassword();
+				boolean isAdmin = regView.isAdmin();
+				String pin = regView.getPin();
 
-			if (nome.isEmpty() || cognome.isEmpty() || username.isEmpty() || password.isEmpty()) {
-				regView.showMessage(ERRORE_TITLE, "Compila tutti i campi obbligatori (Nome, Cognome, Username, Password).", JOptionPane.ERROR_MESSAGE);
-				return;
-			}
+				if (nome.isEmpty() || cognome.isEmpty() || username.isEmpty() || password.isEmpty()) {
+					regView.showMessage(ERRORE_TITLE, "Compila tutti i campi obbligatori (Nome, Cognome, Username, Password).", JOptionPane.ERROR_MESSAGE);
+					return;
+				}
 
-			if (isAdmin && pin.isEmpty()) {
-				regView.showMessage("Errore PIN", "Scegli un PIN personale per registrarti come Amministratore.", JOptionPane.WARNING_MESSAGE);
-				return;
-			}
+				if (isAdmin && pin.isEmpty()) {
+					regView.showMessage("Errore PIN", "Scegli un PIN personale per registrarti come Amministratore.", JOptionPane.WARNING_MESSAGE);
+					return;
+				}
 
-			boolean successo = registrazione(username, password, nome, cognome, pin, isAdmin);
+				boolean successo = registrazione(username, password, nome, cognome, pin, isAdmin);
 
-			if (successo) {
-				regView.showMessage(SUCCESSO_TITLE, "Registrazione completata con successo!\nBenvenuto " + nome + " " + cognome, JOptionPane.INFORMATION_MESSAGE);
-				frame.dispose();
-				avviaSchermataLogin(); // Torna al login
-			} else {
-				regView.showMessage("Errore Registrazione", "Registrazione fallita!\nVerifica che l'username non sia già in uso e, se hai selezionato 'Amministratore', che il PIN di sicurezza sia corretto.", JOptionPane.ERROR_MESSAGE);
-			}
-		});
+				if (successo) {
+					regView.showMessage(SUCCESSO_TITLE, "Registrazione completata con successo!\nBenvenuto " + nome + " " + cognome, JOptionPane.INFORMATION_MESSAGE);
+					frame.dispose();
+					avviaSchermataLogin(); // Torna al login
+				} else {
+					regView.showMessage("Errore Registrazione", "Registrazione fallita!\nVerifica che l'username non sia già in uso e, se hai selezionato 'Amministratore', che il PIN di sicurezza sia corretto.", JOptionPane.ERROR_MESSAGE);
+				}
+			});
 
-		regView.addLoginListener(new java.awt.event.MouseAdapter() {
-			@Override
-			public void mouseClicked(java.awt.event.MouseEvent e) {
-				frame.dispose();
-				avviaSchermataLogin();
-			}
-		});
+			regView.addLoginListener(new java.awt.event.MouseAdapter() {
+				@Override
+				public void mouseClicked(java.awt.event.MouseEvent e) {
+					frame.dispose();
+					avviaSchermataLogin();
+				}
+			});
+		}
 
 		frame.setVisible(true);
 	}

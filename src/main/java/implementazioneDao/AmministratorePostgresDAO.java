@@ -17,7 +17,7 @@ public class AmministratorePostgresDAO implements AmministratoreDAO {
         private static final String CHECK_LOGIN_ESISTENTE_QUERY = "SELECT 1 FROM amministratore WHERE login = ?";
         private static final String AGGIUNGI_AMMINISTRATORE_QUERY = "INSERT INTO amministratore (matricola, login, password, nome, cognome, pin) VALUES (?, ?, ?, ?, ?, ?)";
         private static final String GET_AMMINISTRATORE_BY_LOGIN_AND_PASSWORD_QUERY = "SELECT nome, cognome, login, password, matricola, pin FROM amministratore WHERE login = ? AND password = ?";
-        private static final String UPDATE_ADMIN_QUERY = "UPDATE amministratore SET nome = ?, cognome = ? WHERE matricola = ?"
+        private static final String UPDATE_ADMIN_QUERY = "UPDATE amministratore SET nome = ?, cognome = ? WHERE matricola = ?";
 
         @Override
         public boolean checkLoginEsistente(String login) {

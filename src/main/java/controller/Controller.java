@@ -120,7 +120,10 @@ public class Controller {
 
 	private void aggiungiEventoGiornoSeCorrisponde(ArrayList<String> evento, java.time.LocalDate dataTurno, List<ArrayList<String>> eventiDelGiorno) {
 		try {
-			java.sql.Timestamp tsInizio = java.sql.Timestamp.valueOf(evento.get(4));
+			String strInizio = evento.get(4) != null ? evento.get(4).trim() : "";
+			if (strInizio.length() == 16) strInizio += ":00";
+
+			java.sql.Timestamp tsInizio = java.sql.Timestamp.valueOf(strInizio);
 			if (tsInizio.toLocalDateTime().toLocalDate().equals(dataTurno)) {
 				eventiDelGiorno.add(evento);
 			}
@@ -2501,7 +2504,7 @@ public class Controller {
 		Runnable ricaricaEventi = () -> {
 			if (utenteLoggato != null) {
 				List<ArrayList<String>> eventi = getEventiPerUtente(utenteLoggato.getMatricola());
-				calendarioFrame.setEventi(eventi);
+				calendarioFrame.setEventi(sdoppiaEventiInSlot(eventi));
 			}
 		};
 	
@@ -2595,11 +2598,26 @@ public class Controller {
 
 		try {
 			int idEvento = Integer.parseInt(evento.get(0));
+			String matricola = evento.get(3);
+			
+			// Recupera l'evento REALE e intero dal DB per annullare l'effetto di sdoppiamento visivo
+			List<ArrayList<String>> eventiReali = getEventiPerUtente(matricola);
+			for (ArrayList<String> evReale : eventiReali) {
+				if (Integer.parseInt(evReale.get(0)) == idEvento) {
+					evento = evReale;
+					break;
+				}
+			}
+
 			String titolo = evento.get(1);
 			String descrizione = evento.get(2);
-			String matricola = evento.get(3);
-			java.sql.Timestamp tsInizio = java.sql.Timestamp.valueOf(evento.get(4));
-			java.sql.Timestamp tsFine = java.sql.Timestamp.valueOf(evento.get(5));
+			String strInizio = evento.get(4) != null ? evento.get(4).trim() : "";
+			String strFine = evento.get(5) != null ? evento.get(5).trim() : "";
+			if (strInizio.length() == 16) strInizio += ":00";
+			if (strFine.length() == 16) strFine += ":00";
+
+			java.sql.Timestamp tsInizio = java.sql.Timestamp.valueOf(strInizio);
+			java.sql.Timestamp tsFine = java.sql.Timestamp.valueOf(strFine);
 
 			LocalDateTime ldtInizio = tsInizio.toLocalDateTime();
 			LocalDateTime ldtFine = tsFine.toLocalDateTime();
@@ -3284,20 +3302,66 @@ public class Controller {
 		return dati;
 	}
 
+	private List<ArrayList<String>> sdoppiaEventiInSlot(List<ArrayList<String>> eventi) {
+		if (eventi == null) return new ArrayList<>();
+		List<ArrayList<String>> eventiSplittati = new ArrayList<>();
+		
+		for (ArrayList<String> ev : eventi) {
+			try {
+				String strInizio = ev.get(4) != null ? ev.get(4).trim() : "";
+				String strFine = ev.get(5) != null ? ev.get(5).trim() : "";
+				if (strInizio.length() == 16) strInizio += ":00";
+				if (strFine.length() == 16) strFine += ":00";
+
+				java.time.LocalDateTime start = java.sql.Timestamp.valueOf(strInizio).toLocalDateTime();
+				java.time.LocalDateTime end = java.sql.Timestamp.valueOf(strFine).toLocalDateTime();
+				
+				java.time.LocalDateTime current = start;
+				while (current.isBefore(end)) {
+					java.time.LocalDateTime next = current.plusMinutes(30);
+					if (next.isAfter(end)) next = end;
+					
+					ArrayList<String> slot = new ArrayList<>(ev);
+					// Forza il titolo e la descrizione per mostrare "OCCUPATO" in OGNI cella
+					slot.set(1, "[OCCUPATO] " + ev.get(1));
+					slot.set(2, "[OCCUPATO] " + (ev.size() > 2 ? ev.get(2) : ""));
+					slot.set(4, java.sql.Timestamp.valueOf(current).toString());
+					slot.set(5, java.sql.Timestamp.valueOf(next).toString());
+					eventiSplittati.add(slot);
+					
+					current = next;
+				}
+			} catch (Exception e) {
+				eventiSplittati.add(ev); // Fallback in caso di date non valide
+			}
+		}
+		return eventiSplittati;
+	}
+
 	private Object[][] formattaDatiAgenda(List<ArrayList<String>> eventi) {
         if (eventi == null) return new Object[0][0];
 		Object[][] dati = new Object[eventi.size()][2];
 		for (int i = 0; i < eventi.size(); i++) {
 			ArrayList<String> ev = eventi.get(i);
-			dati[i][0] = ev.size() > 4 ? ev.get(4) : "N/D"; // data_ora_inizio
+			String inizio = ev.size() > 4 ? ev.get(4) : "N/D";
+			String fine = ev.size() > 5 ? ev.get(5) : "N/D";
 			
-			String descrizione;
-			if (ev.size() > 2) {
-				descrizione = ev.get(2);
-			} else {
-				descrizione = "Evento #" + (ev.isEmpty() ? 0 : ev.get(0));
+			String orario = inizio;
+			if (!inizio.equals("N/D") && !fine.equals("N/D")) {
+				String[] inParts = inizio.split(" ");
+				String[] fiParts = fine.split(" ");
+				if (inParts.length > 1 && fiParts.length > 1 && inParts[0].equals(fiParts[0])) {
+					String oraIn = inParts[1].length() >= 5 ? inParts[1].substring(0, 5) : inParts[1];
+					String oraFi = fiParts[1].length() >= 5 ? fiParts[1].substring(0, 5) : fiParts[1];
+					orario = inParts[0] + " " + oraIn + " - " + oraFi;
+				} else {
+					orario = inizio + " - " + fine;
+				}
 			}
-			dati[i][1] = descrizione;
+
+			dati[i][0] = "<html><font color='red'><b>\u231A " + orario + "</b></font></html>";
+			String descrizione = ev.size() > 2 ? ev.get(2) : "Evento #" + (ev.isEmpty() ? 0 : ev.get(0));
+			dati[i][1] = "<html><font color='red'><b>" + descrizione + "</b></font></html>";
 		}
 		return dati;
 	}
@@ -3503,7 +3567,8 @@ public class Controller {
 
     private void aggiornaAgendaGUI(JFrame frame) {
         if (utenteLoggato == null) return;
-        Object[][] dati = formattaDatiAgenda(agendaDAO.getEventiByMatricola(utenteLoggato.getMatricola()));
+        List<ArrayList<String>> eventi = agendaDAO.getEventiByMatricola(utenteLoggato.getMatricola());
+        Object[][] dati = formattaDatiAgenda(sdoppiaEventiInSlot(eventi));
         if (frame instanceof gui.SchermataAmministratore) ((gui.SchermataAmministratore) frame).aggiornaAgenda(dati);
         if (frame instanceof gui.SchermataMedico) ((gui.SchermataMedico) frame).aggiornaAgenda(dati);
     }

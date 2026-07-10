@@ -40,7 +40,7 @@ public class DimissioniPostgresDAO implements DimissioniDAO {
             stmt.setInt(4, Integer.parseInt(idRicovero));
             return stmt.executeUpdate() > 0;
         } catch (SQLException | IllegalArgumentException | NullPointerException e) {
-            LOGGER.log(Level.SEVERE, "Errore durante la creazione della dimissione", e);
+            LOGGER.log(Level.SEVERE, e, () -> "Errore durante la creazione della dimissione per idRicovero: " + idRicovero);
         }
         return false;
     }
@@ -56,7 +56,7 @@ public class DimissioniPostgresDAO implements DimissioniDAO {
                 dimissioni.add(extractDimissioneFromResultSet(rs));
             }
         } catch (SQLException | NullPointerException e) {
-            LOGGER.log(Level.SEVERE, "Errore durante il recupero di tutte le dimissioni", e);
+            LOGGER.log(Level.SEVERE, "Errore durante il recupero di tutte le dimissioni", e); // Questo era già corretto, ma lo lascio per coerenza
         }
         return dimissioni;
     }
@@ -71,7 +71,7 @@ public class DimissioniPostgresDAO implements DimissioniDAO {
                 return extractDimissioneFromResultSet(rs);
             }
         } catch (SQLException | NullPointerException e) {
-            LOGGER.log(Level.SEVERE, "Errore durante il recupero dell'ultimo ricovero chiuso per il paziente " + cfPaziente, e);
+            LOGGER.log(Level.SEVERE, e, () -> "Errore durante il recupero dell'ultimo ricovero chiuso per il paziente " + cfPaziente);
         }
         return new ArrayList<>();
     }
@@ -83,7 +83,7 @@ public class DimissioniPostgresDAO implements DimissioniDAO {
             stmt.setInt(1, Integer.parseInt(idRicovero));
             return stmt.executeUpdate() > 0;
         } catch (SQLException | NumberFormatException | NullPointerException e) {
-            LOGGER.log(Level.SEVERE, "Errore durante l'eliminazione della dimissione", e);
+            LOGGER.log(Level.SEVERE, e, () -> "Errore durante l'eliminazione della dimissione con id: " + idRicovero);
         }
         return false;
     }

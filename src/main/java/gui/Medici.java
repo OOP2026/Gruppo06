@@ -65,7 +65,9 @@ public class Medici extends JFrame {
 			mediciTable.setModel(model);
 		}
         setupListeners();
-        loadTableData(null, null, null, null);
+        if (mediciTable != null) {
+            loadTableData(null, null, null, null);
+        }
     }
 
     public void aggiornaTabella(Object[][] dati) {

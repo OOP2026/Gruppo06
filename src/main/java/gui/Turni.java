@@ -46,7 +46,6 @@ public class Turni extends JFrame {
         }
 
         if (tipologiaList != null) {
-            // Dichiarazione campi JList
             tipologiaList.setListData(TIPOLOGIA_DATA);
         }
         if (repartoList != null) {
@@ -58,7 +57,9 @@ public class Turni extends JFrame {
         }
 
         setupListeners();
-        loadTableData(null, null, null, null, null, null);
+        if (turniTable != null) {
+            loadTableData(null, null, null, null, null, null);
+        }
     }
 
     public void aggiornaTabella(Object[][] dati) {

@@ -66,13 +66,6 @@ public class Pazienti extends JFrame {
         if (resetButton != null) {
             resetButton.addActionListener(e -> resettaRicerca());
         }
-
-        if (tipologiaList != null) {
-            tipologiaList.setListData(new String[]{
-                    "Chirurgia Generale", "Cardiologia", "Ortopedia",
-                    "Pediatria", "Terapia Intensiva", "Pronto Soccorso"
-            });
-        }
     }
 
     /**
@@ -234,5 +227,23 @@ public class Pazienti extends JFrame {
         if (dataField != null) dataField.setText("");
         if (sorter != null) sorter.setRowFilter(null);
     }
-    
+
+    /**
+     * Popola la lista dei reparti con i dati forniti dinamicamente.
+     *
+     * @param reparti lista di stringhe rappresentanti i nomi dei reparti.
+     */
+    public void setRepartiListData(java.util.List<String> reparti) {
+        // NOTA: Nel GUI designer, la JList dei reparti è stata erroneamente
+        // associata alla variabile 'tipologiaList'.
+        if (tipologiaList != null) { // Assicuriamoci che il componente esista
+            final DefaultListModel<String> model = new DefaultListModel<>();
+            if (reparti != null) { // Aggiunto controllo per prevenire NullPointerException
+                for (String reparto : reparti) {
+                    model.addElement(reparto);
+                }
+            }
+            tipologiaList.setModel(model);
+        }
+    }
 }

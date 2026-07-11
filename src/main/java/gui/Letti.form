@@ -170,11 +170,6 @@
                     <properties>
                       <maximumSize width="220" height="140"/>
                       <minimumSize width="220" height="140"/>
-                      <model>
-                        <item value="Chirurgia generale"/>
-                        <item value="Ortopedia"/>
-                        <item value="Cardiologia"/>
-                      </model>
                       <preferredSize width="220" height="140"/>
                     </properties>
                   </component>

@@ -36,11 +36,6 @@ public class Medici extends JFrame {
             "Anestesia", "Chirurgia Toracica", "Ematologia", "Otorinolaringoiatria"
     };
 
-    private static final String[] REPARTI_DATA = {
-            "Blocco Operatorio", "Terapia Intensiva", "Neuroradiologia",
-            "Chirurgia Toracica", "Laboratorio Analisi", "Pronto Soccorso"
-    };
-
     /**
      * Matrice transitoria contenente i dati dei medici, utilizzata per popolare 
      * e filtrare la tabella in memoria senza incorrere in problemi di serializzazione.
@@ -139,7 +134,6 @@ public class Medici extends JFrame {
      */
     private void inizializzaComponentiDati() {
         if (specializzazioneList != null) specializzazioneList.setListData(SPECIALIZZAZIONI_DATA);
-        if (repartoList != null) repartoList.setListData(REPARTI_DATA);
         inizializzaRadioButtons();
         inizializzaTabella();
     }
@@ -273,5 +267,20 @@ public class Medici extends JFrame {
         if (fStato != null && !fStato.equals(rStato)) return false;
 
         return true;
+    }
+
+    /**
+     * Popola la lista dei reparti con i dati forniti dinamicamente.
+     *
+     * @param reparti lista di stringhe rappresentanti i nomi dei reparti.
+     */
+    public void setRepartiListData(java.util.List<String> reparti) {
+        if (repartoList != null) {
+            DefaultListModel<String> model = new DefaultListModel<>();
+            for (String reparto : reparti) {
+                model.addElement(reparto);
+            }
+            repartoList.setModel(model);
+        }
     }
 }

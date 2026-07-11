@@ -94,14 +94,6 @@
                     <properties>
                       <maximumSize width="220" height="140"/>
                       <minimumSize width="220" height="140"/>
-                      <model>
-                        <item value="Blocco Operatorio"/>
-                        <item value="Neuroradiologia"/>
-                        <item value="Terapia Intensiva"/>
-                        <item value="Chrirugia Generale"/>
-                        <item value="Ematologia"/>
-                        <item value="Otorinolaringoiatria"/>
-                      </model>
                       <preferredSize width="220" height="140"/>
                     </properties>
                   </component>

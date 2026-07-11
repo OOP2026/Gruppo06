@@ -202,4 +202,19 @@ public class Letti extends JFrame {
             }
         }
     }
+
+    /**
+     * Popola la lista dei reparti con i dati forniti dinamicamente.
+     *
+     * @param reparti lista di stringhe rappresentanti i nomi dei reparti.
+     */
+    public void setRepartiListData(java.util.List<String> reparti) {
+        if (repartoList != null) {
+            DefaultListModel<String> model = new DefaultListModel<>();
+            for (String reparto : reparti) {
+                model.addElement(reparto);
+            }
+            repartoList.setModel(model);
+        }
+    }
 }

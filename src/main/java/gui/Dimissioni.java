@@ -30,10 +30,6 @@ public class Dimissioni extends JFrame {
             "Reparto Dimissione", "Tipo Dimissione", "Data Dimissione"
     };
 
-    private static final String[] REPARTI_LIST_DATA = {
-            "Chirurgia generale", "Ortopedia", "Cardiologia"
-    };
-
     private static final String[] TIPO_DIMISSIONE_LIST_DATA = {
             "Ordinaria", "Trasferimento", "Volontaria", "Decesso"
     };
@@ -223,8 +219,6 @@ public class Dimissioni extends JFrame {
 
         pazientiTable.setAutoCreateRowSorter(true);
 
-        repartoList.setListData(REPARTI_LIST_DATA);
-
         tipoDimissioneList.setListData(TIPO_DIMISSIONE_LIST_DATA);
 
         SpinnerDateModel dateModel = new SpinnerDateModel(new Date(), null, null, Calendar.DAY_OF_MONTH);
@@ -246,5 +240,20 @@ public class Dimissioni extends JFrame {
         Login.applicaStilePulsantiCentrali(resetButton);
         Login.applicaStilePulsantiCentrali(letturaDimissioneButton);
         Login.applicaStilePulsantiCentrali(archiviaDimissioneButton);
+    }
+
+    /**
+     * Popola la lista dei reparti con i dati forniti dinamicamente.
+     *
+     * @param reparti lista di stringhe rappresentanti i nomi dei reparti.
+     */
+    public void setRepartiListData(java.util.List<String> reparti) {
+        if (repartoList != null) {
+            DefaultListModel<String> model = new DefaultListModel<>();
+            for (String reparto : reparti) {
+                model.addElement(reparto);
+            }
+            repartoList.setModel(model);
+        }
     }
 }

@@ -54,7 +54,7 @@ public class Ricovero extends JFrame {
 		}
 
 		if (repartoList != null) {
-			repartoList.setListData(new String[]{"Chirurgia generale", "Ortopedia", "Cardiologia"});
+			repartoList.setListData(new String[0]);
 		}
 
 		if (ricoveriTable != null) {
@@ -137,6 +137,17 @@ public class Ricovero extends JFrame {
      */
     public void addResetListener(ActionListener listener) {
         resetButton.addActionListener(listener);
+    }
+
+    /**
+     * Imposta i dati per la lista dei reparti.
+     *
+     * @param reparti una lista di stringhe contenente i nomi dei reparti
+     */
+    public void setRepartiListData(List<String> reparti) {
+        if (repartoList != null && reparti != null) {
+            repartoList.setListData(reparti.toArray(new String[0]));
+        }
     }
 
     /**

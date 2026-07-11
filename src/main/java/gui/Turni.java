@@ -31,12 +31,6 @@ public class Turni extends JFrame {
             "Medico", "Amministratore"
     };
 
-    private static final String[] REPARTI_DATA = {
-            "Chirurgia Generale", "Cardiologia", "Ortopedia",
-            "Pediatria", "Terapia Intensiva", "Pronto Soccorso",
-            "Bariatria", "Radiologia Interventistica", "Nessuno"
-    };
-
     private transient Object[][] datiTurni = new Object[0][0];
 
     /**
@@ -55,9 +49,6 @@ public class Turni extends JFrame {
 
         if (tipologiaList != null) {
             tipologiaList.setListData(TIPOLOGIA_DATA);
-        }
-        if (repartoList != null) {
-            repartoList.setListData(REPARTI_DATA);
         }
 
         if (turniTable != null) {
@@ -224,6 +215,21 @@ public class Turni extends JFrame {
             if (isTurnoCorrispondente(row, filtroIdTurno, filtroNome, filtroMatricola, filtroRuolo, filtroReparto, filtroData)) {
                 m.addRow(row);
             }
+        }
+    }
+
+    /**
+     * Popola la lista dei reparti con i dati forniti dinamicamente.
+     *
+     * @param reparti lista di stringhe rappresentanti i nomi dei reparti.
+     */
+    public void setRepartiListData(java.util.List<String> reparti) {
+        if (repartoList != null) {
+            DefaultListModel<String> model = new DefaultListModel<>();
+            for (String reparto : reparti) {
+                model.addElement(reparto);
+            }
+            repartoList.setModel(model);
         }
     }
 }

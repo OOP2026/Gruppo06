@@ -92,13 +92,6 @@
                     <properties>
                       <maximumSize width="220" height="140"/>
                       <minimumSize width="220" height="140"/>
-                      <model>
-                        <item value="Chirurgia Generale"/>
-                        <item value="Bariatria"/>
-                        <item value="Radiologia Interventista"/>
-                        <item value="Radiologia Interventista"/>
-                        <item value="Radiologia Interventista"/>
-                      </model>
                       <preferredSize width="220" height="140"/>
                     </properties>
                   </component>

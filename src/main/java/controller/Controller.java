@@ -865,7 +865,7 @@ public class Controller {
 		JTextField iscrizioneInput = new JTextField();
 		JTextField specializzazioneInput = new JTextField();
 		JComboBox<String> repartoInput = new JComboBox<>(new String[]{
-				 "Chirurgia Generale", "Ortopedia", "Cardiologia"
+				 "Ortopedia", "Pediatria", "Chirurgia Generale", "Cardiologia", "Terapia Intensiva"
 		});
 
 		JPanel panel = new JPanel(new GridLayout(7, 2, 10, 10));
@@ -1407,6 +1407,11 @@ public class Controller {
 
 	public void apriSchermataPazienti(JFrame frameDaChiudere) {
 		gui.Pazienti pazientiFrame = new gui.Pazienti();
+
+		// Carica dinamicamente i reparti dal DB e li passa alla GUI
+		List<String> reparti = lettoDAO.getAllReparti();
+		pazientiFrame.setRepartiListData(reparti);
+
 		impostaSchermata(pazientiFrame, pazientiFrame.mainPanel, "Gestione Pazienti", WindowConstants.DISPOSE_ON_CLOSE);
 
         pazientiFrame.addNuovoPazienteListener(e -> {
@@ -1491,6 +1496,10 @@ public class Controller {
 
 	public void apriSchermataLetti(JFrame frameDaChiudere) {
 		gui.Letti lettiFrame = new gui.Letti();
+
+		// Carica dinamicamente i reparti dal DB e li passa alla GUI
+		List<String> reparti = lettoDAO.getAllReparti();
+		lettiFrame.setRepartiListData(reparti);
 
 
 		impostaSchermata(lettiFrame, lettiFrame.mainPanel, "Gestione Letti", WindowConstants.DISPOSE_ON_CLOSE);
@@ -2179,6 +2188,10 @@ public class Controller {
 
 	public void apriSchermataMedici(JFrame frameDaChiudere) {
 		gui.Medici mediciFrame = new gui.Medici();
+
+		// Carica dinamicamente i reparti dal DB e li passa alla GUI
+		List<String> reparti = lettoDAO.getAllReparti();
+		mediciFrame.setRepartiListData(reparti);
 		impostaSchermata(mediciFrame, mediciFrame.mainPanel, "Gestione Medici", WindowConstants.DISPOSE_ON_CLOSE);
 
 		mediciFrame.addNuovoMedicoListener(e -> {
@@ -2280,6 +2293,10 @@ public class Controller {
 
 	public void apriSchermataDimissioni(JFrame frameDaChiudere) {
 		gui.Dimissioni dimissioniFrame = new gui.Dimissioni();
+
+		// Carica dinamicamente i reparti dal DB e li passa alla GUI
+		List<String> reparti = lettoDAO.getAllReparti();
+		dimissioniFrame.setRepartiListData(reparti);
 		impostaSchermata(dimissioniFrame, dimissioniFrame.mainPanel, "Ricerca Dimissioni", WindowConstants.DISPOSE_ON_CLOSE);
 	
         dimissioniFrame.addArchiviaDimissioneListener(e -> {
@@ -2330,6 +2347,10 @@ public class Controller {
 
 	public void apriSchermataRicoveri(JFrame frameDaChiudere) {
 		gui.Ricovero ricoveroFrame = new gui.Ricovero();
+
+		// Carica dinamicamente i reparti dal DB e li passa alla GUI
+		List<String> reparti = lettoDAO.getAllReparti();
+		ricoveroFrame.setRepartiListData(reparti);
 		impostaSchermata(ricoveroFrame, ricoveroFrame.mainPanel, "Ricerca Ricovero", WindowConstants.DISPOSE_ON_CLOSE);
 
         ricoveroFrame.addNuovoRicoveroListener(e -> {
@@ -2373,6 +2394,10 @@ public class Controller {
 
 	public void apriSchermataTurni(JFrame frameDaChiudere) {
 		gui.Turni turniFrame = new gui.Turni();
+
+		// Carica dinamicamente i reparti dal DB e li passa alla GUI
+		List<String> reparti = lettoDAO.getAllReparti();
+		turniFrame.setRepartiListData(reparti);
 		impostaSchermata(turniFrame, turniFrame.panelHome, "Gestione Turni Lavorativi", WindowConstants.DISPOSE_ON_CLOSE);
 
 		turniFrame.addNuovoTurnoListener(e -> {
@@ -2626,7 +2651,7 @@ public class Controller {
 		JTextField iscrizioneInput = new JTextField(datiMedico.get(5));
 		JTextField specializzazioneInput = new JTextField(datiMedico.get(6));
 		JComboBox<String> repartoInput = new JComboBox<>(new String[]{
-				"Nessuno", "Chirurgia Generale", "Ortopedia", "Cardiologia"
+				"Nessuno", "Ortopedia", "Pediatria", "Chirurgia Generale", "Cardiologia", "Terapia Intensiva"
 		});
 		repartoInput.setSelectedItem(datiMedico.get(7));
 
@@ -2719,7 +2744,7 @@ public class Controller {
 		JTextField iscrizioneInput = new JTextField(datiMedico.get(5));
 		JTextField specializzazioneInput = new JTextField(datiMedico.get(6));
 		JComboBox<String> repartoInput = new JComboBox<>(new String[]{
-				"Nessuno", "Chirurgia generale", "Ortopedia", "Cardiologia"
+				"Nessuno", "Ortopedia", "Pediatria", "Chirurgia Generale", "Cardiologia", "Terapia Intensiva"
 		});
 		repartoInput.setSelectedItem(datiMedico.get(7));
 
@@ -3470,9 +3495,9 @@ public class Controller {
 
 	private void avviaSchermataLogin() {
 		gui.Login loginView = new gui.Login();
-		JFrame frame = new JFrame("Login - Ospedale San Raffaele");
+		JFrame frame = new JFrame("Login - Ospedale");
 		if (loginView.mainPanel != null) {
-			impostaSchermata(frame, loginView.mainPanel, "Login - Ospedale San Raffaele", WindowConstants.EXIT_ON_CLOSE);
+			impostaSchermata(frame, loginView.mainPanel, "Login - Ospedale", WindowConstants.EXIT_ON_CLOSE);
 
 			loginView.addLoginListener(e -> {
 				String username = loginView.getUsername();
@@ -3517,9 +3542,9 @@ public class Controller {
 
 	private void avviaSchermataRegistrazione() {
 		gui.Registrazione regView = new gui.Registrazione();
-		JFrame frame = new JFrame("Registrazione - Ospedale San Raffaele");
+		JFrame frame = new JFrame("Registrazione - Ospedale");
 		if (regView.mainPanel != null) {
-			impostaSchermata(frame, regView.mainPanel, "Registrazione - Ospedale San Raffaele", WindowConstants.EXIT_ON_CLOSE);
+			impostaSchermata(frame, regView.mainPanel, "Registrazione - Ospedale", WindowConstants.EXIT_ON_CLOSE);
 
 			regView.addRegisterListener(e -> {
 				String nome = regView.getNome();

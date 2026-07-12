@@ -29,7 +29,7 @@ public class Pazienti extends JFrame {
     private JRadioButton maschioRadioButton;
 
     private static final String[] COLONNE = {
-            "ID Paziente", "Nome e Cognome", "Codice Fiscale", "Data Nascita", "Diagnosi",
+            "Nome e Cognome", "Codice Fiscale", "Data Nascita", "Diagnosi",
             "Sesso", "Residenza", "Stato Ricovero", "Reparto"
     };
 
@@ -105,7 +105,7 @@ public class Pazienti extends JFrame {
 
     /**
      * Restituisce il codice fiscale del paziente attualmente selezionato nella tabella.
-     * Il codice fiscale è posizionato nella prima colonna.
+     * Il codice fiscale è posizionato nella seconda colonna.
      *
      * @return il codice fiscale come stringa, oppure null se nessuna riga è selezionata
      */
@@ -115,7 +115,7 @@ public class Pazienti extends JFrame {
             JOptionPane.showMessageDialog(this, "Per favore, seleziona un paziente dalla tabella.", "Nessun Paziente Selezionato", JOptionPane.WARNING_MESSAGE);
             return null;
         }
-        return (String) pazientiTable.getValueAt(rigaSelezionata, 0);
+        return (String) pazientiTable.getValueAt(rigaSelezionata, 1);
     }
 
     /**
@@ -138,7 +138,7 @@ public class Pazienti extends JFrame {
             String statoRicovero = (p.size() > 7 && p.get(7) != null && !p.get(7).isEmpty()) ? "Ricoverato - Letto " + p.get(7) : "Non ricoverato";
             String reparto = (p.size() > 8 && p.get(8) != null && !p.get(8).isEmpty()) ? p.get(8) : "Nessuno";
 
-            model.addRow(new Object[]{cf, nomeCognome, cf, dataNascita, diagnosi, sesso, residenza, statoRicovero, reparto});
+            model.addRow(new Object[]{nomeCognome, cf, dataNascita, diagnosi, sesso, residenza, statoRicovero, reparto});
         }
     }
 
@@ -152,7 +152,7 @@ public class Pazienti extends JFrame {
     private void addFilterSeTesto(List<RowFilter<Object, Object>> filters, JTextField field, int columnIndex) {
         if (field != null && !field.getText().trim().isEmpty()) {
             String text = field.getText().trim();
-            if (columnIndex == 3) {
+            if (columnIndex == 2) {
                 filters.add(RowFilter.regexFilter("^" + text, columnIndex));
             } else {
                 filters.add(RowFilter.regexFilter("(?i)" + text, columnIndex));
@@ -167,9 +167,9 @@ public class Pazienti extends JFrame {
      */
     private void addSessoFilter(List<RowFilter<Object, Object>> filters) {
         if (maschioRadioButton != null && maschioRadioButton.isSelected()) {
-            filters.add(RowFilter.regexFilter("(?i)^M$", 5));
+            filters.add(RowFilter.regexFilter("(?i)^M$", 4));
         } else if (femminaRadioButton != null && femminaRadioButton.isSelected()) {
-            filters.add(RowFilter.regexFilter("(?i)^F$", 5));
+            filters.add(RowFilter.regexFilter("(?i)^F$", 4));
         }
     }
 
@@ -183,7 +183,7 @@ public class Pazienti extends JFrame {
             List<String> repartiScelti = tipologiaList.getSelectedValuesList();
             if (!repartiScelti.isEmpty()) {
                 String regex = "(?i)(" + String.join("|", repartiScelti) + ")";
-                filters.add(RowFilter.regexFilter(regex, 8));
+                filters.add(RowFilter.regexFilter(regex, 7));
             }
         }
     }
@@ -196,11 +196,11 @@ public class Pazienti extends JFrame {
         if (sorter == null) return;
         List<RowFilter<Object, Object>> filters = new ArrayList<>();
 
-        addFilterSeTesto(filters, nomeField, 1);
-        addFilterSeTesto(filters, codiceField, 2);
-        addFilterSeTesto(filters, dataField, 3);
-        addFilterSeTesto(filters, ricercaprognosiField, 4);
-        addFilterSeTesto(filters, residenzaField, 6);
+        addFilterSeTesto(filters, nomeField, 0);
+        addFilterSeTesto(filters, codiceField, 1);
+        addFilterSeTesto(filters, dataField, 2);
+        addFilterSeTesto(filters, ricercaprognosiField, 3);
+        addFilterSeTesto(filters, residenzaField, 5);
 
         addSessoFilter(filters);
         addRepartoFilter(filters);

@@ -4,6 +4,8 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.event.ActionListener;
+import java.awt.Color;
+import java.awt.Component;
 
 
 /**
@@ -76,6 +78,8 @@ public class Letti extends JFrame {
         for (int i = 0; i < lettiTable.getColumnCount(); i++) {
             lettiTable.getColumnModel().getColumn(i).setCellRenderer(centerRenderer);
         }
+        
+        lettiTable.getColumnModel().getColumn(5).setCellRenderer(new StatoLettoRenderer());
     }
 
     /**
@@ -215,6 +219,49 @@ public class Letti extends JFrame {
                 model.addElement(reparto);
             }
             repartoList.setModel(model);
+        }
+    }
+
+    /**
+     * Un renderer personalizzato per la colonna dello stato dei letti.
+     * Colora lo sfondo della cella di verde o di rosso a seconda che
+     * il letto sia libero o occupato, garantendo la visualizzazione corretta
+     * su qualsiasi sistema operativo, anche da file JAR.
+     */
+    public static class StatoLettoRenderer extends DefaultTableCellRenderer {
+        private static final Color VERDE_CHIARO = new Color(223, 240, 216);
+        private static final Color ROSSO_CHIARO = new Color(242, 222, 222);
+        private static final Color TESTO_VERDE = new Color(60, 118, 61);
+        private static final Color TESTO_ROSSO = new Color(169, 68, 66);
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+            Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+
+            if (value instanceof String) {
+                String stato = (String) value;
+                if ("Libero".equalsIgnoreCase(stato)) {
+                    c.setBackground(VERDE_CHIARO);
+                    c.setForeground(TESTO_VERDE);
+                    setText("🟢 Libero");
+                } else if ("Occupato".equalsIgnoreCase(stato)) {
+                    c.setBackground(ROSSO_CHIARO);
+                    c.setForeground(TESTO_ROSSO);
+                    setText("🔴 Occupato");
+                } else {
+                    c.setBackground(table.getBackground());
+                    c.setForeground(table.getForeground());
+                    setText(stato);
+                }
+            }
+
+            if (isSelected) {
+                c.setBackground(table.getSelectionBackground());
+                c.setForeground(table.getSelectionForeground());
+            }
+            
+            setHorizontalAlignment(SwingConstants.CENTER);
+            return c;
         }
     }
 }

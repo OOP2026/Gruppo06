@@ -3305,12 +3305,21 @@ public class Controller {
 		if (ricoveroDAO != null && pazienteDAO != null) {
 			List<ArrayList<String>> ricoveriAttivi = ricoveroDAO.getAllRicoveriAttivi();
 
+			// Ottimizzazione: Carica tutti i pazienti una sola volta per evitare il problema delle "N+1 query"
+			List<ArrayList<String>> tuttiPazienti = pazienteDAO.getAllPazienti();
+			java.util.Map<String, List<String>> mappaPazienti = new java.util.HashMap<>();
+			if (tuttiPazienti != null) {
+				for (List<String> p : tuttiPazienti) {
+					if (p != null && !p.isEmpty()) mappaPazienti.put(p.get(0), p);
+				}
+			}
+
 			for (ArrayList<String> ricovero : ricoveriAttivi) {
 				String cfPaziente = ricovero.get(1);
 				String idLetto = ricovero.get(2);
 				String repartoRicovero = ricovero.get(3);
 
-				List<String> paziente = pazienteDAO.getPazienteByCf(cfPaziente);
+				List<String> paziente = mappaPazienti.get(cfPaziente);
 				if (paziente != null && !paziente.isEmpty()) {
 					String nomeCompleto = (paziente.size() > 2 ? paziente.get(2) : "") + " " + (paziente.size() > 1 ? paziente.get(1) : "");
 					ricoveriMap.put(idLetto + "_" + repartoRicovero, new String[]{nomeCompleto.trim(), cfPaziente});
@@ -3357,11 +3366,11 @@ public class Controller {
 					if (letto.isOccupato()) {
 						rigaDati[2] = nomePaziente;
 						rigaDati[3] = cfPaziente;
-						rigaDati[5] = "🔴 Occupato";
+						rigaDati[5] = "Occupato";
 					} else {
 						rigaDati[2] = "-";
 						rigaDati[3] = "-";
-						rigaDati[5] = "🟢 Libero";
+						rigaDati[5] = "Libero";
 					}
 					datiFiltrati.add(rigaDati);
 				}

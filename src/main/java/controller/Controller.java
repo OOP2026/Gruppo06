@@ -2969,7 +2969,7 @@ public class Controller {
 				dati[i][2] = m.size() > 6 ? m.get(6) : "-";
 				dati[i][3] = m.size() > 7 ? m.get(7) : "-";
 				
-				String stato = "Attivo";
+				String stato = "Reperibile";
 				if (!"-".equals(matricola)) {
 					List<ArrayList<String>> assenzeDb = assenzaDAO.getAssenzeByMedico(matricola);
 					if (assenzeDb != null) {
@@ -2981,7 +2981,7 @@ public class Controller {
 						}
 					}
 
-					if (stato.equals("Attivo")) {
+					if (stato.equals("Reperibile")) {
 						List<ArrayList<String>> turniMedico = turnoDAO.getTurniByMedico(matricola);
 						List<ArrayList<String>> prestazioniMedico = prestazioneDAO.getPrestazioniByMedico(matricola);
 

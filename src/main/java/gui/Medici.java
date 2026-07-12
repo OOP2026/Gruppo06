@@ -21,7 +21,7 @@ public class Medici extends JFrame {
     private JList<String> repartoList;
     private JButton assenzaButton;
     private JButton modificamedicoButton;
-    private JRadioButton attivoRadioButton;
+    private JRadioButton reperibileRadioButton;
     private JRadioButton assenteRadioButton;
     private JRadioButton occupatoRadioButton;
     private JRadioButton tuttiRadioButton;
@@ -143,11 +143,11 @@ public class Medici extends JFrame {
      * impostando la selezione predefinita su "Tutti".
      */
     private void inizializzaRadioButtons() {
-        if (tuttiRadioButton == null || attivoRadioButton == null || assenteRadioButton == null || occupatoRadioButton == null) return;
+        if (tuttiRadioButton == null || reperibileRadioButton == null || assenteRadioButton == null || occupatoRadioButton == null) return;
 
         ButtonGroup statoGroup = new ButtonGroup();
         statoGroup.add(tuttiRadioButton);
-        statoGroup.add(attivoRadioButton);
+        statoGroup.add(reperibileRadioButton);
         statoGroup.add(assenteRadioButton);
         statoGroup.add(occupatoRadioButton);
         tuttiRadioButton.setSelected(true);
@@ -234,7 +234,7 @@ public class Medici extends JFrame {
      *         oppure null se è selezionato "Tutti"
      */
     private String determinaFiltroStatoSelezionato() {
-        if (attivoRadioButton != null && attivoRadioButton.isSelected()) return "attivo";
+        if (reperibileRadioButton != null && reperibileRadioButton.isSelected()) return "attivo";
         if (assenteRadioButton != null && assenteRadioButton.isSelected()) return "assente";
         if (occupatoRadioButton != null && occupatoRadioButton.isSelected()) return "occupato";
         return null;
